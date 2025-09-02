@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project 0 — Song-Ze Yu</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=Space+Mono&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        ::selection {
+            background: #000;
+            color: #fff;
+        }
+
+        body {
+            font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 15px;
+            line-height: 1.6;
+            color: #000;
+            background: #fff;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .wrapper {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 60px 40px;
+        }
+
+        /* Header */
+        header {
+            margin-bottom: 120px;
+        }
+
+        .nav {
+            margin-bottom: 80px;
+        }
+
+        .nav a {
+            color: #000;
+            text-decoration: none;
+            font-size: 13px;
+            opacity: 0.5;
+            transition: opacity 0.2s;
+        }
+
+        .nav a:hover {
+            opacity: 1;
+        }
+
+        .title-section {
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 48px;
+            font-weight: 500;
+            letter-spacing: -0.03em;
+            margin-bottom: 20px;
+        }
+
+        .meta {
+            display: flex;
+            gap: 40px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .meta-item {
+            position: relative;
+        }
+
+        .meta-item:not(:last-child)::after {
+            content: '/';
+            position: absolute;
+            right: -20px;
+            color: #ddd;
+        }
+
+        /* Content Sections */
+        .section {
+            margin-bottom: 140px;
+        }
+
+        .section-header {
+            margin-bottom: 30px;
+        }
+
+        .section-number {
+            font-family: 'Space Mono', monospace;
+            font-size: 13px;
+            color: #999;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            font-size: 32px;
+            font-weight: 500;
+            letter-spacing: -0.02em;
+            margin-bottom: 20px;
+        }
+
+        .section-description {
+            color: #666;
+            max-width: 800px;
+            margin-bottom: 60px;
+        }
+
+        /* Part 1 - Portrait Grid */
+        .portrait-grid {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 40px;
+            justify-content: center;
+        }
+
+        .portrait-frame {
+            flex: 0 0 auto;
+            max-width: 240px;
+            background: #fafafa;
+            padding: 20px;
+            position: relative;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .portrait-frame:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+            background: #fff;
+        }
+
+        .portrait-frame img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* Part 2 - Architecture Full Width */
+        .architecture-grid {
+            display: flex;
+            gap: 20px;
+            margin: 0 -40px 40px -40px; /* Negative margins to span full width */
+            padding: 0 40px;
+            justify-content: space-between;
+        }
+
+        .architecture-frame {
+            flex: 1;
+            background: #fafafa;
+            padding: 20px;
+            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .architecture-frame:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+            background: #fff;
+        }
+
+        .architecture-frame img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .image-info {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .focal-label {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .focal-detail {
+            font-size: 12px;
+            color: #999;
+        }
+
+        /* Part 3 - Dolly Section */
+        .dolly-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: start;
+            margin-top: 60px;
+        }
+
+        .dolly-text h3 {
+            font-size: 24px;
+            font-weight: 500;
+            margin-bottom: 20px;
+            letter-spacing: -0.02em;
+        }
+
+        .dolly-text p {
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.8;
+        }
+
+        .dolly-points {
+            list-style: none;
+            margin-top: 30px;
+        }
+
+        .dolly-points li {
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .dolly-points li:last-child {
+            border-bottom: none;
+        }
+
+        .gif-frame {
+            background: #fafafa;
+            padding: 20px;
+        }
+
+        .gif-frame img {
+            width: 100%;
+            height: auto;
+            max-height: 50vh; /* Limit to 50% viewport height */
+            object-fit: contain;
+            display: block;
+        }
+
+        /* Footer */
+        footer {
+            margin-top: 200px;
+            padding-top: 40px;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: #999;
+        }
+
+        /* Responsive */
+        @media (max-width: 968px) {
+            .wrapper {
+                padding: 40px 20px;
+            }
+
+            h1 {
+                font-size: 36px;
+            }
+
+            .portrait-grid {
+                flex-wrap: wrap;
+            }
+
+            .portrait-frame {
+                max-width: 48%;
+            }
+
+            .architecture-grid {
+                flex-direction: column;
+                margin: 0;
+                padding: 0;
+            }
+
+            .dolly-grid {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            h1 {
+                font-size: 28px;
+            }
+
+            h2 {
+                font-size: 24px;
+            }
+
+            .portrait-frame {
+                max-width: 100%;
+            }
+
+            .meta {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .meta-item::after {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <header>
+            <nav class="nav">
+                <a href="../index.html">← Back</a>
+            </nav>
+            
+            <div class="title-section">
+                <h1>Becoming Friends with Your Camera</h1>
+                <div class="meta">
+                    <span class="meta-item">Project 0</span>
+                    <span class="meta-item">CS180 Fall 2025</span>
+                    <span class="meta-item">Song-Ze (Jimmy) Yu</span>
+                    <span class="meta-item">3042011066</span>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <!-- Part 1 -->
+            <section class="section">
+                <div class="section-header">
+                    <div class="section-number">01</div>
+                    <h2>The Wrong Way vs. The Right Way</h2>
+                    <p class="section-description">
+                        An exploration of how focal length affects portrait photography. Shot on iPhone 14 Pro.
+                    </p>
+                </div>
+
+                <div class="portrait-grid">
+                    <div class="portrait-frame">
+                        <img src="src/img/0.5x.jpg" alt="0.5x portrait">
+                        <div class="image-info">
+                            <div class="focal-label">0.5×</div>
+                            <div class="focal-detail">13mm equivalent</div>
+                        </div>
+                    </div>
+                    <div class="portrait-frame">
+                        <img src="src/img/1x.jpg" alt="1x portrait">
+                        <div class="image-info">
+                            <div class="focal-label">1×</div>
+                            <div class="focal-detail">24mm equivalent</div>
+                        </div>
+                    </div>
+                    <div class="portrait-frame">
+                        <img src="src/img/2x.jpg" alt="2x portrait">
+                        <div class="image-info">
+                            <div class="focal-label">2×</div>
+                            <div class="focal-detail">48mm equivalent</div>
+                        </div>
+                    </div>
+                    <div class="portrait-frame">
+                        <img src="src/img/3x.jpg" alt="3x portrait">
+                        <div class="image-info">
+                            <div class="focal-label">3×</div>
+                            <div class="focal-detail">77mm equivalent</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Part 2 -->
+            <section class="section">
+                <div class="section-header">
+                    <div class="section-number">02</div>
+                    <h2>Architectural Perspective Compression</h2>
+                    <p class="section-description">
+                        Haas School of Business. Examining how focal length affects spatial relationships in architecture.
+                    </p>
+                </div>
+
+                <div class="architecture-grid">
+                    <div class="architecture-frame">
+                        <img src="src/img/hass-0.5x.jpg" alt="Haas ultra-wide">
+                        <div class="image-info">
+                            <div class="focal-label">Ultra-Wide</div>
+                            <div class="focal-detail">13mm • Expanded</div>
+                        </div>
+                    </div>
+                    <div class="architecture-frame">
+                        <img src="src/img/hass-1x.jpg" alt="Haas standard">
+                        <div class="image-info">
+                            <div class="focal-label">Standard</div>
+                            <div class="focal-detail">24mm • Natural</div>
+                        </div>
+                    </div>
+                    <div class="architecture-frame">
+                        <img src="src/img/hass-3x.jpg" alt="Haas telephoto">
+                        <div class="image-info">
+                            <div class="focal-label">Telephoto</div>
+                            <div class="focal-detail">77mm • Compressed</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Part 3 -->
+            <section class="section">
+                <div class="section-header">
+                    <div class="section-number">03</div>
+                    <h2>The Dolly Zoom</h2>
+                </div>
+
+                <div class="dolly-grid">
+                    <div class="dolly-text">
+                        <h3>Vertigo Effect</h3>
+                        <p>
+                            A cinematographic technique where the camera moves while simultaneously adjusting the zoom to maintain subject size.
+                        </p>
+                        <p>
+                            Made famous by Alfred Hitchcock, this effect creates a disorienting visual experience that has become a staple of modern filmmaking.
+                        </p>
+                        <ul class="dolly-points">
+                            <li>Camera moves backward</li>
+                            <li>Lens zooms in proportionally</li>
+                            <li>Subject maintains size</li>
+                            <li>Background shifts dramatically</li>
+                        </ul>
+                    </div>
+                    <div class="gif-frame">
+                        <img src="src/img/dolly-effect-macbook.gif" alt="Dolly zoom demonstration">
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <div class="footer-content">
+                <span>© 2025 Song-Ze Yu</span>
+                <span>UC Berkeley • CS180</span>
+            </div>
+        </footer>
+    </div>
+</body>
+</html>
