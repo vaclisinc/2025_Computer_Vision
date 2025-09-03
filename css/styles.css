@@ -1,0 +1,503 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=Space+Mono&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+::selection {
+    background: #000;
+    color: #fff;
+}
+
+body {
+    font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 16px;
+    line-height: 1.7;
+    color: #000;
+    background: #fff;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Common Typography */
+h1 {
+    font-size: 48px;
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    margin-bottom: 20px;
+}
+
+h2 {
+    font-size: 32px;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    margin-bottom: 20px;
+}
+
+/* Main Page Layout */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 80px 40px;
+}
+
+.container header {
+    margin-bottom: 120px;
+}
+
+.container h1 {
+    font-size: 56px;
+    font-weight: 500;
+    letter-spacing: -0.04em;
+    margin-bottom: 24px;
+}
+
+.header-top {
+    margin-bottom: 60px;
+}
+
+.subtitle {
+    font-size: 16px;
+    color: #666;
+    margin-bottom: 8px;
+}
+
+.author-info {
+    display: flex;
+    gap: 24px;
+    font-size: 13px;
+    color: #999;
+    margin-top: 16px;
+}
+
+/* Projects Grid */
+.projects-section {
+    margin-top: 100px;
+}
+
+.section-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #999;
+    margin-bottom: 40px;
+}
+
+.projects-list {
+    display: grid;
+    gap: 1px;
+    background: #f0f0f0;
+}
+
+.project-item {
+    background: #fff;
+    padding: 40px;
+    display: grid;
+    grid-template-columns: 60px 1fr auto;
+    gap: 40px;
+    align-items: center;
+    transition: all 0.2s;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+}
+
+.project-item:hover {
+    background: #fafafa;
+    padding-left: 50px;
+}
+
+.project-number {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    color: #999;
+}
+
+.project-info h3 {
+    font-size: 20px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    letter-spacing: -0.02em;
+}
+
+.project-info p {
+    font-size: 13px;
+    color: #666;
+    max-width: 600px;
+}
+
+.project-status {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.status-active {
+    color: #000;
+}
+
+.status-coming {
+    color: #ccc;
+}
+
+.project-item.coming-soon {
+    pointer-events: none;
+    opacity: 0.4;
+}
+
+.project-item.coming-soon:hover {
+    background: #fff;
+    padding-left: 40px;
+}
+
+/* Project Page Layout */
+.wrapper {
+    width: 100%;
+    margin: 0;
+    padding: 60px 80px;
+}
+
+.wrapper header {
+    margin-bottom: 120px;
+}
+
+.nav {
+    margin-bottom: 80px;
+}
+
+.nav a {
+    color: #000;
+    text-decoration: none;
+    font-size: 13px;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+}
+
+.nav a:hover {
+    opacity: 1;
+}
+
+.title-section {
+    margin-bottom: 40px;
+}
+
+.meta {
+    display: flex;
+    gap: 40px;
+    font-size: 13px;
+    color: #666;
+}
+
+.meta-item {
+    position: relative;
+}
+
+.meta-item:not(:last-child)::after {
+    content: '/';
+    position: absolute;
+    right: -20px;
+    color: #ddd;
+}
+
+/* Content Sections */
+.section {
+    margin-bottom: 140px;
+}
+
+.section-header {
+    margin-bottom: 30px;
+    width: 100%;
+}
+
+.section-number {
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    color: #999;
+    margin-bottom: 20px;
+}
+
+.section-description {
+    color: #333;
+    font-size: 17px;
+    line-height: 1.8;
+    width: 100%;
+    margin-bottom: 60px;
+}
+
+.section-description p {
+    margin-bottom: 24px;
+}
+
+.section-description p:last-child {
+    margin-bottom: 0;
+}
+
+.section-description strong {
+    color: #000;
+    font-weight: 600;
+}
+
+/* Part 1 - Portrait Grid */
+.portrait-grid {
+    display: flex;
+    gap: 20px;
+    margin: 0 -80px 40px -80px;
+    padding: 0 20px;
+    justify-content: center;
+}
+
+.portrait-frame {
+    flex: 0 0 auto;
+    max-width: 240px;
+    background: #fafafa;
+    padding: 20px;
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.portrait-frame:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+    background: #fff;
+}
+
+.portrait-frame img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* Part 2 - Architecture Full Width */
+.architecture-grid {
+    display: flex;
+    gap: 20px;
+    margin: 0 -80px 40px -80px; /* Negative margins to span full width */
+    padding: 0 20px;
+    justify-content: space-between;
+}
+
+.architecture-frame {
+    flex: 1;
+    background: #fafafa;
+    padding: 20px;
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.architecture-frame:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+    background: #fff;
+}
+
+.architecture-frame img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.image-info {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.focal-label {
+    font-size: 18px;
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.focal-detail {
+    font-size: 12px;
+    color: #999;
+}
+
+/* Part 3 - Dolly Section */
+.dolly-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 60px;
+    align-items: center;
+    margin-top: 60px;
+    min-height: 500px;
+}
+
+.dolly-text h3 {
+    font-size: 24px;
+    font-weight: 500;
+    margin-bottom: 20px;
+    letter-spacing: -0.02em;
+}
+
+.dolly-text p {
+    color: #333;
+    font-size: 17px;
+    margin-bottom: 24px;
+    line-height: 1.8;
+}
+
+.dolly-points {
+    list-style: none;
+    margin: 32px 0;
+    background: #fafafa;
+    border-radius: 8px;
+    padding: 24px;
+}
+
+.dolly-points li {
+    padding: 16px 0;
+    border-bottom: 1px solid #e8e8e8;
+    font-size: 15px;
+    color: #333;
+    position: relative;
+    padding-left: 24px;
+}
+
+.dolly-points li:before {
+    content: '•';
+    color: #000;
+    font-weight: bold;
+    position: absolute;
+    left: 0;
+}
+
+.dolly-points li:last-child {
+    border-bottom: none;
+}
+
+.gif-frame {
+    background: #fafafa;
+    padding: 20px;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.gif-frame img {
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 80vh;
+    object-fit: contain;
+    display: block;
+}
+
+/* Footer */
+footer {
+    margin-top: 160px;
+    padding-top: 40px;
+    border-top: 1px solid #f0f0f0;
+    font-size: 12px;
+    color: #999;
+}
+
+.wrapper footer {
+    margin-top: 200px;
+}
+
+.footer-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Responsive */
+@media (max-width: 968px) {
+    .wrapper {
+        padding: 40px 40px;
+    }
+
+    .wrapper h1 {
+        font-size: 36px;
+    }
+
+    .portrait-grid {
+        flex-wrap: wrap;
+        margin: 0 -40px 40px -40px;
+        padding: 0 20px;
+    }
+
+    .portrait-frame {
+        max-width: 48%;
+    }
+
+    .architecture-grid {
+        flex-direction: column;
+        margin: 0 -40px 40px -40px;
+        padding: 0 20px;
+    }
+
+    .dolly-grid {
+        grid-template-columns: 1fr;
+        gap: 40px;
+        min-height: auto;
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 60px 20px;
+    }
+
+    .container h1 {
+        font-size: 36px;
+    }
+
+    .project-item {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        padding: 30px 20px;
+    }
+
+    .project-item:hover {
+        padding-left: 20px;
+    }
+
+    .project-number {
+        display: none;
+    }
+
+    .project-status {
+        margin-top: 12px;
+    }
+}
+
+@media (max-width: 640px) {
+    .wrapper {
+        padding: 30px 30px;
+    }
+
+    .wrapper h1 {
+        font-size: 28px;
+    }
+
+    .wrapper h2 {
+        font-size: 24px;
+    }
+
+    .portrait-grid {
+        margin: 0 -30px 40px -30px;
+        padding: 0 15px;
+    }
+
+    .portrait-frame {
+        max-width: 100%;
+    }
+
+    .architecture-grid {
+        margin: 0 -30px 40px -30px;
+        padding: 0 15px;
+    }
+
+    .meta {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .meta-item::after {
+        display: none;
+    }
+}

@@ -4,308 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Project 0 — Song-Ze Yu</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=Space+Mono&display=swap');
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        ::selection {
-            background: #000;
-            color: #fff;
-        }
-
-        body {
-            font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
-            font-size: 15px;
-            line-height: 1.6;
-            color: #000;
-            background: #fff;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
-
-        .wrapper {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 60px 40px;
-        }
-
-        /* Header */
-        header {
-            margin-bottom: 120px;
-        }
-
-        .nav {
-            margin-bottom: 80px;
-        }
-
-        .nav a {
-            color: #000;
-            text-decoration: none;
-            font-size: 13px;
-            opacity: 0.5;
-            transition: opacity 0.2s;
-        }
-
-        .nav a:hover {
-            opacity: 1;
-        }
-
-        .title-section {
-            margin-bottom: 40px;
-        }
-
-        h1 {
-            font-size: 48px;
-            font-weight: 500;
-            letter-spacing: -0.03em;
-            margin-bottom: 20px;
-        }
-
-        .meta {
-            display: flex;
-            gap: 40px;
-            font-size: 13px;
-            color: #666;
-        }
-
-        .meta-item {
-            position: relative;
-        }
-
-        .meta-item:not(:last-child)::after {
-            content: '/';
-            position: absolute;
-            right: -20px;
-            color: #ddd;
-        }
-
-        /* Content Sections */
-        .section {
-            margin-bottom: 140px;
-        }
-
-        .section-header {
-            margin-bottom: 30px;
-        }
-
-        .section-number {
-            font-family: 'Space Mono', monospace;
-            font-size: 13px;
-            color: #999;
-            margin-bottom: 20px;
-        }
-
-        h2 {
-            font-size: 32px;
-            font-weight: 500;
-            letter-spacing: -0.02em;
-            margin-bottom: 20px;
-        }
-
-        .section-description {
-            color: #666;
-            max-width: 800px;
-            margin-bottom: 60px;
-        }
-
-        /* Part 1 - Portrait Grid */
-        .portrait-grid {
-            display: flex;
-            gap: 20px;
-            margin-bottom: 40px;
-            justify-content: center;
-        }
-
-        .portrait-frame {
-            flex: 0 0 auto;
-            max-width: 240px;
-            background: #fafafa;
-            padding: 20px;
-            position: relative;
-            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        }
-
-        .portrait-frame:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
-            background: #fff;
-        }
-
-        .portrait-frame img {
-            width: 100%;
-            height: auto;
-            display: block;
-        }
-
-        /* Part 2 - Architecture Full Width */
-        .architecture-grid {
-            display: flex;
-            gap: 20px;
-            margin: 0 -40px 40px -40px; /* Negative margins to span full width */
-            padding: 0 40px;
-            justify-content: space-between;
-        }
-
-        .architecture-frame {
-            flex: 1;
-            background: #fafafa;
-            padding: 20px;
-            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        }
-
-        .architecture-frame:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
-            background: #fff;
-        }
-
-        .architecture-frame img {
-            width: 100%;
-            height: auto;
-            display: block;
-        }
-
-        .image-info {
-            margin-top: 16px;
-            padding-top: 16px;
-            border-top: 1px solid #f0f0f0;
-        }
-
-        .focal-label {
-            font-size: 18px;
-            font-weight: 500;
-            margin-bottom: 4px;
-        }
-
-        .focal-detail {
-            font-size: 12px;
-            color: #999;
-        }
-
-        /* Part 3 - Dolly Section */
-        .dolly-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 60px;
-            align-items: start;
-            margin-top: 60px;
-        }
-
-        .dolly-text h3 {
-            font-size: 24px;
-            font-weight: 500;
-            margin-bottom: 20px;
-            letter-spacing: -0.02em;
-        }
-
-        .dolly-text p {
-            color: #666;
-            margin-bottom: 20px;
-            line-height: 1.8;
-        }
-
-        .dolly-points {
-            list-style: none;
-            margin-top: 30px;
-        }
-
-        .dolly-points li {
-            padding: 12px 0;
-            border-bottom: 1px solid #f0f0f0;
-            font-size: 13px;
-            color: #666;
-        }
-
-        .dolly-points li:last-child {
-            border-bottom: none;
-        }
-
-        .gif-frame {
-            background: #fafafa;
-            padding: 20px;
-        }
-
-        .gif-frame img {
-            width: 100%;
-            height: auto;
-            max-height: 50vh; /* Limit to 50% viewport height */
-            object-fit: contain;
-            display: block;
-        }
-
-        /* Footer */
-        footer {
-            margin-top: 200px;
-            padding-top: 40px;
-            border-top: 1px solid #f0f0f0;
-        }
-
-        .footer-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 12px;
-            color: #999;
-        }
-
-        /* Responsive */
-        @media (max-width: 968px) {
-            .wrapper {
-                padding: 40px 20px;
-            }
-
-            h1 {
-                font-size: 36px;
-            }
-
-            .portrait-grid {
-                flex-wrap: wrap;
-            }
-
-            .portrait-frame {
-                max-width: 48%;
-            }
-
-            .architecture-grid {
-                flex-direction: column;
-                margin: 0;
-                padding: 0;
-            }
-
-            .dolly-grid {
-                grid-template-columns: 1fr;
-                gap: 40px;
-            }
-        }
-
-        @media (max-width: 640px) {
-            h1 {
-                font-size: 28px;
-            }
-
-            h2 {
-                font-size: 24px;
-            }
-
-            .portrait-frame {
-                max-width: 100%;
-            }
-
-            .meta {
-                flex-direction: column;
-                gap: 8px;
-            }
-
-            .meta-item::after {
-                display: none;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="../css/styles.css">
 </head>
 <body>
     <div class="wrapper">
@@ -330,10 +29,15 @@
             <section class="section">
                 <div class="section-header">
                     <div class="section-number">01</div>
-                    <h2>The Wrong Way vs. The Right Way</h2>
-                    <p class="section-description">
-                        An exploration of how focal length affects portrait photography. Shot on iPhone 14 Pro.
-                    </p>
+                    <h2>Selfie: The Wrong Way vs. The Right Way</h2>
+                    <div class="section-description">
+                        <p>As shown in the pictures below, these are all photos of me taken with different lenses on an iPhone 14 Pro. We can observe that the <strong>wide-angle lens (0.5x) creates more facial distortion</strong>, making the face appear less natural. As we use longer focal lengths, the facial contours appear more natural and dimensional.</p>
+                        
+                        <p><strong>Why does this happen?</strong> When we take a photograph, we're converting a 3D scene into a 2D image. The perspective distortion occurs because of the distance between the camera and subject. You can visualize this by drawing a triangle - <strong>when the subject is farther from the lens, the light rays entering the lens are more parallel</strong>, creating a more natural perspective similar to how we perceive depth.</p>
+                        
+                        <p>Interestingly, <strong>the human eye has a focal length of approximately 50mm</strong> (in full-frame equivalent terms), which is why a 2x zoom on iPhone often produces the best photo.</p> 
+                        <p>P.S. I personally prefer the 2x lens on iPhone for food photography on Instagram stories, and I often use a <strong>50mm lens</strong> on my film camera!.</p>
+                    </div>
                 </div>
 
                 <div class="portrait-grid">
@@ -373,31 +77,33 @@
                 <div class="section-header">
                     <div class="section-number">02</div>
                     <h2>Architectural Perspective Compression</h2>
-                    <p class="section-description">
-                        Haas School of Business. Examining how focal length affects spatial relationships in architecture.
-                    </p>
+                    <div class="section-description">
+                        <p>I photographed the Haas School of Business using three different focal lengths. The <strong>perspective compression effect</strong> is most clearly visible in the buildings surrounding the main "HAAS SCHOOL OF BUSINESS" structure.</p>
+                        
+                        <p>With the <strong>0.5x wide-angle lens</strong>, we can see much more of the surrounding environment and buildings appear more spread out. However, with the <strong>3x telephoto lens</strong>, the background buildings appear much closer and compressed together.</p>
+                    </div>
                 </div>
 
                 <div class="architecture-grid">
                     <div class="architecture-frame">
                         <img src="src/img/hass-0.5x.jpg" alt="Haas ultra-wide">
                         <div class="image-info">
-                            <div class="focal-label">Ultra-Wide</div>
-                            <div class="focal-detail">13mm • Expanded</div>
+                            <div class="focal-label">0.5x</div>
+                            <div class="focal-detail">13mm equivalent</div>
                         </div>
                     </div>
                     <div class="architecture-frame">
                         <img src="src/img/hass-1x.jpg" alt="Haas standard">
                         <div class="image-info">
-                            <div class="focal-label">Standard</div>
-                            <div class="focal-detail">24mm • Natural</div>
+                            <div class="focal-label">1x</div>
+                            <div class="focal-detail">24mm equivalent</div>
                         </div>
                     </div>
                     <div class="architecture-frame">
                         <img src="src/img/hass-3x.jpg" alt="Haas telephoto">
                         <div class="image-info">
-                            <div class="focal-label">Telephoto</div>
-                            <div class="focal-detail">77mm • Compressed</div>
+                            <div class="focal-label">3x</div>
+                            <div class="focal-detail">77mm equivalent</div>
                         </div>
                     </div>
                 </div>
@@ -412,19 +118,24 @@
 
                 <div class="dolly-grid">
                     <div class="dolly-text">
-                        <h3>Vertigo Effect</h3>
+                        <h3>Vertigo Shot</h3>
                         <p>
-                            A cinematographic technique where the camera moves while simultaneously adjusting the zoom to maintain subject size.
+                            This is a classic cinematographic technique commonly used in films to <strong>create dramatic emphasis on a subject</strong> while building tension or unease. The effect is actually a practical application of the principles we learned in Parts 1 and 2 - combining focal length changes with camera movement.
                         </p>
                         <p>
-                            Made famous by Alfred Hitchcock, this effect creates a disorienting visual experience that has become a staple of modern filmmaking.
+                            <strong>The technique involves:</strong>
                         </p>
                         <ul class="dolly-points">
-                            <li>Camera moves backward</li>
-                            <li>Lens zooms in proportionally</li>
-                            <li>Subject maintains size</li>
-                            <li>Background shifts dramatically</li>
+                            <li>Moving the camera backward or forward</li>
+                            <li>Simultaneously zooming in or out proportionally</li>
+                            <li>Maintaining the subject at the <strong>same position and size</strong> in frame</li>
                         </ul>
+                        <p>
+                            Creating a smooth dolly zoom video is technically challenging because it requires <strong>precise, synchronized movement of both the camera position and zoom level</strong> while keeping the subject perfectly framed. I think this is why for Project 0, we simplify the process by taking multiple still photographs and combining them into a GIF.
+                        </p>
+                        <p>
+                            I captured this sequence outside <strong>the Upper Division Lounge in Soda Hall</strong>, using my MacBook Pro as the subject. After shooting five different setups and nearly ninety photos, I finally achieved a satisfying dolly zoom effect!
+                        </p>
                     </div>
                     <div class="gif-frame">
                         <img src="src/img/dolly-effect-macbook.gif" alt="Dolly zoom demonstration">
