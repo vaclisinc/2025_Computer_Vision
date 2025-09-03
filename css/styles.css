@@ -243,8 +243,7 @@ h2 {
 .portrait-grid {
     display: flex;
     gap: 20px;
-    margin: 0 -80px 40px -80px;
-    padding: 0 20px;
+    margin-bottom: 40px;
     justify-content: center;
 }
 
@@ -269,12 +268,11 @@ h2 {
     display: block;
 }
 
-/* Part 2 - Architecture Full Width */
+/* Part 2 - Architecture Grid */
 .architecture-grid {
     display: flex;
     gap: 20px;
-    margin: 0 -80px 40px -80px; /* Negative margins to span full width */
-    padding: 0 20px;
+    margin-bottom: 40px;
     justify-content: space-between;
 }
 
@@ -416,8 +414,7 @@ footer {
 
     .portrait-grid {
         flex-wrap: wrap;
-        margin: 0 -40px 40px -40px;
-        padding: 0 20px;
+        margin-bottom: 40px;
     }
 
     .portrait-frame {
@@ -426,8 +423,7 @@ footer {
 
     .architecture-grid {
         flex-direction: column;
-        margin: 0 -40px 40px -40px;
-        padding: 0 20px;
+        margin-bottom: 40px;
     }
 
     .dolly-grid {
@@ -479,8 +475,7 @@ footer {
     }
 
     .portrait-grid {
-        margin: 0 -30px 40px -30px;
-        padding: 0 15px;
+        margin-bottom: 40px;
     }
 
     .portrait-frame {
@@ -488,8 +483,7 @@ footer {
     }
 
     .architecture-grid {
-        margin: 0 -30px 40px -30px;
-        padding: 0 15px;
+        margin-bottom: 40px;
     }
 
     .meta {
