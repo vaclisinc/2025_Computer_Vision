@@ -99,26 +99,14 @@
                     <div class="text-block fade-in">
                         <p>The goal is to automatically align the RGB channels to produce a single color image by computing optimal displacement vectors that minimize alignment error using <strong>Normalized Cross-Correlation (NCC)</strong> as the primary metric (with L2 distance used specifically for the emir image for better results).</p>
                     </div>
-                    <div class="methodology">
-                        <h3>Methodology</h3>
-                        <div class="method-cards">
-                            <div class="method-card">
-                                <div class="method-icon">
-                                    <i class="fas fa-search"></i>
-                                </div>
-                                <h4>Single-Scale Search</h4>
-                                <p>For images under 1000px width</p>
-                                <div class="method-detail">±15 pixel search window</div>
-                            </div>
-                            <div class="method-card">
-                                <div class="method-icon">
-                                    <i class="fas fa-layer-group"></i>
-                                </div>
-                                <h4>Pyramid Alignment</h4>
-                                <p>For high-resolution images</p>
-                                <div class="method-detail">Multi-scale approach</div>
-                            </div>
-                        </div>
+                    <div class="features-list">
+                        <h4>Implementation Details</h4>
+                        <ul>
+                            <li><i class="fas fa-crop"></i> Images cropped by 10% to remove edge artifacts</li>
+                            <li><i class="fas fa-border-style"></i> 20-pixel border removed to eliminate discontinuities</li>
+                            <li><i class="fas fa-search"></i> Pyramid search range reduced to ±2 pixels at finer levels</li>
+                            <li><i class="fas fa-chart-line"></i> NCC metric with L2 distance for specific cases</li>
+                        </ul>
                     </div>
                 </div>
                 <div class="intro-visual">
@@ -143,6 +131,27 @@
                             <div class="channel result-channel">
                                 <div class="channel-label">Result</div>
                                 <div class="channel-box rainbow"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="methodology">
+                        <h3>Algorithm</h3>
+                        <div class="method-cards">
+                            <div class="method-card">
+                                <div class="method-icon">
+                                    <i class="fas fa-search"></i>
+                                </div>
+                                <h4>Single-Scale Search</h4>
+                                <p>For images under 1000px width</p>
+                                <div class="method-detail">±15 pixel search window</div>
+                            </div>
+                            <div class="method-card">
+                                <div class="method-icon">
+                                    <i class="fas fa-layer-group"></i>
+                                </div>
+                                <h4>Pyramid Alignment</h4>
+                                <p>For high-resolution images</p>
+                                <div class="method-detail">Multi-scale approach</div>
                             </div>
                         </div>
                     </div>
@@ -275,13 +284,6 @@
             </div>
             <div class="algorithm-info">
                 <div class="info-card">
-                    <i class="fas fa-layer-group"></i>
-                    <div>
-                        <h4>Multi-Scale</h4>
-                        <p>Image pyramid approach</p>
-                    </div>
-                </div>
-                <div class="info-card">
                     <i class="fas fa-clock"></i>
                     <div>
                         <h4>Processing Time</h4>
@@ -289,11 +291,19 @@
                     </div>
                 </div>
                 <div class="info-card">
-                    <i class="fas fa-expand-arrows-alt"></i>
+                    <i class="fas fa-search"></i>
                     <div>
-                        <h4>Max Displacement</h4>
-                        <p>Up to 178 pixels (largest offset found)</p>
-                        <small>Displacement = how far we moved red/green channels to align with blue</small>
+                        <h4>Searching Window</h4>
+                        <p>±15 pixels (coarsest level)</p>
+                        <small>±2 pixels at finer levels</small>
+                    </div>
+                </div>
+                <div class="info-card">
+                    <i class="fas fa-chart-line"></i>
+                    <div>
+                        <h4>Metric</h4>
+                        <p>Normalized Cross-Correlation</p>
+                        <small>Emir uses L2 distance</small>
                     </div>
                 </div>
             </div>
@@ -587,16 +597,7 @@
                         <p>I initially implemented an edge detection enhancement using <strong>Sobel filters</strong> from scikit-image to improve alignment accuracy by focusing on edge features rather than raw pixel intensities.</p>
                     </div>
                     <div class="text-block fade-in">
-                        <p>However, upon discovering that external image processing libraries were not permitted for the core implementation, I removed this code. The edge detection approach showed promise in preliminary testing, particularly for images with distinct structural features.</p>
-                    </div>
-                    <div class="features-list">
-                        <h4>Implementation Details</h4>
-                        <ul>
-                            <li><i class="fas fa-crop"></i> Images cropped by 10% to remove edge artifacts</li>
-                            <li><i class="fas fa-border-style"></i> 20-pixel border removed to eliminate discontinuities</li>
-                            <li><i class="fas fa-search"></i> Pyramid search range reduced to ±2 pixels at finer levels</li>
-                            <li><i class="fas fa-chart-line"></i> NCC metric with L2 distance for specific cases</li>
-                        </ul>
+                        <p>However, upon discovering that external image processing libraries were not permitted for the core implementation, I removed this code from the notebook file which I submitted. Luckily, I didn't delete the pictures processed with this method so I can still showcase the results here.</p>
                     </div>
                 </div>
                 <div class="improvement-visual">
@@ -625,7 +626,7 @@
                     </div>
                     <div class="improvement-note">
                         <i class="fas fa-info-circle"></i>
-                        <p>Edge-based alignment could potentially provide more robust results for challenging lighting conditions, but was not included in the final submission due to project constraints.</p>
+                        <p>To see other pictures processed with this method, feel free to refer  <a href="https://github.com/vaclisinc/2025_Computer_Vision/tree/main/project_1/src/img/improvement" target="_blank">here</a>.</p>
                     </div>
                 </div>
             </div>

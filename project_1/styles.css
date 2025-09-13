@@ -408,7 +408,6 @@ body {
     border-radius: 25px;
     color: var(--secondary-color);
     font-size: 0.9rem;
-    font-style: italic;
 }
 
 .hover-instruction i {
@@ -418,17 +417,18 @@ body {
 /* Introduction Section */
 .intro-section {
     background: var(--bg-light);
+    padding: 60px 0; /* Reduced from 100px */
 }
 
 .intro-content {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 60px;
-    align-items: center;
+    gap: 40px; /* Reduced from 60px */
+    align-items: start; /* Changed from center to start */
 }
 
 .text-block {
-    margin-bottom: 30px;
+    margin-bottom: 20px; /* Reduced from 30px */
     opacity: 0;
     transform: translateY(30px);
     transition: all 0.6s ease;
@@ -440,27 +440,27 @@ body {
 }
 
 .text-block p {
-    font-size: 1.1rem;
-    line-height: 1.8;
+    font-size: 0.95rem; /* Reduced from 1.1rem */
+    line-height: 1.6; /* Reduced from 1.8 */
     color: var(--text-dark);
 }
 
 .methodology h3 {
     font-family: 'Playfair Display', serif;
-    font-size: 1.8rem;
+    font-size: 1.5rem; /* Reduced from 1.8rem */
     color: var(--primary-color);
-    margin-bottom: 30px;
+    margin-bottom: 20px; /* Reduced from 30px */
 }
 
 .method-cards {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 20px;
+    gap: 15px; /* Reduced from 20px */
 }
 
 .method-card {
     background: white;
-    padding: 30px 20px;
+    padding: 20px 15px; /* Reduced from 30px 20px */
     border-radius: 15px;
     text-align: center;
     box-shadow: var(--shadow-light);
@@ -473,54 +473,61 @@ body {
 }
 
 .method-icon {
-    width: 60px;
-    height: 60px;
+    width: 50px; /* Reduced from 60px */
+    height: 50px; /* Reduced from 60px */
     background: var(--gradient-primary);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 auto 20px;
+    margin: 0 auto 15px; /* Reduced from 20px */
     color: white;
-    font-size: 1.5rem;
+    font-size: 1.3rem; /* Reduced from 1.5rem */
 }
 
 .method-card h4 {
-    font-size: 1.2rem;
+    font-size: 1rem; /* Reduced from 1.2rem */
     color: var(--primary-color);
-    margin-bottom: 10px;
+    margin-bottom: 8px; /* Reduced from 10px */
+}
+
+.method-card p {
+    font-size: 0.85rem; /* Added smaller font size */
+    margin-bottom: 5px;
 }
 
 .method-detail {
-    font-size: 0.9rem;
+    font-size: 0.8rem; /* Reduced from 0.9rem */
     color: var(--text-gray);
     font-style: italic;
 }
 
 .intro-visual {
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+    gap: 25px; /* Reduced from 40px */
 }
 
 .algorithm-demo {
     background: white;
-    padding: 40px;
-    border-radius: 20px;
+    padding: 25px; /* Reduced from 40px */
+    border-radius: 15px; /* Reduced from 20px */
     box-shadow: var(--shadow-medium);
     text-align: center;
 }
 
 .demo-title {
-    font-size: 1.2rem;
+    font-size: 1rem; /* Reduced from 1.2rem */
     font-weight: 600;
     color: var(--primary-color);
-    margin-bottom: 30px;
+    margin-bottom: 20px; /* Reduced from 30px */
 }
 
 .channels {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 12px; /* Reduced from 15px */
     flex-wrap: wrap;
     justify-content: center;
 }
@@ -530,16 +537,16 @@ body {
 }
 
 .channel-label {
-    font-size: 0.9rem;
+    font-size: 0.8rem; /* Reduced from 0.9rem */
     font-weight: 600;
-    margin-bottom: 10px;
+    margin-bottom: 8px; /* Reduced from 10px */
     color: var(--text-dark);
 }
 
 .channel-box {
-    width: 50px;
-    height: 50px;
-    border-radius: 8px;
+    width: 40px; /* Reduced from 50px */
+    height: 40px; /* Reduced from 50px */
+    border-radius: 6px; /* Reduced from 8px */
     border: 2px solid var(--border-color);
     position: relative;
     overflow: hidden;
@@ -766,13 +773,13 @@ body {
 }
 
 .features-list {
-    margin-top: 40px;
+    margin-top: 15px; /* Reduced from 20px */
 }
 
 .features-list h4 {
-    font-size: 1.2rem;
+    font-size: 1rem; /* Reduced from 1.2rem */
     color: var(--primary-color);
-    margin-bottom: 20px;
+    margin-bottom: 8px; /* Reduced from 12px */
 }
 
 .features-list ul {
@@ -782,18 +789,20 @@ body {
 .features-list li {
     display: flex;
     align-items: center;
-    gap: 15px;
-    margin-bottom: 15px;
-    padding: 15px;
-    background: var(--bg-light);
-    border-radius: 10px;
+    gap: 8px; /* Reduced from 10px */
+    margin-bottom: 6px; /* Reduced from 8px */
+    padding: 8px; /* Reduced from 10px */
+    background: white; /* Changed from var(--bg-light) */
+    border-radius: 6px; /* Reduced from 8px */
     transition: all 0.3s ease;
+    font-size: 0.8rem; /* Reduced from 0.85rem */
+    box-shadow: var(--shadow-light);
 }
 
 .features-list li:hover {
-    background: white;
-    box-shadow: var(--shadow-light);
-    transform: translateX(5px);
+    background: var(--bg-light); /* Swapped logic */
+    box-shadow: var(--shadow-medium); /* Enhanced shadow on hover */
+    transform: translateX(3px); /* Reduced movement */
 }
 
 .features-list i {
