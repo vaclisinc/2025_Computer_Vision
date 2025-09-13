@@ -516,6 +516,137 @@ document.addEventListener('DOMContentLoaded', function() {
         introSection.id = 'main-content';
     }
 
+    // Image Modal functionality
+    const imageModal = document.getElementById('image-modal');
+    const modalImage = document.getElementById('modal-image');
+    const modalTitle = document.getElementById('modal-title');
+    const modalDescription = document.getElementById('modal-description');
+    const modalClose = document.querySelector('.modal-close');
+    const modalOverlay = document.querySelector('.modal-overlay');
+    
+    // Function to open modal with image data
+    function openImageModal(imgSrc, title, description, greenOffset, redOffset, processingTime, metric) {
+        modalImage.src = imgSrc;
+        modalTitle.textContent = title || 'Image Preview';
+        modalDescription.textContent = description || '';
+        
+        // Show/hide and populate detail items
+        const greenDetail = document.getElementById('green-offset-detail');
+        const redDetail = document.getElementById('red-offset-detail');
+        const timeDetail = document.getElementById('time-detail');
+        const metricDetail = document.getElementById('metric-detail');
+        
+        if (greenOffset) {
+            document.getElementById('modal-green-offset').textContent = greenOffset;
+            greenDetail.style.display = 'block';
+        } else {
+            greenDetail.style.display = 'none';
+        }
+        
+        if (redOffset) {
+            document.getElementById('modal-red-offset').textContent = redOffset;
+            redDetail.style.display = 'block';
+        } else {
+            redDetail.style.display = 'none';
+        }
+        
+        if (processingTime) {
+            document.getElementById('modal-time').textContent = processingTime;
+            timeDetail.style.display = 'block';
+        } else {
+            timeDetail.style.display = 'none';
+        }
+        
+        if (metric && metric !== 'NCC') {
+            document.getElementById('modal-metric').textContent = metric;
+            metricDetail.style.display = 'block';
+        } else if (greenOffset || redOffset) { // Show NCC for result images
+            document.getElementById('modal-metric').textContent = 'NCC';
+            metricDetail.style.display = 'block';
+        } else {
+            metricDetail.style.display = 'none';
+        }
+        
+        imageModal.classList.add('active');
+        document.body.style.overflow = 'hidden'; // Prevent background scrolling
+    }
+    
+    // Function to close modal
+    function closeImageModal() {
+        imageModal.classList.remove('active');
+        document.body.style.overflow = 'auto';
+        // Clear src after animation completes
+        setTimeout(() => {
+            if (!imageModal.classList.contains('active')) {
+                modalImage.src = '';
+            }
+        }, 300);
+    }
+    
+    // Add click handlers to all clickable images
+    document.querySelectorAll('.result-card img, .improvement-img').forEach(img => {
+        img.addEventListener('click', function() {
+            const card = this.closest('.result-card') || this.closest('.improvement-section');
+            let title = 'Image Preview';
+            let description = '';
+            let greenOffset = '';
+            let redOffset = '';
+            let processingTime = '';
+            let metric = 'NCC';
+            
+            if (card) {
+                const titleElement = card.querySelector('h3') || card.querySelector('h4');
+                if (titleElement) {
+                    title = titleElement.textContent;
+                }
+                
+                const descElement = card.querySelector('p');
+                if (descElement) {
+                    description = descElement.textContent;
+                }
+                
+                // Extract offset and timing information from result cards
+                if (card.classList.contains('result-card')) {
+                    const metrics = card.querySelectorAll('.metric');
+                    metrics.forEach(item => {
+                        const label = item.querySelector('.label');
+                        const value = item.querySelector('.value');
+                        if (label && value) {
+                            const labelText = label.textContent.toLowerCase();
+                            if (labelText.includes('green')) {
+                                greenOffset = value.textContent;
+                            } else if (labelText.includes('red')) {
+                                redOffset = value.textContent;
+                            } else if (labelText.includes('time')) {
+                                processingTime = value.textContent;
+                            } else if (labelText.includes('metric')) {
+                                metric = value.textContent;
+                            }
+                        }
+                    });
+                }
+            }
+            
+            openImageModal(this.src, title, description, greenOffset, redOffset, processingTime, metric);
+        });
+    });
+    
+    // Close modal handlers
+    modalClose.addEventListener('click', closeImageModal);
+    modalOverlay.addEventListener('click', closeImageModal);
+    
+    // Close modal with Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && imageModal.classList.contains('active')) {
+            closeImageModal();
+        }
+    });
+    
+    // Prevent modal content from closing when clicked
+    document.querySelector('.modal-content').addEventListener('click', (e) => {
+        e.stopPropagation();
+    });
+
     console.log('🎨 CS 180 Project 1 website loaded successfully!');
     console.log('📸 Featuring', resultCards.length, 'beautiful historical photographs');
 });

@@ -168,7 +168,7 @@
                 <div class="section-subtitle">Single-Scale Alignment Algorithm</div>
                 <div class="hover-instruction">
                     <i class="fas fa-info-circle"></i>
-                    <span>Hover over images to see alignment offsets and processing times</span>
+                    <span>Hover over images to see alignment offsets and processing times. Click to enlarge!</span>
                 </div>
             </div>
             <div class="algorithm-info">
@@ -279,7 +279,7 @@
                 <div class="section-subtitle">Pyramid Alignment Algorithm</div>
                 <div class="hover-instruction">
                     <i class="fas fa-info-circle"></i>
-                    <span>Hover over images to see alignment offsets and processing times</span>
+                    <span>Hover over images to see alignment offsets and processing times. Click to enlarge!</span>
                 </div>
             </div>
             <div class="algorithm-info">
@@ -667,6 +667,39 @@
     <button id="scroll-top" class="scroll-top-btn">
         <i class="fas fa-chevron-up"></i>
     </button>
+
+    <!-- Image Modal -->
+    <div id="image-modal" class="image-modal">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <button class="modal-close" aria-label="Close modal">
+                <i class="fas fa-times"></i>
+            </button>
+            <img id="modal-image" src="" alt="">
+            <div class="modal-info">
+                <h3 id="modal-title"></h3>
+                <p id="modal-description"></p>
+                <div class="modal-details">
+                    <div class="modal-detail-item" id="green-offset-detail" style="display: none;">
+                        <div class="modal-detail-label">Green Offset</div>
+                        <div class="modal-detail-value" id="modal-green-offset"></div>
+                    </div>
+                    <div class="modal-detail-item" id="red-offset-detail" style="display: none;">
+                        <div class="modal-detail-label">Red Offset</div>
+                        <div class="modal-detail-value" id="modal-red-offset"></div>
+                    </div>
+                    <div class="modal-detail-item" id="time-detail" style="display: none;">
+                        <div class="modal-detail-label">Processing Time</div>
+                        <div class="modal-detail-value" id="modal-time"></div>
+                    </div>
+                    <div class="modal-detail-item" id="metric-detail" style="display: none;">
+                        <div class="modal-detail-label">Metric</div>
+                        <div class="modal-detail-value" id="modal-metric"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="script.js"></script>
 </body>
