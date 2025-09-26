@@ -117,10 +117,18 @@
 
             <!-- Box Filter Test -->
             <h3>Testing with 9×9 Box Filter</h3>
-            <p>To test our implementations, I used a 9×9 box filter created with:</p>
-            <div class="note-box">
-                <code>box_filter = np.ones((9, 9)) / (9 * 9)</code>
-                <p>This creates a uniform averaging filter where each pixel is replaced by the mean of its 9×9 neighborhood.</p>
+            <!-- <p>To test our implementations, I used a 9×9 box filter:</p> -->
+
+            <div class="code-block collapsible">
+                <h4 class="code-toggle" onclick="toggleCode(this)">
+                    <span class="toggle-icon">▶</span> Creating a Box Filter
+                </h4>
+                <div class="code-content" style="display: none;">
+                    <pre><code class="language-python">def create_box_filter(size):
+    return np.ones((size, size)) / (size * size)
+
+box_filter = create_box_filter(9)</code></pre>
+                </div>
             </div>
 
             <!-- Performance Results with Image Side by Side -->
@@ -170,10 +178,18 @@
             <!-- Finite Difference Operators -->
             <h3>Finite Difference Operators</h3>
             <p>Next, I tested with finite difference operators to detect edges:</p>
-            <div class="note-box">
-                <code>Dx = np.array([[-1, 0, 1]])          # Detects vertical edges
-Dy = np.array([[-1], [0], [1]])      # Detects horizontal edges</code>
-                <p>These operators compute the image gradient by approximating derivatives in x and y directions.</p>
+
+            <div class="code-block collapsible">
+                <h4 class="code-toggle" onclick="toggleCode(this)">
+                    <span class="toggle-icon">▶</span> Finite Difference Operators
+                </h4>
+                <div class="code-content" style="display: none;">
+                    <pre><code class="language-python"># Detects vertical edges (horizontal gradient)
+Dx = np.array([[-1, 0, 1]])
+
+# Detects horizontal edges (vertical gradient)
+Dy = np.array([[-1], [0], [1]])</code></pre>
+                </div>
             </div>
 
             <!-- Finite Difference Results with Table and Images -->
@@ -240,11 +256,28 @@ Dy = np.array([[-1], [0], [1]])      # Detects horizontal edges</code>
         <section id="part1-2">
             <h2>Part 1.2: Finite Difference Operator</h2>
 
-            <p>Edge detection via gradient magnitude and thresholding.</p>
+            <p>Edge detection via gradient magnitude and thresholding. After learning how to implement convolution from scratch in Part 1.1, we now use scipy for efficiency.</p>
 
             <!-- Initial Gradient -->
             <h3>Applying Finite Difference to Cameraman</h3>
-            <p>After learning how to implement convolution from scratch in Part 1.1, we now use scipy for efficiency. Here we apply the same Dx and Dy operators to the classic cameraman.png image and compute the gradient magnitude.</p>
+            <p> Here we apply the same Dx and Dy operators to the classic cameraman.png image and compute the gradient magnitude.</p>
+
+            <div class="code-block collapsible">
+                <h4 class="code-toggle" onclick="toggleCode(this)">
+                    <span class="toggle-icon">▶</span> Image Preprocessing
+                </h4>
+                <div class="code-content" style="display: none;">
+                    <pre><code class="language-python"># Important: The cameraman.png downloaded from the project page
+# is not a 2D grayscale image, so we need to convert it
+
+if len(cameraman.shape) == 3:
+    if cameraman.shape[2] == 4:  # RGBA image
+        cameraman = sk.color.rgba2rgb(cameraman)
+    cameraman = sk.color.rgb2gray(cameraman)
+
+cameraman = cameraman.astype(np.float64)</code></pre>
+                </div>
+            </div>
 
             <div class="image-grid">
                 <figure>
@@ -256,24 +289,58 @@ Dy = np.array([[-1], [0], [1]])      # Detects horizontal edges</code>
             <p>Notice that the contrast is quite poor - the edges appear faint rather than bright white. To address this issue, we need to normalize the gradient magnitude to the range [0,1] and find an optimal threshold to filter out noise -> this is called <b>binary edge detection.</b></p>
 
             <!-- Normalization -->
-            <div class="note-box">
-                <code>normalized = gradient_magnitude / np.max(gradient_magnitude)</code>
-                <p>Normalization maps values to [0,1] for better visualization and thresholding</p>
+            <div class="code-block collapsible">
+                <h4 class="code-toggle" onclick="toggleCode(this)">
+                    <span class="toggle-icon">▶</span> Gradient Normalization
+                </h4>
+                <div class="code-content" style="display: none;">
+                    <pre><code class="language-python"># Normalize gradient magnitude to [0, 1] range
+normalized = gradient_magnitude / np.max(gradient_magnitude)</code></pre>
+                </div>
             </div>
 
             <!-- Threshold Search -->
             <h3>Finding Optimal Threshold</h3>
 
-            <div class="image-grid">
-                <figure>
-                    <img src="src/img/part1_2_threshold_comparison_0.01_to_0.25.png" alt="Coarse Search" class="clickable">
-                    <figcaption>Coarse search: 0.01 (too noisy) → 0.25 (too sparse)</figcaption>
-                </figure>
-                <figure>
-                    <img src="src/img/part1_2_threshold_comparison_0.19_to_0.23.png" alt="Fine Search" class="clickable">
-                    <figcaption>Fine-tuning: 0.19-0.23, optimal at 0.21</figcaption>
-                </figure>
+            <div class="code-block collapsible">
+                <h4 class="code-toggle" onclick="toggleCode(this)">
+                    <span class="toggle-icon">▶</span> Coarse Search
+                </h4>
+                <div class="code-content" style="display: none;">
+                    <pre><code class="language-python"># Coarse search to find approximate optimal threshold
+thresholds = [0.01, 0.05, 0.10, 0.15, 0.20, 0.25]
+binary_edges = []
+
+for threshold in thresholds:
+    binary_edge = (normalized_gradient_cameraman > threshold).astype(np.float64)
+    binary_edges.append(binary_edge)</code></pre>
+                </div>
             </div>
+
+            <figure>
+                <img src="src/img/part1_2_threshold_comparison_0.01_to_0.25.png" alt="Coarse Search" class="clickable">
+                <figcaption>Coarse search: 0.01 (too noisy) → 0.25 (too sparse)</figcaption>
+            </figure>
+
+            <div class="code-block collapsible">
+                <h4 class="code-toggle" onclick="toggleCode(this)">
+                    <span class="toggle-icon">▶</span> Fine-tuned Search
+                </h4>
+                <div class="code-content" style="display: none;">
+                    <pre><code class="language-python"># Fine-tuned search around the promising range
+thresholds = [0.19, 0.20, 0.21, 0.22, 0.23]
+binary_edges = []
+
+for threshold in thresholds:
+    binary_edge = (normalized_gradient_cameraman > threshold).astype(np.float64)
+    binary_edges.append(binary_edge)</code></pre>
+                </div>
+            </div>
+
+            <figure>
+                <img src="src/img/part1_2_threshold_comparison_0.19_to_0.23.png" alt="Fine Search" class="clickable">
+                <figcaption>Fine-tuning: 0.19-0.23, optimal at 0.21</figcaption>
+            </figure>
 
             <!-- Final Result with Trade-off -->
             <div class="highlight-result-with-tradeoff">
@@ -281,24 +348,9 @@ Dy = np.array([[-1], [0], [1]])      # Detects horizontal edges</code>
                 <div class="right-panel">
                     <div class="result-info">
                         <h4>Optimal: T = 0.21</h4>
-                        <p>Best balance between noise suppression and edge preservation</p>
-                    </div>
-                    <div class="tradeoff-items">
-                        <div class="tradeoff-item">
-                            <span class="icon">📊</span>
-                            <strong>Low Threshold</strong>
-                            <p>All edges but noisy</p>
-                        </div>
-                        <div class="tradeoff-item optimal">
-                            <span class="icon">✨</span>
-                            <strong>T = 0.21</strong>
-                            <p>Clean & complete</p>
-                        </div>
-                        <div class="tradeoff-item">
-                            <span class="icon">🔍</span>
-                            <strong>High Threshold</strong>
-                            <p>Clean but incomplete</p>
-                        </div>
+                        <p>It's a difficult trade-off: if the threshold is higher, it reduces noise but also blurs the real edges of the cameraman.</p>
+                        <p>Since no matter how large the threshold is, the bridge remains as high-frequency as the cameraman, it's impossible to isolate only the cameraman.</p>
+                        <p>Hence, this setting is already the best balance between noise suppression and edge preservation.</p>
                     </div>
                 </div>
             </div>
@@ -307,7 +359,168 @@ Dy = np.array([[-1], [0], [1]])      # Detects horizontal edges</code>
         <!-- Part 1.3: DoG Filters -->
         <section id="part1-3">
             <h2>Part 1.3: Derivative of Gaussian (DoG) Filter</h2>
-            <p>Coming soon...</p>
+
+            <p>The edges from Part 1.2 appear noisy. We can improve edge detection by first smoothing the image with a Gaussian filter before computing gradients.</p>
+                    <div class="code-block collapsible">
+                        <h4 class="code-toggle" onclick="toggleCode(this)">
+                            <span class="toggle-icon">▶</span>  Gaussian Kernel Creation
+                        </h4>
+                        <div class="code-content" style="display: none;">
+                            <pre><code class="language-python"># Since a 2D Gaussian is separable:
+# G(x,y) = e^(-(x²+y²)/2σ²) = e^(-x²/2σ²) · e^(-y²/2σ²)
+#
+# So the 2D kernel is just the outer product of the 1D Gaussian with itself.
+
+def create_gaussian_kernel(ksize, sigma):
+    gaussian_1d = cv2.getGaussianKernel(ksize, sigma)  # Get 1D Gaussian
+    gaussian_2d = gaussian_1d @ gaussian_1d.T           # Outer product
+    return gaussian_2d</code></pre>
+                        </div>
+                    </div>
+            <!-- Two-Step Approach -->
+            <div style="margin: 30px 0;">
+                <h3>Two-Step Approach: Blur Then Gradient</h3>
+                    <p>First, we apply a Gaussian filter to smooth the image, then compute gradients:</p>
+
+                    <div class="code-block collapsible">
+                        <h4 class="code-toggle" onclick="toggleCode(this)">
+                            <span class="toggle-icon">▶</span> Two-Step Implementation
+                        </h4>
+                        <div class="code-content" style="display: none;">
+                            <pre><code class="language-python"># Step 1: Apply Gaussian blur
+gaussian_kernel = create_gaussian_kernel(7, 1)
+blurred_cameraman = scipy.signal.convolve2d(
+    cameraman, gaussian_kernel,
+    mode='same', boundary='symm'
+)
+
+# Step 2: Apply derivative operators
+Dx_blurred = scipy.signal.convolve2d(
+    blurred_cameraman, Dx,
+    mode='same', boundary='symm'
+)
+Dy_blurred = scipy.signal.convolve2d(
+    blurred_cameraman, Dy,
+    mode='same', boundary='symm'
+)
+
+# Compute gradient magnitude
+gradient_magnitude_blurred = np.sqrt(Dx_blurred**2 + Dy_blurred**2)</code></pre>
+                        </div>
+                    </div>
+<div class="observation-box">
+                        <h4>Why Choose kernel_size=7, sigma=1?</h4>
+                        <p>A common choice is to choose <strong>k = 6σ + 1</strong></p>
+                        <ul>
+                            <li>Gaussian kernel contains most (>99%) of the useful weights</li>
+                            <li>Kernel size too tiny: cut off the Gaussian</li>
+                            <li>Kernel size too large: waste compute since outside the ±3σ weights are very close to 0</li>
+                        </ul>
+                    </div>
+                <figure style="margin-top: 20px;">
+                    <img src="src/img/part1_3_two_step_partial_derivatives.png" alt="Two-Step" class="clickable" style="width: 100%;">
+                    <figcaption>Two-step: Gaussian smoothing → Gradient</figcaption>
+                </figure>
+            </div>
+
+            <!-- One-Step Approach -->
+            <div style="margin: 30px 0;">
+                <h3>One-Step Approach: DoG Filters</h3>
+                    <p>Due to convolution associativity, we can combine the Gaussian and derivative into a single DoG filter:</p>
+
+                <div class="code-block collapsible">
+                    <h4 class="code-toggle" onclick="toggleCode(this)">
+                        <span class="toggle-icon">▶</span> DoG Filter Implementation
+                    </h4>
+                    <div class="code-content" style="display: none;">
+                        <pre><code class="language-python"># By convolution associativity:
+# Instead of: (G * I) * D
+# We can do: I * (G * D)
+
+# Create DoG filters by convolving Gaussian with derivatives
+dog_x = scipy.signal.convolve2d(gaussian_kernel, Dx, mode='same')
+dog_y = scipy.signal.convolve2d(gaussian_kernel, Dy, mode='same')
+
+# Then apply directly to the image
+dx_one_step = scipy.signal.convolve2d(image, dog_x, mode='same')
+dy_one_step = scipy.signal.convolve2d(image, dog_y, mode='same')
+
+# This is mathematically equivalent but computationally more efficient</code></pre>
+                    </div>
+                </div>
+
+                <figure style="margin-top: 20px;">
+                    <img src="src/img/part1_3_one_step_partial_derivatives.png" alt="One-Step" class="clickable" style="width: 100%;">
+                    <figcaption>One-step DoG approach (identical results)</figcaption>
+                </figure>
+            </div>
+
+            <h3>Comparing Edge Detection: With vs Without Blur</h3>
+            <div class="image-grid">
+                <figure>
+                    <img src="src/img/part1_3_no_blur_partial_derivatives.png" alt="No Blur" class="clickable">
+                    <figcaption>Without Gaussian smoothing (noisy)</figcaption>
+                </figure>
+                <figure>
+                    <img src="src/img/part1_3_dog_filters_visualization.png" alt="DoG Filters" class="clickable">
+                    <figcaption>DoG filter kernels visualization</figcaption>
+                </figure>
+            </div>
+
+            <div class="observation-box">
+                <h4>Verification</h4>
+                <p>Two-step vs One-step maximum difference: < 10⁻¹⁵ (floating point precision)</p>
+                <p>This confirms that convolution associativity holds: (G * I) * D = I * (G * D)</p>
+            </div>
+
+            <h3>Optimal Threshold with DoG</h3>
+            <p>With smoothed gradients, we need a different threshold for edge detection:</p>
+
+            <div class="image-grid">
+                <figure>
+                    <img src="src/img/part1_3_threshold_comparison_0.01_to_0.50.png" alt="DoG Coarse Search" class="clickable">
+                    <figcaption>Coarse search: 0.01 → 0.50</figcaption>
+                </figure>
+                <figure>
+                    <img src="src/img/part1_3_threshold_comparison_0.35_to_0.5.png" alt="DoG Fine Search" class="clickable">
+                    <figcaption>Fine-tuning: 0.35 → 0.50</figcaption>
+                </figure>
+            </div>
+
+            <h3>Final Comparison</h3>
+            <div class="highlight-result-with-tradeoff">
+                <img src="src/img/part1_3_edge_comparison_threshold_0.41.png" alt="Comparison" class="clickable">
+                <div class="right-panel">
+                    <div class="result-info">
+                        <h4>DoG Advantage</h4>
+                        <p>Cleaner edges with less noise</p>
+                    </div>
+                    <div class="tradeoff-items">
+                        <div class="tradeoff-item">
+                            <span class="icon">🎯</span>
+                            <strong>Without Blur</strong>
+                            <p>T = 0.21, noisy edges</p>
+                        </div>
+                        <div class="tradeoff-item optimal">
+                            <span class="icon">✨</span>
+                            <strong>With DoG</strong>
+                            <p>T = 0.41, clean edges</p>
+                        </div>
+                        <div class="tradeoff-item">
+                            <span class="icon">📈</span>
+                            <strong>Higher Threshold</strong>
+                            <p>Less noise sensitivity</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="observation-box">
+                <h4>Key Findings</h4>
+                <p>• DoG allows using higher thresholds (0.41 vs 0.21) while preserving important edges</p>
+                <p>• Gaussian smoothing effectively removes high-frequency noise without losing edge information</p>
+                <p>• One-step DoG is computationally more efficient than two-step approach</p>
+            </div>
         </section>
 
         <!-- Part 2.1: Sharpening -->
