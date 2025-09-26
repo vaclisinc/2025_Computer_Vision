@@ -484,6 +484,24 @@ gradient_magnitude_DoG_cameraman = np.sqrt(DoG_x_cameraman ** 2 + DoG_y_camerama
                 </div>
             </div>
 
+            <div class="implementation-note" style="margin-top: 2rem;">
+                <h4>⚠️ Implementation Detail: Convolution Padding</h4>
+                <p>When implementing convolution, using <code>boundary='fill'</code> will produce incorrect results, but <code>boundary='symm'</code> gives the correct output. Here's why:</p>
+                <p><strong>Why <code>boundary='fill'</code> fails:</strong></p>
+                <ul>
+                    <li>Our kernel size is relatively small (e.g., DoG filter visualization shows edges are still gray, not zero)</li>
+                    <li>When boundary values are treated as 0 (black), a <strong>"dark edge effect"</strong> appears at borders</li>
+                    <li>The convolution kernel near edges mixes in these 0 values → causes brightness reduction and obvious dark frames</li>
+                </ul>
+                <p><strong>Why <code>boundary='symm'</code> (mirror padding) works:</strong></p>
+                <ul>
+                    <li>Boundary values are <strong>mirrored</strong> symmetrically, like looking in a mirror</li>
+                    <li>The kernel at edges can still get <strong>reasonable values</strong> instead of encountering zeros</li>
+                    <li>The effect is more natural, without dark edges or sudden brightness changes</li>
+                    <li>Most image processing libraries (OpenCV, Pillow, MATLAB) use mirror/reflection padding by default for sharpening and blurring operations</li>
+                </ul>
+            </div>
+
             <h3 style="border-top: 1px solid #e5e5e5; padding-top: 2rem; margin-top: 3rem;">1.3.3 Comparing Edge Detection: With vs Without Blur</h3>
             <p>We can find out that with DoG Filter, the edge is clearer since it <strong>removes high-frequency noise through Gaussian</strong> smoothing while preserving the main edge structures.</p>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin: 2rem 0;">

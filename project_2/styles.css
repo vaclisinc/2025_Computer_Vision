@@ -465,6 +465,56 @@ figcaption {
     margin-bottom: 0;
 }
 
+/* Implementation Note Box */
+.implementation-note {
+    background: #dbeafe;
+    border: 1px solid #93c5fd;
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 2rem 0;
+}
+
+.implementation-note h4 {
+    color: #1e3a8a;
+    margin-bottom: 1rem;
+    font-size: 1rem;
+}
+
+.implementation-note p {
+    color: #1e40af;
+    margin-bottom: 0.5rem;
+}
+
+.implementation-note p:last-child {
+    margin-bottom: 0;
+}
+
+.implementation-note ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.implementation-note li {
+    color: #1e40af;
+    margin-bottom: 0.75rem;
+    line-height: 1.7;
+    padding-left: 1.5rem;
+    position: relative;
+}
+
+.implementation-note li:before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: #3b82f6;
+    font-weight: bold;
+}
+
+.implementation-note li:last-child {
+    margin-bottom: 0;
+}
+
 /* Final result container for Part 1.2 */
 .final-result-container {
     display: grid;
