@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project 2: Fun with Filters and Frequencies</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="header-content">
+            <div class="header-info">
+                <a href="../index.html" class="back-link">← Back to Projects</a>
+                <h1>Fun with Filters and Frequencies</h1>
+                <p class="subtitle">CS 180 Project 2 · Song-Ze Yu</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="toc">
+        <a href="#part1-1">1.1 Convolutions</a>
+        <a href="#part1-2">1.2 Edge Detection</a>
+        <a href="#part1-3">1.3 DoG Filters</a>
+        <a href="#part2-1">2.1 Sharpening</a>
+        <a href="#part2-2">2.2 Hybrid Images</a>
+        <a href="#part2-3">2.3 Stacks</a>
+        <a href="#part2-4">2.4 Blending</a>
+    </nav>
+
+    <main>
+        <!-- Part 1.1: Convolutions -->
+        <section id="part1-1">
+            <h2>Part 1.1: Convolutions from Scratch</h2>
+
+            <p>I implemented 2D convolution three ways to understand performance trade-offs:</p>
+
+            <!-- Code Implementation -->
+            <h3>Three Convolution Implementations</h3>
+
+            <div class="code-block collapsible">
+                <h4 class="code-toggle" onclick="toggleCode(this)">
+                    <span class="toggle-icon">▶</span> Implementation 1: Naive (4 loops)
+                </h4>
+                <div class="code-content" style="display: none;">
+                    <pre><code class="language-python">def convolve_naive(image, kernel):
+    h, w = image.shape
+    kh, kw = kernel.shape
+
+    # Padding
+    pad_h = kh // 2
+    pad_w = kw // 2
+    padded = np.pad(image,
+        ((pad_h, pad_h), (pad_w, pad_w)),
+        mode='constant')
+    output = np.zeros((h, w))
+
+    for i in range(h):
+        for j in range(w):
+            for ki in range(kh):
+                for kj in range(kw):
+                    # Flip kernel
+                    fi = kh - 1 - ki
+                    fj = kw - 1 - kj
+                    output[i,j] += padded[i+ki, j+kj] * kernel[fi, fj]
+    return output</code></pre>
+                </div>
+            </div>
+
+            <div class="code-block collapsible">
+                <h4 class="code-toggle" onclick="toggleCode(this)">
+                    <span class="toggle-icon">▶</span> Implementation 2: Optimized (2 loops)
+                </h4>
+                <div class="code-content" style="display: none;">
+                    <pre><code class="language-python">def convolve_optimized(image, kernel):
+    h, w = image.shape
+    kh, kw = kernel.shape
+
+    # Padding
+    pad_h = kh // 2
+    pad_w = kw // 2
+    padded = np.pad(image,
+        ((pad_h, pad_h), (pad_w, pad_w)),
+        mode='constant')
+
+    output = np.zeros((h, w))
+
+    # Pre-flip kernel
+    flipped = np.flip(np.flip(kernel, 0), 1)
+
+    for i in range(h):
+        for j in range(w):
+            region = padded[i:i+kh, j:j+kw]
+            output[i,j] = np.sum(region * flipped)
+
+    return output</code></pre>
+                </div>
+            </div>
+
+            <div class="code-block collapsible">
+                <h4 class="code-toggle" onclick="toggleCode(this)">
+                    <span class="toggle-icon">▶</span> Implementation 3: Using SciPy
+                </h4>
+                <div class="code-content" style="display: none;">
+                    <pre><code class="language-python">def convolve_scipy(image, kernel):
+    output = scipy.signal.convolve2d(
+        image, kernel,
+        mode='same',
+        boundary='fill',
+        fillvalue=0)
+    return output</code></pre>
+                </div>
+            </div>
+
+            <!-- Box Filter Test -->
+            <h3>Testing with 9×9 Box Filter</h3>
+            <p>To test our implementations, I used a 9×9 box filter created with:</p>
+            <div class="note-box">
+                <code>box_filter = np.ones((9, 9)) / (9 * 9)</code>
+                <p>This creates a uniform averaging filter where each pixel is replaced by the mean of its 9×9 neighborhood.</p>
+            </div>
+
+            <!-- Performance Results with Image Side by Side -->
+            <div class="results-with-image">
+                <div class="left-content">
+                    <div class="performance-table">
+                        <table>
+                            <tr>
+                                <th>Implementation</th>
+                                <th>9×9 Box Filter</th>
+                                <th>Speedup</th>
+                                <th>Max Error</th>
+                            </tr>
+                            <tr>
+                                <td>Naive</td>
+                                <td class="time-slow">32.65s</td>
+                                <td>1×</td>
+                                <td rowspan="3">< 10⁻¹⁵</td>
+                            </tr>
+                            <tr>
+                                <td>Optimized</td>
+                                <td class="time-med">3.03s</td>
+                                <td>10.8×</td>
+                            </tr>
+                            <tr>
+                                <td>Scipy</td>
+                                <td class="time-fast">0.11s</td>
+                                <td>295×</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="accuracy-details">
+                        <h4>Accuracy Verification</h4>
+                        <p><strong>Naive vs Scipy max difference:</strong> 2.44 × 10⁻¹⁵</p>
+                        <p><strong>Optimized vs Scipy max difference:</strong> 7.77 × 10⁻¹⁶</p>
+                        <!-- <p class="note">Differences are within floating-point precision, confirming all implementations are correct.</p> -->
+                    </div>
+                </div>
+                <div class="right-content">
+                    <figure>
+                        <img src="src/img/part1_1_box_filter_results.png" alt="Box Filter Results" class="clickable">
+                        <figcaption>Original (top left) → Blurred with 9×9 box filter (other three show identical results from all implementations)</figcaption>
+                    </figure>
+                </div>
+            </div>
+
+            <!-- Finite Difference Operators -->
+            <h3>Finite Difference Operators</h3>
+            <p>Next, I tested with finite difference operators to detect edges:</p>
+            <div class="note-box">
+                <code>Dx = np.array([[-1, 0, 1]])          # Detects vertical edges
+Dy = np.array([[-1], [0], [1]])      # Detects horizontal edges</code>
+                <p>These operators compute the image gradient by approximating derivatives in x and y directions.</p>
+            </div>
+
+            <!-- Finite Difference Results with Table and Images -->
+            <div class="results-with-image">
+                <div class="left-content">
+                    <div class="performance-table">
+                        <table>
+                            <tr>
+                                <th>Implementation</th>
+                                <th>Dx Runtime</th>
+                                <th>Dy Runtime</th>
+                            </tr>
+                            <tr>
+                                <td>Naive</td>
+                                <td class="time-med">1.47s</td>
+                                <td class="time-med">1.60s</td>
+                            </tr>
+                            <tr>
+                                <td>Optimized</td>
+                                <td class="time-slow">2.89s</td>
+                                <td class="time-slow">2.92s</td>
+                            </tr>
+                            <tr>
+                                <td>Scipy</td>
+                                <td class="time-fast">0.01s</td>
+                                <td class="time-fast">0.02s</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="accuracy-details">
+                        <h4>Key Observations</h4>
+                        <p>• Small kernels (3×3) show naive faster than optimized due to NumPy overhead.</p>
+                        <p>• All implementations produce identical results.</p>
+                        <p>• <strong>Dx, Dy outputs:</strong> Can be negative or positive, so black = negative, gray = zero, white = positive.</p>
+                        <p>• <strong>Gradient Magnitude:</strong> Always positive, so black = 0 (no edge), white = strong edge.</p>
+                    </div>
+                </div>
+                <div class="right-content">
+                    <div class="stacked-images">
+                        <figure>
+                            <img src="src/img/part1_1_Dx_filter_results.png" alt="Dx Filter" class="clickable">
+                            <figcaption><strong>Dx Result:</strong> Detects vertical edges.</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="src/img/part1_1_Dy_filter_results.png" alt="Dy Filter" class="clickable">
+                            <figcaption><strong>Dy Result:</strong> Detects horizontal edges.</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="src/img/part1_1_Dx_Dy_Gradient Magnitude_results.png" alt="Gradient Magnitude" class="clickable">
+                            <figcaption><strong>Gradient Magnitude:</strong> √(Dx² + Dy²) </figcaption>
+                        </figure>
+                    </div>
+                </div>
+            </div>
+<!-- 
+            <div class="observation-box">
+                <h4>Key Observation: Color Representation</h4>
+                <p><strong>Dx and Dy outputs:</strong> Can be negative or positive, so zero appears as gray (middle value), with black showing negative gradients and white showing positive gradients.</p>
+                <p><strong>Gradient Magnitude:</strong> Always positive (due to squaring), so zero appears as pure black, with brighter values indicating stronger edges regardless of direction.</p>
+            </div> -->
+        </section>
+
+        <!-- Part 1.2: Edge Detection -->
+        <section id="part1-2">
+            <h2>Part 1.2: Finite Difference Operator</h2>
+
+            <p>Edge detection via gradient magnitude and thresholding.</p>
+
+            <!-- Initial Gradient -->
+            <h3>Applying Finite Difference to Cameraman</h3>
+            <p>After learning how to implement convolution from scratch in Part 1.1, we now use scipy for efficiency. Here we apply the same Dx and Dy operators to the classic cameraman.png image and compute the gradient magnitude.</p>
+
+            <div class="image-grid">
+                <figure>
+                    <img src="src/img/part1_2_partial_derivatives.png" alt="Partial Derivatives" class="clickable">
+                    <!-- <figcaption>Partial Derivative in X (Dx), Partial Derivative in Y (Dy), Gradient Magnitude</figcaption> -->
+                </figure>
+            </div>
+
+            <p>Notice that the contrast is quite poor - the edges appear faint rather than bright white. To address this issue, we need to normalize the gradient magnitude to the range [0,1] and find an optimal threshold to filter out noise -> this is called <b>binary edge detection.</b></p>
+
+            <!-- Normalization -->
+            <div class="note-box">
+                <code>normalized = gradient_magnitude / np.max(gradient_magnitude)</code>
+                <p>Normalization maps values to [0,1] for better visualization and thresholding</p>
+            </div>
+
+            <!-- Threshold Search -->
+            <h3>Finding Optimal Threshold</h3>
+
+            <div class="image-grid">
+                <figure>
+                    <img src="src/img/part1_2_threshold_comparison_0.01_to_0.25.png" alt="Coarse Search" class="clickable">
+                    <figcaption>Coarse search: 0.01 (too noisy) → 0.25 (too sparse)</figcaption>
+                </figure>
+                <figure>
+                    <img src="src/img/part1_2_threshold_comparison_0.19_to_0.23.png" alt="Fine Search" class="clickable">
+                    <figcaption>Fine-tuning: 0.19-0.23, optimal at 0.21</figcaption>
+                </figure>
+            </div>
+
+            <!-- Final Result with Trade-off -->
+            <div class="highlight-result-with-tradeoff">
+                <img src="src/img/part1_2_edge_threshold_0.21_final.png" alt="Final Edge Detection" class="clickable">
+                <div class="right-panel">
+                    <div class="result-info">
+                        <h4>Optimal: T = 0.21</h4>
+                        <p>Best balance between noise suppression and edge preservation</p>
+                    </div>
+                    <div class="tradeoff-items">
+                        <div class="tradeoff-item">
+                            <span class="icon">📊</span>
+                            <strong>Low Threshold</strong>
+                            <p>All edges but noisy</p>
+                        </div>
+                        <div class="tradeoff-item optimal">
+                            <span class="icon">✨</span>
+                            <strong>T = 0.21</strong>
+                            <p>Clean & complete</p>
+                        </div>
+                        <div class="tradeoff-item">
+                            <span class="icon">🔍</span>
+                            <strong>High Threshold</strong>
+                            <p>Clean but incomplete</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Part 1.3: DoG Filters -->
+        <section id="part1-3">
+            <h2>Part 1.3: Derivative of Gaussian (DoG) Filter</h2>
+            <p>Coming soon...</p>
+        </section>
+
+        <!-- Part 2.1: Sharpening -->
+        <section id="part2-1">
+            <h2>Part 2.1: Image Sharpening</h2>
+            <p>Coming soon...</p>
+        </section>
+
+        <!-- Part 2.2: Hybrid Images -->
+        <section id="part2-2">
+            <h2>Part 2.2: Hybrid Images</h2>
+            <p>Coming soon...</p>
+        </section>
+
+        <!-- Part 2.3: Stacks -->
+        <section id="part2-3">
+            <h2>Part 2.3: Gaussian and Laplacian Stacks</h2>
+            <p>Coming soon...</p>
+        </section>
+
+        <!-- Part 2.4: Blending -->
+        <section id="part2-4">
+            <h2>Part 2.4: Multi-resolution Blending</h2>
+            <p>Coming soon...</p>
+        </section>
+    </main>
+
+    <!-- Lightbox -->
+    <div id="lightbox" class="lightbox">
+        <img id="lightbox-img">
+        <span class="close">&times;</span>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script>
+        // Toggle code blocks
+        function toggleCode(element) {
+            const codeContent = element.nextElementSibling;
+            const toggleIcon = element.querySelector('.toggle-icon');
+
+            if (codeContent.style.display === 'none') {
+                codeContent.style.display = 'block';
+                toggleIcon.textContent = '▼';
+            } else {
+                codeContent.style.display = 'none';
+                toggleIcon.textContent = '▶';
+            }
+        }
+
+        // Image lightbox
+        document.querySelectorAll('.clickable').forEach(img => {
+            img.addEventListener('click', function() {
+                const lightbox = document.getElementById('lightbox');
+                const lightboxImg = document.getElementById('lightbox-img');
+                lightbox.style.display = 'flex';
+                lightboxImg.src = this.src;
+            });
+        });
+
+        document.querySelector('.lightbox .close').addEventListener('click', function() {
+            document.getElementById('lightbox').style.display = 'none';
+        });
+
+        document.getElementById('lightbox').addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.style.display = 'none';
+            }
+        });
+
+        // Smooth scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+</body>
+</html>
