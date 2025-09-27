@@ -895,33 +895,42 @@ gradient_magnitude_DoG_cameraman = np.sqrt(DoG_x_cameraman ** 2 + DoG_y_camerama
                     <span class="toggle-icon">▶</span> Gaussian Stack Implementation
                 </h4>
                 <div class="code-content" style="display: none;">
-                    <pre><code class="language-python">def build_gaussian_stack(image, levels=5, sigma_base=1):
+                    <pre><code class="language-python">def build_gaussian_stack(image, levels=5, sigma_base=1, max_kernel_size=51):
     stack = [image]
-    current = image.copy()
 
     for i in range(1, levels):
-        # Progressively increase sigma
         sigma = sigma_base * (2 ** i)
         kernel_size = int(2 * np.ceil(3 * sigma) + 1)
+        kernel_size = min(kernel_size, max_kernel_size)
         kernel = create_gaussian_kernel(kernel_size, sigma)
 
-        # Apply Gaussian blur (handle RGB channels)
-        if len(current.shape) == 3:
-            blurred = np.zeros_like(current)
+        # IMPORTANT: Always blur from the ORIGINAL image, not the previous level!
+        if len(image.shape) == 3:
+            blurred = np.zeros_like(image)
             for c in range(3):
                 blurred[:, :, c] = scipy.signal.convolve2d(
-                    current[:, :, c], kernel, mode='same', boundary='symm'
+                    image[:, :, c], kernel, mode='same', boundary='symm'
                 )
         else:
             blurred = scipy.signal.convolve2d(
-                current, kernel, mode='same', boundary='symm'
+                image, kernel, mode='same', boundary='symm'
             )
 
         stack.append(blurred)
-        current = blurred
 
     return stack</code></pre>
                 </div>
+            </div>
+
+            <div class="implementation-note" style="margin-top: 1rem;">
+                <h4>[Common Pitfall] Blur the <em>previous level</em> repeatedly</h4> 
+                <ul>
+                    <li>Level 1: Blur original with σ=2</li>
+                    <li>Level 2: Blur Level 1 with σ=4 → cumulative blur exceeds σ=4</li>
+                    <li>Level 3: Blur Level 2 with σ=8 → cumulative blur far exceeds σ=8</li>
+                    <li>Result: <strong>Compounding blur</strong> that grows much faster than exponential</li>
+                </ul>
+                <!-- <p><strong>Note:</strong> We also cap <code>kernel_size</code> at 51 to prevent excessively large kernels at high σ values.</p> -->
             </div>
 
             <h3>2.3.2 Building Laplacian Stack</h3>
@@ -968,11 +977,9 @@ gradient_magnitude_DoG_cameraman = np.sqrt(DoG_x_cameraman ** 2 + DoG_y_camerama
             <div class="observation-box">
                 <h4>Observations</h4>
                 <ul>
-                    <li><strong>Gaussian Stack:</strong> Each level becomes progressively more blurred while maintaining full resolution</li>
-                    <li><strong>Laplacian Stack:</strong> Each layer (except the last) captures a specific frequency band, appearing mostly gray with edges highlighted</li>
-                    <li><strong>Last Laplacian layer:</strong> Contains the low-frequency content (blurry version), identical to the last Gaussian layer</li>
-                    <li>These stacks will be used in Part 2.4 for seamless multi-resolution blending</li>
-                </ul>
+                    <li><strong>Gaussian Stack:</strong> Each level becomes more blurred while maintaining full resolution</li>
+                    <li><strong>Laplacian Stack:</strong> Each layer (except the last) <strong>captures a specific frequency band</strong>, appearing mostly gray with edges highlighted</li>
+                    <li><strong>Last Laplacian layer:</strong> Contains the low-frequency content (blurry version), identical to the last Gaussian layer</li>                </ul>
             </div>
 
         </section>
@@ -980,7 +987,203 @@ gradient_magnitude_DoG_cameraman = np.sqrt(DoG_x_cameraman ** 2 + DoG_y_camerama
         <!-- Part 2.4: Blending -->
         <section id="part2-4">
             <h2>Part 2.4: Multi-resolution Blending</h2>
-            <p>Coming soon...</p>
+
+            <p>Multi-resolution blending uses Laplacian stacks to seamlessly combine images at different frequency bands, avoiding harsh transitions. By blending each frequency level separately with a smoothly transitioning mask, we achieve natural-looking composites.</p>
+
+            <h3>2.4.1 Image Selection</h3>
+            <p>I selected three pairs of images to blend using different mask shapes:</p>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; margin: 2rem 0;">
+                <!-- Apple + Orange -->
+                <div class="observation-box">
+                    <h4 style="text-align: center;">Apple + Orange</h4>
+                    <p>The classic oraple from project spec.</p>
+                    <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem;">
+                        <figure style="margin: 0; text-align: center; margin-top: 4rem;">
+                            <img src="src/img/part2_4_apple.jpeg" alt="Apple" class="clickable" style="width: 60%; border-radius: 4px;">
+                            <figcaption style="font-size: 0.75rem; margin-top: 0.25rem;">Apple</figcaption>
+                        </figure>
+                        <figure style="margin: 0; text-align: center;">
+                            <img src="src/img/part2_4_orange.jpeg" alt="Orange" class="clickable" style="width: 60%; border-radius: 4px;">
+                            <figcaption style="font-size: 0.75rem; margin-top: 0.25rem;">Orange</figcaption>
+                        </figure>
+                    </div>
+                </div>
+
+                <!-- Jay Chou + Me -->
+                <div class="observation-box">
+                    <h4 style="text-align: center;">Jay Chou + Me</h4>
+                    <p>It will be a good idea to blend this picture again since it has similar background and position!</p>
+                    <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem;">
+                        <figure style="margin: 0; text-align: center; margin-top:4rem;">
+                            <img src="src/img/part2_2_jaychou.jpg" alt="Jay Chou" class="clickable" style="width: 60%; border-radius: 4px;">
+                            <figcaption style="font-size: 0.75rem; margin-top: 0.25rem;">Jay Chou</figcaption>
+                        </figure>
+                        <figure style="margin: 0; text-align: center;">
+                            <img src="src/img/part2_2_me.jpg" alt="Me" class="clickable" style="width: 60%; border-radius: 4px;">
+                            <figcaption style="font-size: 0.75rem; margin-top: 0.25rem;">Me</figcaption>
+                        </figure>
+                    </div>
+                </div>
+
+                <!-- Campanile + Tree Trunk -->
+                <div class="observation-box">
+                    <h4 style="text-align: center;">Campanile + Tree Rings</h4>
+                    <p>I spent many days thinking about what to blend. Then while walking past the campanile, I realized: why not blend tree rings into the tower? It needs an irregular mask anyway!</p>
+                    <p style="font-size: 0.75rem; margin-top: 2rem; text-align: center;">(Photos sourced online)</p>
+                    <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem;">
+                        <figure style="margin: 0; text-align: center;">
+                            <img src="src/img/part2_4_campantile.jpg" alt="Campanile" class="clickable" style="width: 60%; border-radius: 4px;">
+                            <figcaption style="font-size: 0.75rem; margin-top: 0.25rem;">Campanile</figcaption>
+                        </figure>
+                        <figure style="margin: 0; text-align: center;">
+                            <img src="src/img/part2_4_trunk.jpg" alt="Tree Trunk" class="clickable" style="width: 60%; border-radius: 4px;">
+                            <figcaption style="font-size: 0.75rem; margin-top: 0.25rem;">Tree Rings</figcaption>
+                        </figure>
+                    </div>
+                </div>
+            </div>
+
+            <h3>2.4.2 Implementation: Masks and Blending</h3>
+            <p>I implemented four types of masks for different blending scenarios:</p>
+
+            <div class="code-block collapsible">
+                <h4 class="code-toggle" onclick="toggleCode(this)">
+                    <span class="toggle-icon">▶</span> Mask Creation Functions
+                </h4>
+                <div class="code-content" style="display: none;">
+                    <pre><code class="language-python">def create_vertical_mask(shape, split_ratio=0.5):
+    mask = np.zeros(shape[:2])
+    split_col = int(shape[1] * split_ratio)
+    mask[:, :split_col] = 1.0
+    return mask
+
+def create_horizontal_mask(shape, split_ratio=0.5):
+    mask = np.zeros(shape[:2])
+    split_row = int(shape[0] * split_ratio)
+    mask[:split_row, :] = 1.0
+    return mask
+
+def create_circular_mask(shape, center=None, radius=None):
+    h, w = shape[:2]
+    if center is None:
+        center = (h // 2, w // 2)
+    if radius is None:
+        radius = min(h, w) // 3
+
+    Y, X = np.ogrid[:h, :w]
+    dist_from_center = np.sqrt((X - center[1])**2 + (Y - center[0])**2)
+    mask = (dist_from_center <= radius).astype(np.float64)
+    return mask
+
+def create_ellipse_mask(shape, center, radius_x, radius_y):
+    h, w = shape[:2]
+    Y, X = np.ogrid[:h, :w]
+
+    dist = ((X - center[1])**2 / radius_x**2 +
+            (Y - center[0])**2 / radius_y**2)
+
+    mask = (dist <= 1).astype(np.float64)
+
+    # Smooth the mask edges
+    from scipy.ndimage import gaussian_filter
+    mask = gaussian_filter(mask, sigma=5)
+
+    return mask</code></pre>
+                </div>
+            </div>
+
+            <div class="code-block collapsible">
+                <h4 class="code-toggle" onclick="toggleCode(this)">
+                    <span class="toggle-icon">▶</span> Multi-resolution Blending Function
+                </h4>
+                <div class="code-content" style="display: none;">
+                    <pre><code class="language-python">def blend_images_multiresolution(image1, image2, mask, levels=5, sigma_base=1, filename='temp.jpg'):
+    if len(mask.shape) == 3:
+        mask = mask[:, :, 0]
+
+    mask = mask.astype(np.float64)
+    if mask.max() > 1:
+        mask = mask / 255.0
+
+    # Build Gaussian stacks for both images and mask
+    gaussian_stack1 = build_gaussian_stack(image1, levels, sigma_base)
+    gaussian_stack2 = build_gaussian_stack(image2, levels, sigma_base)
+    gaussian_stack_mask = build_gaussian_stack(mask, levels, sigma_base)
+
+    # Build Laplacian stacks for both images
+    laplacian_stack1 = build_laplacian_stack(gaussian_stack1)
+    laplacian_stack2 = build_laplacian_stack(gaussian_stack2)
+
+    # Blend each level of the Laplacian stacks using the corresponding mask level
+    blended_laplacian = []
+    for i in range(levels):
+        if len(image1.shape) == 3:
+            mask_3d = np.stack([gaussian_stack_mask[i]] * 3, axis=2)
+        else:
+            mask_3d = gaussian_stack_mask[i]
+
+        blended = laplacian_stack1[i] * mask_3d + laplacian_stack2[i] * (1 - mask_3d)
+        blended_laplacian.append(blended)
+
+    # Reconstruct final image by summing all blended Laplacian levels
+    result = np.sum(blended_laplacian, axis=0)
+    result = np.clip(result, 0, 1)
+
+    plt.figure(figsize=(8, 8))
+    plt.imshow(result)
+    plt.axis('off')
+    plt.tight_layout()
+    plt.savefig(f'images/{filename}', dpi=250, bbox_inches='tight')
+    plt.close()
+
+    return result, laplacian_stack1, laplacian_stack2, blended_laplacian, gaussian_stack_mask</code></pre>
+                </div>
+            </div>
+
+            <h3>2.4.3 Apple + Orange (Vertical Mask)</h3>
+            <p><strong>Parameters:</strong> <code>create_vertical_mask(split_ratio=0.5)</code>, levels=6</p>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin: 2rem 0; align-items: start;">
+                <figure style="margin: 0;">
+                    <img src="src/img/part2_4_final_1_oraple_process.png" alt="Apple Orange Process" class="clickable" style="width: 100%;">
+                    <figcaption>▲ Blending process: Laplacian stacks at each level combined using the mask</figcaption>
+                </figure>
+                <figure style="margin: 0; text-align: center">
+                    <img src="src/img/part2_4_final_1_oraple_result.png" alt="Apple Orange Result" class="clickable" style="width: 70%;">
+                    <figcaption>▲ The classic "Oraple" - seamlessly blended down the middle</figcaption>
+                </figure>
+            </div>
+
+            <h3>2.4.4 Jay Chou + Me (Horizontal Mask)</h3>
+            <p><strong>Parameters:</strong> <code>create_horizontal_mask(split_ratio=0.5)</code>, levels=6</p>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin: 2rem 0; align-items: start;">
+                <figure style="margin: 0;">
+                    <img src="src/img/part2_4_final_2_jaychou_me_process.png" alt="Jay Chou Me Crop" class="clickable" style="width: 100%;">
+                    <figcaption>▲ Side-by-side comparison showing the blending transition</figcaption>
+                </figure>
+                <figure style="margin: 0; text-align: center;">
+                    <img src="src/img/part2_4_final_2_jaychou_me_crop.jpg" alt="Jay Chou Me Result" class="clickable" style="width: 60%;">
+                    <figcaption>▲ Jay Chou (top) blends seamlessly into childhood me (bottom)</figcaption>
+                </figure>
+            </div>
+
+            <h3>2.4.5 Campanile + Tree Rings (Ellipse Mask)</h3>
+            <p><strong>Parameters:</strong> Both images resized to 800×600, <code>create_ellipse_mask(center=(440, 290), radius_x=89, radius_y=121)</code>, levels=6</p>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin: 2rem 0; align-items: start;">
+                <figure style="margin: 0;">
+                    <img src="src/img/part2_4_final_3_campanile_trunk_process.png" alt="Campanile Process" class="clickable" style="width: 100%;">
+                    <figcaption>▲ Blending process with elliptical mask centered on the clock</figcaption>
+                </figure>
+                <figure style="margin: 0; text-align: center">
+                    <img src="src/img/part2_4_final_3_campantile_trunk_result.png" alt="Campanile Result" class="clickable" style="width: 60%;">
+                    <figcaption>▲ Tree rings blended into the campanile using an elliptical mask - nature meets architecture!</figcaption>
+                </figure>
+            </div>
+
+
         </section>
     </main>
 
