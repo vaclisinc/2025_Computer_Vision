@@ -862,7 +862,119 @@ gradient_magnitude_DoG_cameraman = np.sqrt(DoG_x_cameraman ** 2 + DoG_y_camerama
         <!-- Part 2.3: Stacks -->
         <section id="part2-3">
             <h2>Part 2.3: Gaussian and Laplacian Stacks</h2>
-            <p>Coming soon...</p>
+
+            <p>Unlike <strong>Gaussian pyramids</strong> which downsample at each level (as seen in Project 1), <strong>Gaussian stacks</strong> keep all levels at the same resolution as the original image. This makes them ideal for multi-resolution blending.</p>
+
+            <div class="observation-box" style="margin: 1.5rem 0;">
+                <h4>Stack vs Pyramid</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div>
+                        <p><strong>Gaussian Pyramid (Project 1):</strong></p>
+                        <ul>
+                            <li>Each level is <strong>downsampled</strong> (half size)</li>
+                            <li>Used for efficient processing</li>
+                            <li>Different resolutions at each level</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <p><strong>Gaussian Stack (This Project):</strong></p>
+                        <ul>
+                            <li>All levels keep <strong>same size</strong> as original</li>
+                            <li>No downsampling, just increasing blur</li>
+                            <li>Essential for multi-resolution blending</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <h3>2.3.1 Building Gaussian Stack</h3>
+            <p>At each level, we apply progressively stronger Gaussian blur while maintaining the original image size:</p>
+
+            <div class="code-block collapsible">
+                <h4 class="code-toggle" onclick="toggleCode(this)">
+                    <span class="toggle-icon">▶</span> Gaussian Stack Implementation
+                </h4>
+                <div class="code-content" style="display: none;">
+                    <pre><code class="language-python">def build_gaussian_stack(image, levels=5, sigma_base=1):
+    stack = [image]
+    current = image.copy()
+
+    for i in range(1, levels):
+        # Progressively increase sigma
+        sigma = sigma_base * (2 ** i)
+        kernel_size = int(2 * np.ceil(3 * sigma) + 1)
+        kernel = create_gaussian_kernel(kernel_size, sigma)
+
+        # Apply Gaussian blur (handle RGB channels)
+        if len(current.shape) == 3:
+            blurred = np.zeros_like(current)
+            for c in range(3):
+                blurred[:, :, c] = scipy.signal.convolve2d(
+                    current[:, :, c], kernel, mode='same', boundary='symm'
+                )
+        else:
+            blurred = scipy.signal.convolve2d(
+                current, kernel, mode='same', boundary='symm'
+            )
+
+        stack.append(blurred)
+        current = blurred
+
+    return stack</code></pre>
+                </div>
+            </div>
+
+            <h3>2.3.2 Building Laplacian Stack</h3>
+            <p>The Laplacian stack captures the difference between consecutive Gaussian levels, representing different frequency bands. Note that the <strong>last layer is directly taken from the Gaussian stack's last layer</strong> (not a difference), as there's no next level to subtract.</p>
+
+            <div class="code-block collapsible">
+                <h4 class="code-toggle" onclick="toggleCode(this)">
+                    <span class="toggle-icon">▶</span> Laplacian Stack Implementation
+                </h4>
+                <div class="code-content" style="display: none;">
+                    <pre><code class="language-python">def build_laplacian_stack(gaussian_stack):
+    laplacian_stack = []
+
+    # Compute differences between consecutive levels
+    for i in range(len(gaussian_stack) - 1):
+        laplacian = gaussian_stack[i] - gaussian_stack[i + 1]
+        laplacian_stack.append(laplacian)
+
+    # Last layer: directly use the final Gaussian level
+    laplacian_stack.append(gaussian_stack[-1])
+
+    return laplacian_stack</code></pre>
+                </div>
+            </div>
+
+            <div class="observation-box" style="margin: 1.5rem 0;">
+                <h4>Why does the last Laplacian layer = last Gaussian layer?</h4>
+                <p>In a Laplacian stack, each layer represents a frequency band extracted as the difference between consecutive Gaussian levels. However, the <strong>last layer</strong> has no next level to subtract from, so we keep the final Gaussian layer as-is. This represents the lowest frequency band (most blurred version) of the image.</p>
+            </div>
+
+            <h3>2.3.3 Results: Apple and Orange Stacks</h3>
+            <p>I built 6-level Gaussian and Laplacian stacks for both apple and orange images:</p>
+
+            <figure style="margin: 2rem 0; text-align: center;">
+                <img src="src/img/part2_3_apple_stacks.png" alt="Apple Stacks" class="clickable" style="width: 60%;">
+                <figcaption>▲ Apple: Gaussian stack (top) shows progressive blur, Laplacian stack (bottom) shows frequency bands</figcaption>
+            </figure>
+
+            <figure style="margin: 2rem 0;  text-align: center;">
+                <img src="src/img/part2_3_orange_stacks.png" alt="Orange Stacks" class="clickable" style="width: 60%;">
+                <figcaption>▲ Orange: Gaussian stack (top) shows progressive blur, Laplacian stack (bottom) shows frequency bands</figcaption>
+            </figure>
+
+            <div class="observation-box">
+                <h4>Observations</h4>
+                <ul>
+                    <li><strong>Gaussian Stack:</strong> Each level becomes progressively more blurred while maintaining full resolution</li>
+                    <li><strong>Laplacian Stack:</strong> Each layer (except the last) captures a specific frequency band, appearing mostly gray with edges highlighted</li>
+                    <li><strong>Last Laplacian layer:</strong> Contains the low-frequency content (blurry version), identical to the last Gaussian layer</li>
+                    <li>These stacks will be used in Part 2.4 for seamless multi-resolution blending</li>
+                </ul>
+            </div>
+
         </section>
 
         <!-- Part 2.4: Blending -->
