@@ -377,6 +377,16 @@ def create_gaussian_kernel(ksize, sigma):
     return gaussian_2d</code></pre>
                         </div>
                     </div>
+
+            <div class="observation-box" style="margin-top: 1rem;">
+                <h4>Understanding σ (Sigma)</h4>
+                <p><strong>σ</strong> is the standard deviation that controls the blur intensity:</p>
+                <ul>
+                    <li><strong>Small σ</strong> → Sharp, blurs only a small neighborhood</li>
+                    <li><strong>Large σ</strong> → Strong blur, affects a wider range</li>
+                </ul>
+            </div>
+
             <!-- Two-Step Approach -->
             <div style="margin: 30px 0;">
                 <h3>1.3.1 Two-Step Approach: Blur Then Gradient</h3>
@@ -561,8 +571,142 @@ gradient_magnitude_DoG_cameraman = np.sqrt(DoG_x_cameraman ** 2 + DoG_y_camerama
 
         <!-- Part 2.1: Sharpening -->
         <section id="part2-1">
-            <h2>Part 2.1: Image Sharpening</h2>
-            <p>Coming soon...</p>
+            <h2>Part 2.1: Image Sharpening with Unsharp Masking</h2>
+
+            <p>Unsharp masking sharpens images by first blurring (applying Gaussian filter), then subtracting to get high frequencies (similar to Laplacian), and finally adding them back to enhance edges.</p>
+
+            <h3>2.1.1 Step-by-Step Implementation</h3>
+            <p>Let's break down the sharpening process into individual steps:</p>
+
+            <div class="code-block collapsible">
+                <h4 class="code-toggle" onclick="toggleCode(this)">
+                    <span class="toggle-icon">▶</span> Stepwise Unsharp Masking
+                </h4>
+                <div class="code-content" style="display: none;">
+                    <pre><code class="language-python">def apply_unsharp_mask_stepwise_demo(image, kernel_size=9, sigma=2.0, alpha=1.5):
+    gaussian_kernel = create_gaussian_kernel(kernel_size, sigma)
+
+    # Step 1: Blur the image (low-pass filter)
+    blurred = np.zeros_like(image)
+    for i in range(3):
+        blurred[:,:,i] = scipy.signal.convolve2d(
+            image[:,:,i], gaussian_kernel, mode='same', boundary='symm'
+        )
+
+    # Step 2: Extract high frequencies
+    high_freq = image - blurred
+
+    # Step 3: Add amplified high frequencies back
+    sharpened = image + alpha * high_freq
+    sharpened = np.clip(sharpened, 0, 1)
+
+    return blurred, high_freq, sharpened</code></pre>
+                </div>
+            </div>
+
+            <figure style="margin: 2rem 0;">
+                <img src="src/img/part2_1_taj_sharpen_demo.jpg" alt="Taj Mahal Sharpening Process" class="clickable" style="width: 100%;">
+                <figcaption>▲ Sharpening pipeline: Original → Blurred (low freq) → High freq → Sharpened (α=1)</figcaption>
+            </figure>
+
+            <h3>2.1.2 Simplified: Single Unsharp Mask Kernel</h3>
+            <p>We don't need to perform these steps separately. We can combine them into a single <strong>unsharp mask kernel</strong> and apply it in one convolution:</p>
+            <div class="observation-box">
+                <h4>Unsharp Masking Formula Derivation</h4>
+                <div style="text-align: left; margin: 1rem 0; font-size: 1rem; font-family: 'JetBrains Mono', monospace; line-height: 2;">
+                    <strong>sharpened</strong> = original + α × (original - blurred)<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = (1 + α) × original - α × blurred<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = (1 + α) × original - α × (gaussian ⊗ original)<br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; = <strong>[(1 + α) × identity - α × gaussian] ⊗ original</strong>
+                </div>
+                <p style="margin-top: 1rem;">Therefore, the <strong>unsharp kernel</strong> = (1 + α) × identity - α × gaussian</p>
+                <p>Where <strong>α</strong> controls the sharpening strength. Higher α = more pronounced edges.</p>
+                <p><em>Note: "identity" here refers to the identity convolution kernel (center=1, rest=0), not the linear algebra identity matrix.</em></p>
+            </div>
+            <div class="code-block collapsible">
+                <h4 class="code-toggle" onclick="toggleCode(this)">
+                    <span class="toggle-icon">▶</span> Unsharp Mask Kernel Creation
+                </h4>
+                <div class="code-content" style="display: none;">
+                    <pre><code class="language-python">def create_unsharp_mask_kernel(kernel_size, sigma, alpha):
+    gaussian = create_gaussian_kernel(kernel_size, sigma)        # low pass
+    identity = np.zeros_like(gaussian)
+    center = kernel_size // 2
+    identity[center, center] = 1
+    unsharp_kernel = (1 + alpha) * identity - alpha * gaussian   # I + alpha * (I - low pass) => sharper
+    return unsharp_kernel</code></pre>
+                </div>
+            </div>
+
+            <div class="code-block collapsible">
+                <h4 class="code-toggle" onclick="toggleCode(this)">
+                    <span class="toggle-icon">▶</span> Convolve with Unsharp Mask Kernel
+                </h4>
+                <div class="code-content" style="display: none;">
+                    <pre><code class="language-python">def apply_unsharp_mask(image, kernel_size=9, sigma=2.0, alpha=1.5):
+    unsharp_kernel = create_unsharp_mask_kernel(kernel_size, sigma, alpha)
+
+    result = np.zeros_like(image)
+    for i in range(3):
+        result[:,:,i] = scipy.signal.convolve2d(
+            image[:,:,i], unsharp_kernel, mode='same', boundary='symm'
+        )
+
+    return np.clip(result, 0, 1)  # restrict to [0, 1]: <0 -> black; >1: white</code></pre>
+                </div>
+            </div>
+
+            <h3>2.1.3 Testing Different Alpha Values</h3>
+            <p>The α parameter controls sharpening intensity. Let's compare different values:</p>
+
+            <figure style="margin: 2rem 0;">
+                <img src="src/img/part2_1_taj_alpha_comparison.png" alt="Taj Alpha Comparison" class="clickable" style="width: 100%;">
+                <figcaption>▲ Effect of α on sharpening: α=0.5, 1.0, 2.0, 3.0</figcaption>
+            </figure>
+
+            <h3>2.1.4 Blur-Sharpen-Blur-Sharpen Experiment</h3>
+            <p>What happens if we blur a sharpened image and sharpen it again?</p>
+
+            <figure style="margin: 2rem 0;">
+                <img src="src/img/part2_1_taj_sharpen_blurred_sharpen.jpg" alt="Blur-Sharpen Cycle" class="clickable" style="width: 100%;">
+                <figcaption>▲ Original → Sharpened → Blurred → Re-sharpened</figcaption>
+            </figure>
+
+            <div class="observation-box">
+                <p><strong>Lesson:</strong> Information loss in blurring is irreversible</p>
+                <ul>
+                    <li>Some high-frequency details are <strong>permanently lost</strong> in the blur step</li>
+                    <li>The result is softer than the original sharpened version</li>
+                    <li>We <strong>partially recover</strong> sharpness, but not fully</li>
+                </ul>
+            </div>
+
+            <h3>2.1.5 Custom Image: Shaved Snow</h3>
+            <p>This image holds special meaning for me — it was taken with friends a week before I came to the US for exchange. The day before taking this photo, I accidentally fell asleep in the bathtub while showering, and my phone got water damaged. Can CS180 techniques rescue this photo?</p>
+
+            <p>At first, I loaded the picture as-is, but its shape is <code class="code-inline">(4032, 2268, 3)</code> — way bigger than the Taj image. The default <code class="code-inline">kernel_size=9</code> is too small to capture many edge details at this resolution. To be honest, I can't really tell the difference:</p>
+
+            <figure style="margin: 2rem 0; text-align: center;">
+                <img src="src/img/part2_1_shaved_snow_alpha_comparison.png" alt="Shaved Snow Alpha Comparison" class="clickable" style="width: 75%;">
+                <figcaption>▲ Sharpening on original resolution (α values: 0.5, 1.0, 2.0, 3.0) — barely visible differences</figcaption>
+            </figure>
+
+            <p>My solution: resize the image using <code class="code-inline">transform.resize(shaved_snow, (600, 337), anti_aliasing=True)</code>. Now we can actually see the results:</p>
+
+            <figure style="margin: 2rem 0;  text-align: center;">
+                <img src="src/img/part2_1_shaved_snow_resized_alpha_comparison.png" alt="Resized Shaved Snow Comparison" class="clickable" style="width: 75%;">
+                <figcaption>▲ Sharpening on resized image (600×337) — now the differences are visible!</figcaption>
+            </figure>
+
+            <div class="observation-box">
+                <h4>The photo wasn't fully rescued:</h4>
+                <ul>
+                    <li>While sharpening helps, it can't fully recover lost details from the water damage.</li>
+                    <li>No matter how advanced image processing techniques are, the most important thing is still the <strong>quality of the original signal</strong></li>
+                    <li><strong>Kernel size matters:</strong> Must be proportional to image resolution for effective sharpening</li>
+                </ul>
+            </div>
+
         </section>
 
         <!-- Part 2.2: Hybrid Images -->
