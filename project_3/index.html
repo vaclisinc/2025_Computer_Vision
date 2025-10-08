@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Project 3: Image Warping and Mosaicing</title>
     <link rel="stylesheet" href="css/styles.css?v=1759909542">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
 </head>
 <body>
@@ -17,12 +17,24 @@
                 <h1>Project 3: Image Warping and Mosaicing</h1>
                 <p class="subtitle">CS 180 Project 3 · Song-Ze Yu</p>
             </div>
+
+            <div class="overview-grid">
+                <div class="overview-card">
+                    <h3>Part A: Image Warping and Mosaicing</h3>
+                    <p>Manually select correspondences, compute homographies, warp images, and blend them into seamless panoramas.</p>
+                </div>
+
+                <div class="overview-card">
+                    <h3>Part B: Feature Matching for Autostitching</h3>
+                    <p style="font-style: italic; color: var(--text-muted);">Stay tuned.</p>
+                </div>
+            </div>
         </div>
     </header>
 
     <!-- Navigation -->
     <nav class="toc">
-        <a href="#part1-1">A.1: Shoot</a>
+        <a href="#part1-1-overview">A.1: Shoot</a>
         <a href="#part1-2">A.2: Homographies</a>
         <a href="#part1-3">A.3: Warp</a>
         <a href="#part1-4">A.4: Mosaic</a>
@@ -33,26 +45,6 @@
     </nav>
 
     <main>
-        <!-- Overview -->
-        <section id="overview">
-            <h2>Overview</h2>
-
-            <div class="content">
-                <p>This project explores creating panoramic image mosaics through two approaches:</p>
-
-                <div class="overview-grid">
-                    <div class="overview-card">
-                        <h3>Part A: Image Warping and Mosaicing</h3>
-                        <p>Manually select correspondences, compute homographies, warp images, and blend them into seamless panoramas.</p>
-                    </div>
-
-                    <div class="overview-card">
-                        <h3>Part B: Feature Matching for Autostitching</h3>
-                        <p style="font-style: italic; color: var(--text-muted);">Stay tuned.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
 
         <!-- PART A: IMAGE MOSAICS -->
 
@@ -300,6 +292,13 @@ Max reprojection error:  3.22 pixels</code></pre>
         <span class="close">&times;</span>
     </div>
 
+    <!-- Section Navigation for Part A.1 -->
+    <div class="section-nav" id="part-a1-nav" style="display: none;">
+        <div class="section-nav-dot" data-section="part1-1-overview" data-label="Overview"></div>
+        <div class="section-nav-dot" data-section="scene-1" data-label="Scene 1"></div>
+        <div class="section-nav-dot" data-section="scene-2" data-label="Scene 2"></div>
+    </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
     <script>
@@ -457,6 +456,68 @@ Max reprojection error:  3.22 pixels</code></pre>
             initScrollGallery('gallery-ihouse', 'scene-1');
             initScrollGallery('gallery-cnmat', 'scene-2');
         });
+
+        // Section Navigation
+        const partA1Sections = ['part1-1-overview', 'scene-1', 'scene-2'];
+        const sectionNav = document.getElementById('part-a1-nav');
+        const navDots = sectionNav.querySelectorAll('.section-nav-dot');
+
+        // Click handlers for navigation dots
+        navDots.forEach(dot => {
+            dot.addEventListener('click', function() {
+                const sectionId = this.getAttribute('data-section');
+                const section = document.getElementById(sectionId);
+                if (section) {
+                    section.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+
+        // Update navigation on scroll
+        function updateSectionNav() {
+            let currentSection = null;
+            let isInPartA1 = false;
+
+            // Check which section is currently in view
+            partA1Sections.forEach(sectionId => {
+                const section = document.getElementById(sectionId);
+                if (section) {
+                    const rect = section.getBoundingClientRect();
+                    // Section is active when it's near the top of viewport
+                    if (rect.top >= -100 && rect.top <= 200) {
+                        currentSection = sectionId;
+                        isInPartA1 = true;
+                    }
+                }
+            });
+
+            // Show/hide navigation based on whether we're in Part A.1
+            if (isInPartA1) {
+                sectionNav.style.display = 'flex';
+            } else {
+                sectionNav.style.display = 'none';
+            }
+
+            // Update active dot
+            navDots.forEach(dot => {
+                const dotSection = dot.getAttribute('data-section');
+                if (dotSection === currentSection) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            });
+        }
+
+        // Listen to scroll events
+        let scrollTimeout;
+        window.addEventListener('scroll', function() {
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(updateSectionNav, 10);
+        }, { passive: true });
+
+        // Initial check
+        updateSectionNav();
     </script>
 </body>
 </html>

@@ -36,7 +36,7 @@ html {
 }
 
 body {
-    font-family: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
+    font-family: "Space Grotesk", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
     font-size: 18px;
     line-height: 1.6;
     font-weight: 400;
@@ -47,42 +47,43 @@ body {
     -moz-osx-font-smoothing: grayscale;
 }
 
-/* Typography - Apple Style */
+/* Typography - Modern Tech Style */
 h1, h2, h3, h4 {
-    font-weight: 600;
-    line-height: 1.0834933333;
-    letter-spacing: -0.015em;
+    font-family: "Space Grotesk", sans-serif;
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
     color: var(--text-primary);
 }
 
 h1 {
-    font-size: 80px;
-    line-height: 1.05;
-    font-weight: 600;
-    letter-spacing: -0.015em;
+    font-size: 96px;
+    line-height: 1;
+    font-weight: 700;
+    letter-spacing: -0.03em;
 }
 
 h2 {
-    font-size: 48px;
-    line-height: 1.0834933333;
-    font-weight: 600;
-    letter-spacing: -0.003em;
+    font-size: 56px;
+    line-height: 1.1;
+    font-weight: 700;
+    letter-spacing: -0.02em;
     margin: 0 0 0.4em;
 }
 
 h3 {
-    font-size: 32px;
-    line-height: 1.125;
+    font-size: 40px;
+    line-height: 1.2;
     font-weight: 600;
-    letter-spacing: 0.004em;
-    margin: 0 0 0.8em;
+    letter-spacing: -0.01em;
+    margin: 0 0 0.5em;
 }
 
 h4 {
-    font-size: 24px;
-    line-height: 1.1666666667;
+    font-size: 20px;
+    line-height: 1.3;
     font-weight: 600;
-    letter-spacing: 0.009em;
+    letter-spacing: 0.05em;
 }
 
 p {
@@ -108,8 +109,8 @@ a:hover {
 /* Layout */
 header {
     text-align: center;
-    padding: 0;
-    background: #000;
+    padding: 80px 60px 100px;
+    background: radial-gradient(ellipse at center, #1a1a1a 0%, #000000 100%);
     position: relative;
     overflow: hidden;
     scroll-snap-align: start;
@@ -118,6 +119,27 @@ header {
     flex-direction: column;
     justify-content: center;
     align-items: center;
+}
+
+header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 30% 40%, rgba(41, 151, 255, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 70% 60%, rgba(255, 255, 255, 0.02) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+.header-content {
+    max-width: 1200px;
+    width: 100%;
+}
+
+.header-info {
+    margin-bottom: 4rem;
 }
 
 header h1 {
@@ -136,30 +158,128 @@ header .subtitle {
     color: #a1a1a6;
 }
 
+header .overview-grid {
+    margin: 0;
+}
+
+header .overview-card {
+    background: linear-gradient(135deg,
+                rgba(255, 255, 255, 0.04) 0%,
+                rgba(255, 255, 255, 0.01) 50%,
+                rgba(255, 255, 255, 0.02) 100%);
+    border: 0.5px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(80px) saturate(180%);
+    -webkit-backdrop-filter: blur(80px) saturate(180%);
+    box-shadow:
+        /* 外部阴影 - 12层渐进深度 */
+        0 0.5px 1px rgba(0, 0, 0, 0.05),
+        0 1px 2px rgba(0, 0, 0, 0.08),
+        0 2px 4px rgba(0, 0, 0, 0.08),
+        0 3px 6px rgba(0, 0, 0, 0.09),
+        0 4px 8px rgba(0, 0, 0, 0.09),
+        0 6px 12px rgba(0, 0, 0, 0.1),
+        0 8px 16px rgba(0, 0, 0, 0.11),
+        0 12px 24px rgba(0, 0, 0, 0.12),
+        0 16px 32px rgba(0, 0, 0, 0.13),
+        0 24px 48px rgba(0, 0, 0, 0.14),
+        0 32px 64px rgba(0, 0, 0, 0.15),
+        0 48px 96px rgba(0, 0, 0, 0.16),
+        /* 内部光效 - 6层 */
+        inset 0 0 0 0.5px rgba(255, 255, 255, 0.08),
+        inset 0 0.5px 0 0 rgba(255, 255, 255, 0.15),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.3),
+        inset 0 2px 1px 0 rgba(255, 255, 255, 0.15),
+        inset 0 -0.5px 0 0 rgba(0, 0, 0, 0.03),
+        inset 0 -1px 0 0 rgba(0, 0, 0, 0.05);
+}
+
 .back-link {
     position: absolute;
     top: 20px;
     left: 20px;
     font-size: 17px;
     color: #f5f5f7;
-    padding: 8px 16px;
+    padding: 10px 20px;
     border-radius: 980px;
-    transition: background 0.3s ease;
+    transition: all 0.3s ease;
+    background: linear-gradient(135deg,
+                rgba(255, 255, 255, 0.04) 0%,
+                rgba(255, 255, 255, 0.01) 50%,
+                rgba(255, 255, 255, 0.02) 100%);
+    border: 0.5px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(80px) saturate(180%);
+    -webkit-backdrop-filter: blur(80px) saturate(180%);
+    box-shadow:
+        /* 外部阴影 - 12层 */
+        0 0.5px 1px rgba(0, 0, 0, 0.05),
+        0 1px 2px rgba(0, 0, 0, 0.08),
+        0 2px 4px rgba(0, 0, 0, 0.08),
+        0 3px 6px rgba(0, 0, 0, 0.09),
+        0 4px 8px rgba(0, 0, 0, 0.09),
+        0 6px 12px rgba(0, 0, 0, 0.1),
+        0 8px 16px rgba(0, 0, 0, 0.11),
+        0 12px 24px rgba(0, 0, 0, 0.12),
+        0 16px 32px rgba(0, 0, 0, 0.13),
+        0 24px 48px rgba(0, 0, 0, 0.14),
+        0 32px 64px rgba(0, 0, 0, 0.15),
+        0 48px 96px rgba(0, 0, 0, 0.16),
+        /* 内部光效 - 6层 */
+        inset 0 0 0 0.5px rgba(255, 255, 255, 0.08),
+        inset 0 0.5px 0 0 rgba(255, 255, 255, 0.15),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.3),
+        inset 0 2px 1px 0 rgba(255, 255, 255, 0.15),
+        inset 0 -0.5px 0 0 rgba(0, 0, 0, 0.03),
+        inset 0 -1px 0 0 rgba(0, 0, 0, 0.05);
 }
 
 .back-link:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: linear-gradient(135deg,
+                rgba(255, 255, 255, 0.07) 0%,
+                rgba(255, 255, 255, 0.03) 50%,
+                rgba(255, 255, 255, 0.04) 100%);
+    border-color: rgba(41, 151, 255, 0.4);
     text-decoration: none;
+    box-shadow:
+        /* 外部阴影 - 11层 */
+        0 1px 2px rgba(0, 0, 0, 0.06),
+        0 2px 4px rgba(0, 0, 0, 0.08),
+        0 4px 8px rgba(0, 0, 0, 0.09),
+        0 6px 12px rgba(0, 0, 0, 0.1),
+        0 8px 16px rgba(0, 0, 0, 0.11),
+        0 12px 24px rgba(0, 0, 0, 0.12),
+        0 16px 32px rgba(0, 0, 0, 0.13),
+        0 24px 48px rgba(0, 0, 0, 0.15),
+        0 32px 64px rgba(0, 0, 0, 0.17),
+        0 48px 96px rgba(0, 0, 0, 0.19),
+        0 64px 128px rgba(0, 0, 0, 0.21),
+        /* 蓝色发光 - 5层 */
+        0 0 0 0.5px rgba(41, 151, 255, 0.2),
+        0 0 0 1px rgba(41, 151, 255, 0.3),
+        0 0 10px rgba(41, 151, 255, 0.08),
+        0 0 20px rgba(41, 151, 255, 0.1),
+        0 0 40px rgba(41, 151, 255, 0.06),
+        /* 内部光效 - 7层 */
+        inset 0 0 0 0.5px rgba(255, 255, 255, 0.12),
+        inset 0 0.5px 0 0 rgba(255, 255, 255, 0.2),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.4),
+        inset 0 2px 2px 0 rgba(255, 255, 255, 0.2),
+        inset 0 4px 4px 0 rgba(255, 255, 255, 0.08),
+        inset 0 -0.5px 0 0 rgba(0, 0, 0, 0.03),
+        inset 0 -1px 0 0 rgba(0, 0, 0, 0.05);
 }
 
 /* Navigation - Dark Theme */
 .toc {
     position: sticky;
     top: 0;
-    background: rgba(29, 29, 31, 0.85);
-    backdrop-filter: saturate(180%) blur(20px);
-    -webkit-backdrop-filter: saturate(180%) blur(20px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: linear-gradient(135deg,
+                rgba(255, 255, 255, 0.04) 0%,
+                rgba(255, 255, 255, 0.01) 50%,
+                rgba(255, 255, 255, 0.02) 100%);
+    border: 0.5px solid rgba(255, 255, 255, 0.2);
+    border-bottom: 0.5px solid rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(80px) saturate(180%);
+    -webkit-backdrop-filter: blur(80px) saturate(180%);
     padding: 0;
     z-index: 9999;
     display: flex;
@@ -168,6 +288,27 @@ header .subtitle {
     gap: 0;
     height: 44px;
     min-height: 44px;
+    box-shadow:
+        /* 外部阴影 - 12层 */
+        0 0.5px 1px rgba(0, 0, 0, 0.05),
+        0 1px 2px rgba(0, 0, 0, 0.08),
+        0 2px 4px rgba(0, 0, 0, 0.08),
+        0 3px 6px rgba(0, 0, 0, 0.09),
+        0 4px 8px rgba(0, 0, 0, 0.09),
+        0 6px 12px rgba(0, 0, 0, 0.1),
+        0 8px 16px rgba(0, 0, 0, 0.11),
+        0 12px 24px rgba(0, 0, 0, 0.12),
+        0 16px 32px rgba(0, 0, 0, 0.13),
+        0 24px 48px rgba(0, 0, 0, 0.14),
+        0 32px 64px rgba(0, 0, 0, 0.15),
+        0 48px 96px rgba(0, 0, 0, 0.16),
+        /* 内部光效 - 6层 */
+        inset 0 0 0 0.5px rgba(255, 255, 255, 0.08),
+        inset 0 0.5px 0 0 rgba(255, 255, 255, 0.15),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.3),
+        inset 0 2px 1px 0 rgba(255, 255, 255, 0.15),
+        inset 0 -0.5px 0 0 rgba(0, 0, 0, 0.03),
+        inset 0 -1px 0 0 rgba(0, 0, 0, 0.05);
 }
 
 .toc a {
@@ -197,11 +338,9 @@ main {
 section {
     scroll-snap-align: start;
     scroll-snap-stop: always;
-    height: 100vh;
     min-height: 100vh;
-    max-height: 100vh;
-    overflow: hidden;
     padding: 3rem 3rem;
+    position: relative;
 }
 
 /* Content Sections */
@@ -226,22 +365,49 @@ section {
 }
 
 .content code {
-    background: #f5f5f5;
-    padding: 0.2rem 0.4rem;
-    border-radius: 3px;
-    font-family: 'Monaco', 'Courier New', monospace;
+    background: rgba(41, 151, 255, 0.15);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
     font-size: 0.9em;
-    color: #c7254e;
+    color: var(--accent);
+    border: 1px solid rgba(41, 151, 255, 0.2);
 }
 
 /* Note Boxes */
 .note {
-    background: linear-gradient(135deg, #f7f9fc 0%, #f1f5fb 100%);
-    border-left: 4px solid var(--accent);
+    background: linear-gradient(135deg,
+                rgba(255, 255, 255, 0.04) 0%,
+                rgba(255, 255, 255, 0.01) 50%,
+                rgba(255, 255, 255, 0.02) 100%);
+    border: 0.5px solid rgba(255, 255, 255, 0.2);
+    border-left: 3px solid var(--accent);
     padding: 1.5rem 2rem;
     margin: 2rem 0;
-    border-radius: 8px;
-    box-shadow: var(--shadow-sm);
+    border-radius: 12px;
+    backdrop-filter: blur(80px) saturate(180%);
+    -webkit-backdrop-filter: blur(80px) saturate(180%);
+    box-shadow:
+        /* 外部阴影 - 12层 */
+        0 0.5px 1px rgba(0, 0, 0, 0.05),
+        0 1px 2px rgba(0, 0, 0, 0.08),
+        0 2px 4px rgba(0, 0, 0, 0.08),
+        0 3px 6px rgba(0, 0, 0, 0.09),
+        0 4px 8px rgba(0, 0, 0, 0.09),
+        0 6px 12px rgba(0, 0, 0, 0.1),
+        0 8px 16px rgba(0, 0, 0, 0.11),
+        0 12px 24px rgba(0, 0, 0, 0.12),
+        0 16px 32px rgba(0, 0, 0, 0.13),
+        0 24px 48px rgba(0, 0, 0, 0.14),
+        0 32px 64px rgba(0, 0, 0, 0.15),
+        0 48px 96px rgba(0, 0, 0, 0.16),
+        /* 内部光效 - 6层 */
+        inset 0 0 0 0.5px rgba(255, 255, 255, 0.08),
+        inset 0 0.5px 0 0 rgba(255, 255, 255, 0.15),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.3),
+        inset 0 2px 1px 0 rgba(255, 255, 255, 0.15),
+        inset 0 -0.5px 0 0 rgba(0, 0, 0, 0.03),
+        inset 0 -1px 0 0 rgba(0, 0, 0, 0.05);
     position: relative;
     overflow: hidden;
 }
@@ -251,9 +417,9 @@ section {
     position: absolute;
     top: 0;
     left: 0;
-    width: 4px;
+    width: 3px;
     height: 100%;
-    background: var(--bg-gradient);
+    background: linear-gradient(180deg, var(--accent) 0%, rgba(41, 151, 255, 0.3) 100%);
 }
 
 .note strong {
@@ -268,6 +434,17 @@ section {
     margin-bottom: 0.75rem;
     font-size: 1rem;
     line-height: 1.8;
+    color: var(--text-secondary);
+}
+
+.note ul {
+    margin: 0.5rem 0;
+    padding-left: 1.5rem;
+    color: var(--text-secondary);
+}
+
+.note li {
+    margin-bottom: 0.5rem;
 }
 
 /* Image Grids */
@@ -282,18 +459,73 @@ section {
 .image-grid.grid-2col { grid-template-columns: repeat(2, 1fr); }
 
 .result-item {
-    background: var(--card-bg);
-    border: 1px solid var(--border);
+    background: linear-gradient(135deg,
+                rgba(255, 255, 255, 0.04) 0%,
+                rgba(255, 255, 255, 0.01) 50%,
+                rgba(255, 255, 255, 0.02) 100%);
+    border: 0.5px solid rgba(255, 255, 255, 0.2);
     border-radius: 12px;
     overflow: hidden;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: var(--shadow-sm);
+    backdrop-filter: blur(80px) saturate(180%);
+    -webkit-backdrop-filter: blur(80px) saturate(180%);
+    box-shadow:
+        /* 外部阴影 - 12层 */
+        0 0.5px 1px rgba(0, 0, 0, 0.05),
+        0 1px 2px rgba(0, 0, 0, 0.08),
+        0 2px 4px rgba(0, 0, 0, 0.08),
+        0 3px 6px rgba(0, 0, 0, 0.09),
+        0 4px 8px rgba(0, 0, 0, 0.09),
+        0 6px 12px rgba(0, 0, 0, 0.1),
+        0 8px 16px rgba(0, 0, 0, 0.11),
+        0 12px 24px rgba(0, 0, 0, 0.12),
+        0 16px 32px rgba(0, 0, 0, 0.13),
+        0 24px 48px rgba(0, 0, 0, 0.14),
+        0 32px 64px rgba(0, 0, 0, 0.15),
+        0 48px 96px rgba(0, 0, 0, 0.16),
+        /* 内部光效 - 6层 */
+        inset 0 0 0 0.5px rgba(255, 255, 255, 0.08),
+        inset 0 0.5px 0 0 rgba(255, 255, 255, 0.15),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.3),
+        inset 0 2px 1px 0 rgba(255, 255, 255, 0.15),
+        inset 0 -0.5px 0 0 rgba(0, 0, 0, 0.03),
+        inset 0 -1px 0 0 rgba(0, 0, 0, 0.05);
 }
 
 .result-item:hover {
-    box-shadow: var(--shadow-lg);
-    transform: translateY(-8px);
-    border-color: var(--accent);
+    transform: translateY(-4px);
+    border-color: rgba(41, 151, 255, 0.4);
+    background: linear-gradient(135deg,
+                rgba(255, 255, 255, 0.07) 0%,
+                rgba(255, 255, 255, 0.03) 50%,
+                rgba(255, 255, 255, 0.04) 100%);
+    box-shadow:
+        /* 外部阴影 - 11层 */
+        0 1px 2px rgba(0, 0, 0, 0.06),
+        0 2px 4px rgba(0, 0, 0, 0.08),
+        0 4px 8px rgba(0, 0, 0, 0.09),
+        0 6px 12px rgba(0, 0, 0, 0.1),
+        0 8px 16px rgba(0, 0, 0, 0.11),
+        0 12px 24px rgba(0, 0, 0, 0.12),
+        0 16px 32px rgba(0, 0, 0, 0.13),
+        0 24px 48px rgba(0, 0, 0, 0.15),
+        0 32px 64px rgba(0, 0, 0, 0.17),
+        0 48px 96px rgba(0, 0, 0, 0.19),
+        0 64px 128px rgba(0, 0, 0, 0.21),
+        /* 蓝色发光 - 5层 */
+        0 0 0 0.5px rgba(41, 151, 255, 0.2),
+        0 0 0 1px rgba(41, 151, 255, 0.3),
+        0 0 10px rgba(41, 151, 255, 0.08),
+        0 0 20px rgba(41, 151, 255, 0.1),
+        0 0 40px rgba(41, 151, 255, 0.06),
+        /* 内部光效 - 7层 */
+        inset 0 0 0 0.5px rgba(255, 255, 255, 0.12),
+        inset 0 0.5px 0 0 rgba(255, 255, 255, 0.2),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.4),
+        inset 0 2px 2px 0 rgba(255, 255, 255, 0.2),
+        inset 0 4px 4px 0 rgba(255, 255, 255, 0.08),
+        inset 0 -0.5px 0 0 rgba(0, 0, 0, 0.03),
+        inset 0 -1px 0 0 rgba(0, 0, 0, 0.05);
 }
 
 .result-item img {
@@ -310,30 +542,94 @@ section {
 
 .image-caption {
     text-align: center;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     color: var(--text-muted);
     padding: 1rem;
-    background: linear-gradient(180deg, #fafbfc 0%, #f6f8fa 100%);
-    font-weight: 500;
+    background: rgba(255, 255, 255, 0.05);
+    font-weight: 400;
+    letter-spacing: 0.01em;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
 
 /* Code Blocks */
 .code-section {
     margin: 2rem 0;
-    border: 2px solid var(--border);
+    background: linear-gradient(135deg,
+                rgba(255, 255, 255, 0.04) 0%,
+                rgba(255, 255, 255, 0.01) 50%,
+                rgba(255, 255, 255, 0.02) 100%);
+    border: 0.5px solid rgba(255, 255, 255, 0.2);
     border-radius: 12px;
     overflow: hidden;
-    box-shadow: var(--shadow-sm);
     transition: all 0.3s ease;
+    backdrop-filter: blur(80px) saturate(180%);
+    -webkit-backdrop-filter: blur(80px) saturate(180%);
+    box-shadow:
+        /* 外部阴影 - 12层 */
+        0 0.5px 1px rgba(0, 0, 0, 0.05),
+        0 1px 2px rgba(0, 0, 0, 0.08),
+        0 2px 4px rgba(0, 0, 0, 0.08),
+        0 3px 6px rgba(0, 0, 0, 0.09),
+        0 4px 8px rgba(0, 0, 0, 0.09),
+        0 6px 12px rgba(0, 0, 0, 0.1),
+        0 8px 16px rgba(0, 0, 0, 0.11),
+        0 12px 24px rgba(0, 0, 0, 0.12),
+        0 16px 32px rgba(0, 0, 0, 0.13),
+        0 24px 48px rgba(0, 0, 0, 0.14),
+        0 32px 64px rgba(0, 0, 0, 0.15),
+        0 48px 96px rgba(0, 0, 0, 0.16),
+        /* 内部光效 - 6层 */
+        inset 0 0 0 0.5px rgba(255, 255, 255, 0.08),
+        inset 0 0.5px 0 0 rgba(255, 255, 255, 0.15),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.3),
+        inset 0 2px 1px 0 rgba(255, 255, 255, 0.15),
+        inset 0 -0.5px 0 0 rgba(0, 0, 0, 0.03),
+        inset 0 -1px 0 0 rgba(0, 0, 0, 0.05);
 }
 
 .code-section:hover {
-    box-shadow: var(--shadow-md);
-    border-color: var(--accent);
+    border-color: rgba(41, 151, 255, 0.4);
+    background: linear-gradient(135deg,
+                rgba(255, 255, 255, 0.07) 0%,
+                rgba(255, 255, 255, 0.03) 50%,
+                rgba(255, 255, 255, 0.04) 100%);
+    box-shadow:
+        /* 外部阴影 - 11层 */
+        0 1px 2px rgba(0, 0, 0, 0.06),
+        0 2px 4px rgba(0, 0, 0, 0.08),
+        0 4px 8px rgba(0, 0, 0, 0.09),
+        0 6px 12px rgba(0, 0, 0, 0.1),
+        0 8px 16px rgba(0, 0, 0, 0.11),
+        0 12px 24px rgba(0, 0, 0, 0.12),
+        0 16px 32px rgba(0, 0, 0, 0.13),
+        0 24px 48px rgba(0, 0, 0, 0.15),
+        0 32px 64px rgba(0, 0, 0, 0.17),
+        0 48px 96px rgba(0, 0, 0, 0.19),
+        0 64px 128px rgba(0, 0, 0, 0.21),
+        /* 蓝色发光 - 5层 */
+        0 0 0 0.5px rgba(41, 151, 255, 0.2),
+        0 0 0 1px rgba(41, 151, 255, 0.3),
+        0 0 10px rgba(41, 151, 255, 0.08),
+        0 0 20px rgba(41, 151, 255, 0.1),
+        0 0 40px rgba(41, 151, 255, 0.06),
+        /* 内部光效 - 7层 */
+        inset 0 0 0 0.5px rgba(255, 255, 255, 0.12),
+        inset 0 0.5px 0 0 rgba(255, 255, 255, 0.2),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.4),
+        inset 0 2px 2px 0 rgba(255, 255, 255, 0.2),
+        inset 0 4px 4px 0 rgba(255, 255, 255, 0.08),
+        inset 0 -0.5px 0 0 rgba(0, 0, 0, 0.03),
+        inset 0 -1px 0 0 rgba(0, 0, 0, 0.05);
 }
 
 .code-header {
-    background: linear-gradient(135deg, #f8f9fb 0%, #f0f2f5 100%);
+    background: linear-gradient(135deg,
+                rgba(255, 255, 255, 0.04) 0%,
+                rgba(255, 255, 255, 0.01) 50%,
+                rgba(255, 255, 255, 0.02) 100%);
+    border: 0.5px solid rgba(255, 255, 255, 0.2);
+    border-bottom: 0.5px solid rgba(255, 255, 255, 0.12);
     padding: 1rem 1.5rem;
     cursor: pointer;
     user-select: none;
@@ -341,11 +637,63 @@ section {
     align-items: center;
     gap: 0.5rem;
     transition: all 0.3s ease;
-    border-bottom: 1px solid var(--border);
+    backdrop-filter: blur(80px) saturate(180%);
+    -webkit-backdrop-filter: blur(80px) saturate(180%);
+    box-shadow:
+        /* 外部阴影 - 12层 */
+        0 0.5px 1px rgba(0, 0, 0, 0.05),
+        0 1px 2px rgba(0, 0, 0, 0.08),
+        0 2px 4px rgba(0, 0, 0, 0.08),
+        0 3px 6px rgba(0, 0, 0, 0.09),
+        0 4px 8px rgba(0, 0, 0, 0.09),
+        0 6px 12px rgba(0, 0, 0, 0.1),
+        0 8px 16px rgba(0, 0, 0, 0.11),
+        0 12px 24px rgba(0, 0, 0, 0.12),
+        0 16px 32px rgba(0, 0, 0, 0.13),
+        0 24px 48px rgba(0, 0, 0, 0.14),
+        0 32px 64px rgba(0, 0, 0, 0.15),
+        0 48px 96px rgba(0, 0, 0, 0.16),
+        /* 内部光效 - 6层 */
+        inset 0 0 0 0.5px rgba(255, 255, 255, 0.08),
+        inset 0 0.5px 0 0 rgba(255, 255, 255, 0.15),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.3),
+        inset 0 2px 1px 0 rgba(255, 255, 255, 0.15),
+        inset 0 -0.5px 0 0 rgba(0, 0, 0, 0.03),
+        inset 0 -1px 0 0 rgba(0, 0, 0, 0.05);
 }
 
 .code-header:hover {
-    background: linear-gradient(135deg, #f0f2f5 0%, #e8ebf0 100%);
+    background: linear-gradient(135deg,
+                rgba(255, 255, 255, 0.07) 0%,
+                rgba(255, 255, 255, 0.03) 50%,
+                rgba(255, 255, 255, 0.04) 100%);
+    box-shadow:
+        /* 外部阴影 - 11层 */
+        0 1px 2px rgba(0, 0, 0, 0.06),
+        0 2px 4px rgba(0, 0, 0, 0.08),
+        0 4px 8px rgba(0, 0, 0, 0.09),
+        0 6px 12px rgba(0, 0, 0, 0.1),
+        0 8px 16px rgba(0, 0, 0, 0.11),
+        0 12px 24px rgba(0, 0, 0, 0.12),
+        0 16px 32px rgba(0, 0, 0, 0.13),
+        0 24px 48px rgba(0, 0, 0, 0.15),
+        0 32px 64px rgba(0, 0, 0, 0.17),
+        0 48px 96px rgba(0, 0, 0, 0.19),
+        0 64px 128px rgba(0, 0, 0, 0.21),
+        /* 蓝色发光 - 5层 */
+        0 0 0 0.5px rgba(41, 151, 255, 0.2),
+        0 0 0 1px rgba(41, 151, 255, 0.3),
+        0 0 10px rgba(41, 151, 255, 0.08),
+        0 0 20px rgba(41, 151, 255, 0.1),
+        0 0 40px rgba(41, 151, 255, 0.06),
+        /* 内部光效 - 7层 */
+        inset 0 0 0 0.5px rgba(255, 255, 255, 0.12),
+        inset 0 0.5px 0 0 rgba(255, 255, 255, 0.2),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.4),
+        inset 0 2px 2px 0 rgba(255, 255, 255, 0.2),
+        inset 0 4px 4px 0 rgba(255, 255, 255, 0.08),
+        inset 0 -0.5px 0 0 rgba(0, 0, 0, 0.03),
+        inset 0 -1px 0 0 rgba(0, 0, 0, 0.05);
 }
 
 .code-header code {
@@ -423,23 +771,80 @@ section {
 .overview-card {
     width: 100%;
     flex: 1;
-    background: var(--card-bg);
-    border: 2px solid var(--border);
-    border-radius: 12px;
+    background: linear-gradient(135deg,
+                rgba(255, 255, 255, 0.04) 0%,
+                rgba(255, 255, 255, 0.01) 50%,
+                rgba(255, 255, 255, 0.02) 100%);
+    border: 0.5px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
     padding: 2rem;
-    box-shadow: var(--shadow-sm);
     transition: all 0.3s ease;
+    backdrop-filter: blur(80px) saturate(180%);
+    -webkit-backdrop-filter: blur(80px) saturate(180%);
+    box-shadow:
+        /* 外部阴影 - 12层 */
+        0 0.5px 1px rgba(0, 0, 0, 0.05),
+        0 1px 2px rgba(0, 0, 0, 0.08),
+        0 2px 4px rgba(0, 0, 0, 0.08),
+        0 3px 6px rgba(0, 0, 0, 0.09),
+        0 4px 8px rgba(0, 0, 0, 0.09),
+        0 6px 12px rgba(0, 0, 0, 0.1),
+        0 8px 16px rgba(0, 0, 0, 0.11),
+        0 12px 24px rgba(0, 0, 0, 0.12),
+        0 16px 32px rgba(0, 0, 0, 0.13),
+        0 24px 48px rgba(0, 0, 0, 0.14),
+        0 32px 64px rgba(0, 0, 0, 0.15),
+        0 48px 96px rgba(0, 0, 0, 0.16),
+        /* 内部光效 - 6层 */
+        inset 0 0 0 0.5px rgba(255, 255, 255, 0.08),
+        inset 0 0.5px 0 0 rgba(255, 255, 255, 0.15),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.3),
+        inset 0 2px 1px 0 rgba(255, 255, 255, 0.15),
+        inset 0 -0.5px 0 0 rgba(0, 0, 0, 0.03),
+        inset 0 -1px 0 0 rgba(0, 0, 0, 0.05);
 }
 
 .overview-card:hover {
-    box-shadow: var(--shadow-lg);
     transform: translateY(-4px);
-    border-color: var(--accent);
+    border-color: rgba(41, 151, 255, 0.4);
+    background: linear-gradient(135deg,
+                rgba(255, 255, 255, 0.07) 0%,
+                rgba(255, 255, 255, 0.03) 50%,
+                rgba(255, 255, 255, 0.04) 100%);
+    box-shadow:
+        /* 外部阴影 - 11层 */
+        0 1px 2px rgba(0, 0, 0, 0.06),
+        0 2px 4px rgba(0, 0, 0, 0.08),
+        0 4px 8px rgba(0, 0, 0, 0.09),
+        0 6px 12px rgba(0, 0, 0, 0.1),
+        0 8px 16px rgba(0, 0, 0, 0.11),
+        0 12px 24px rgba(0, 0, 0, 0.12),
+        0 16px 32px rgba(0, 0, 0, 0.13),
+        0 24px 48px rgba(0, 0, 0, 0.15),
+        0 32px 64px rgba(0, 0, 0, 0.17),
+        0 48px 96px rgba(0, 0, 0, 0.19),
+        0 64px 128px rgba(0, 0, 0, 0.21),
+        /* 蓝色发光 - 5层 */
+        0 0 0 0.5px rgba(41, 151, 255, 0.2),
+        0 0 0 1px rgba(41, 151, 255, 0.3),
+        0 0 10px rgba(41, 151, 255, 0.08),
+        0 0 20px rgba(41, 151, 255, 0.1),
+        0 0 40px rgba(41, 151, 255, 0.06),
+        /* 内部光效 - 7层 */
+        inset 0 0 0 0.5px rgba(255, 255, 255, 0.12),
+        inset 0 0.5px 0 0 rgba(255, 255, 255, 0.2),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.4),
+        inset 0 2px 2px 0 rgba(255, 255, 255, 0.2),
+        inset 0 4px 4px 0 rgba(255, 255, 255, 0.08),
+        inset 0 -0.5px 0 0 rgba(0, 0, 0, 0.03),
+        inset 0 -1px 0 0 rgba(0, 0, 0, 0.05);
 }
 
 .overview-card h3 {
     margin-top: 0;
     color: var(--accent);
+    font-size: 28px;
+    font-weight: 600;
 }
 
 /* Apple-style Horizontal Scroll Gallery */
@@ -450,15 +855,15 @@ section {
     margin-right: calc(-50vw + 50%);
     padding: 0;
     overflow: visible;
-    height: 60vh;
+    height: 100%;
     display: flex;
-    align-items: flex-start;
+    align-items: center;
 }
 
 .scroll-gallery-container {
     position: relative;
     width: 100%;
-    height: 60vh;
+    height: 65vh;
     overflow: hidden;
     border-radius: 0;
 }
@@ -498,11 +903,14 @@ section {
     bottom: 0;
     left: 0;
     right: 0;
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.7) 0%, transparent 100%);
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0.3) 50%, transparent 100%);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
     color: white;
     padding: 2rem;
     font-size: 1.1rem;
     font-weight: 500;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* Info Section */
@@ -510,63 +918,277 @@ section {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--bg-alt);
+    background: radial-gradient(ellipse at center, #1a1a1a 0%, #000000 100%);
+    position: relative;
+}
+
+.info-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 50% 40%, rgba(41, 151, 255, 0.04) 0%, transparent 60%),
+                radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.02) 0%, transparent 50%);
+    pointer-events: none;
 }
 
 .content-centered {
-    max-width: 980px;
+    max-width: 1200px;
     text-align: center;
-    padding: 0 40px;
+    padding: 0 60px;
+    position: relative;
+    z-index: 1;
+}
+
+.content-centered h2 {
+    font-size: 64px;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, #f5f5f7 0%, #a1a1a6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.content-centered > p {
+    font-size: 24px;
+    line-height: 1.5;
+    color: var(--text-secondary);
+    max-width: 800px;
+    margin: 0 auto 4rem;
+    font-weight: 300;
 }
 
 .specs-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 2rem;
-    margin-top: 3rem;
+    gap: 3rem;
+    margin-top: 4rem;
+}
+
+.spec-item {
+    padding: 2rem;
+    background: linear-gradient(135deg,
+                rgba(255, 255, 255, 0.04) 0%,
+                rgba(255, 255, 255, 0.01) 50%,
+                rgba(255, 255, 255, 0.02) 100%);
+    border: 0.5px solid rgba(255, 255, 255, 0.2);
+    border-radius: 16px;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(80px) saturate(180%);
+    -webkit-backdrop-filter: blur(80px) saturate(180%);
+    box-shadow:
+        0 0.5px 1px rgba(0, 0, 0, 0.05),
+        0 1px 2px rgba(0, 0, 0, 0.08),
+        0 2px 4px rgba(0, 0, 0, 0.08),
+        0 3px 6px rgba(0, 0, 0, 0.09),
+        0 4px 8px rgba(0, 0, 0, 0.09),
+        0 6px 12px rgba(0, 0, 0, 0.1),
+        0 8px 16px rgba(0, 0, 0, 0.11),
+        0 12px 24px rgba(0, 0, 0, 0.12),
+        0 16px 32px rgba(0, 0, 0, 0.13),
+        0 24px 48px rgba(0, 0, 0, 0.14),
+        0 32px 64px rgba(0, 0, 0, 0.15),
+        0 48px 96px rgba(0, 0, 0, 0.16),
+        inset 0 0 0 0.5px rgba(255, 255, 255, 0.08),
+        inset 0 0.5px 0 0 rgba(255, 255, 255, 0.15),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.3),
+        inset 0 2px 1px 0 rgba(255, 255, 255, 0.15),
+        inset 0 -0.5px 0 0 rgba(0, 0, 0, 0.03),
+        inset 0 -1px 0 0 rgba(0, 0, 0, 0.05);
+}
+
+.spec-item:hover {
+    background: linear-gradient(135deg,
+                rgba(255, 255, 255, 0.07) 0%,
+                rgba(255, 255, 255, 0.03) 50%,
+                rgba(255, 255, 255, 0.04) 100%);
+    border-color: rgba(41, 151, 255, 0.4);
+    transform: translateY(-4px);
+    box-shadow:
+        0 1px 2px rgba(0, 0, 0, 0.06),
+        0 2px 4px rgba(0, 0, 0, 0.08),
+        0 4px 8px rgba(0, 0, 0, 0.09),
+        0 6px 12px rgba(0, 0, 0, 0.1),
+        0 8px 16px rgba(0, 0, 0, 0.11),
+        0 12px 24px rgba(0, 0, 0, 0.12),
+        0 16px 32px rgba(0, 0, 0, 0.13),
+        0 24px 48px rgba(0, 0, 0, 0.15),
+        0 32px 64px rgba(0, 0, 0, 0.17),
+        0 48px 96px rgba(0, 0, 0, 0.19),
+        0 64px 128px rgba(0, 0, 0, 0.21),
+        /* 蓝色发光 */
+        0 0 0 0.5px rgba(41, 151, 255, 0.2),
+        0 0 0 1px rgba(41, 151, 255, 0.3),
+        0 0 10px rgba(41, 151, 255, 0.08),
+        0 0 20px rgba(41, 151, 255, 0.1),
+        0 0 40px rgba(41, 151, 255, 0.06),
+        /* 内部光效 */
+        inset 0 0 0 0.5px rgba(255, 255, 255, 0.12),
+        inset 0 0.5px 0 0 rgba(255, 255, 255, 0.2),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.4),
+        inset 0 2px 2px 0 rgba(255, 255, 255, 0.2),
+        inset 0 4px 4px 0 rgba(255, 255, 255, 0.08),
+        inset 0 -0.5px 0 0 rgba(0, 0, 0, 0.03),
+        inset 0 -1px 0 0 rgba(0, 0, 0, 0.05);
 }
 
 .spec-item h4 {
-    font-size: 14px;
+    font-size: 12px;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--text-muted);
-    margin-bottom: 0.5rem;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    margin-bottom: 0.8rem;
+    font-weight: 600;
 }
 
 .spec-item p {
-    font-size: 21px;
+    font-size: 18px;
     color: var(--text-primary);
-    font-weight: 500;
+    font-weight: 400;
+    line-height: 1.4;
 }
 
 /* Scene wrapper to group text + gallery */
 .scene-wrapper {
     scroll-snap-align: start;
-    height: 100vh;
     min-height: 100vh;
-    max-height: 100vh;
-    overflow: hidden;
     display: flex;
     flex-direction: column;
-    justify-content: flex-start;
-    padding: 100px 0 0 0;
+    justify-content: space-between;
+    padding: 80px 0 0 0;
     position: relative;
     background: var(--bg);
 }
 
 .scene-wrapper .content {
     flex-shrink: 0;
-    padding: 0 max(22px, env(safe-area-inset-left)) 40px max(22px, env(safe-area-inset-right));
+    padding: 0 max(22px, env(safe-area-inset-left)) 20px max(22px, env(safe-area-inset-right));
     max-width: 980px;
     margin: 0 auto;
     width: 100%;
 }
 
 .scene-wrapper .scroll-gallery-section {
-    margin-top: auto;
-    margin-bottom: 0;
-    flex-shrink: 0;
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    margin: 0;
+}
+
+/* Section Navigation Indicators */
+.section-nav {
+    position: fixed;
+    right: 2rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem;
+    background: linear-gradient(135deg,
+                rgba(255, 255, 255, 0.04) 0%,
+                rgba(255, 255, 255, 0.01) 50%,
+                rgba(255, 255, 255, 0.02) 100%);
+    border: 0.5px solid rgba(255, 255, 255, 0.2);
+    border-radius: 24px;
+    backdrop-filter: blur(80px) saturate(180%);
+    -webkit-backdrop-filter: blur(80px) saturate(180%);
+    box-shadow:
+        /* 外部阴影 - 12层 */
+        0 0.5px 1px rgba(0, 0, 0, 0.05),
+        0 1px 2px rgba(0, 0, 0, 0.08),
+        0 2px 4px rgba(0, 0, 0, 0.08),
+        0 3px 6px rgba(0, 0, 0, 0.09),
+        0 4px 8px rgba(0, 0, 0, 0.09),
+        0 6px 12px rgba(0, 0, 0, 0.1),
+        0 8px 16px rgba(0, 0, 0, 0.11),
+        0 12px 24px rgba(0, 0, 0, 0.12),
+        0 16px 32px rgba(0, 0, 0, 0.13),
+        0 24px 48px rgba(0, 0, 0, 0.14),
+        0 32px 64px rgba(0, 0, 0, 0.15),
+        0 48px 96px rgba(0, 0, 0, 0.16),
+        /* 内部光效 - 6层 */
+        inset 0 0 0 0.5px rgba(255, 255, 255, 0.08),
+        inset 0 0.5px 0 0 rgba(255, 255, 255, 0.15),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.3),
+        inset 0 2px 1px 0 rgba(255, 255, 255, 0.15),
+        inset 0 -0.5px 0 0 rgba(0, 0, 0, 0.03),
+        inset 0 -1px 0 0 rgba(0, 0, 0, 0.05);
+    pointer-events: auto;
+}
+
+.section-nav-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+}
+
+.section-nav-dot:hover {
+    background: rgba(255, 255, 255, 0.5);
+    transform: scale(1.2);
+}
+
+.section-nav-dot.active {
+    background: var(--accent);
+    box-shadow: 0 0 12px rgba(41, 151, 255, 0.6),
+                inset 0 0 4px rgba(255, 255, 255, 0.3);
+    transform: scale(1.3);
+}
+
+.section-nav-dot::after {
+    content: attr(data-label);
+    position: absolute;
+    right: 24px;
+    top: 50%;
+    transform: translateY(-50%);
+    white-space: nowrap;
+    padding: 0.5rem 1rem;
+    background: linear-gradient(135deg,
+                rgba(255, 255, 255, 0.04) 0%,
+                rgba(255, 255, 255, 0.01) 50%,
+                rgba(255, 255, 255, 0.02) 100%);
+    border: 0.5px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 0.75rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    backdrop-filter: blur(80px) saturate(180%);
+    -webkit-backdrop-filter: blur(80px) saturate(180%);
+    box-shadow:
+        /* 外部阴影 - 12层 */
+        0 0.5px 1px rgba(0, 0, 0, 0.05),
+        0 1px 2px rgba(0, 0, 0, 0.08),
+        0 2px 4px rgba(0, 0, 0, 0.08),
+        0 3px 6px rgba(0, 0, 0, 0.09),
+        0 4px 8px rgba(0, 0, 0, 0.09),
+        0 6px 12px rgba(0, 0, 0, 0.1),
+        0 8px 16px rgba(0, 0, 0, 0.11),
+        0 12px 24px rgba(0, 0, 0, 0.12),
+        0 16px 32px rgba(0, 0, 0, 0.13),
+        0 24px 48px rgba(0, 0, 0, 0.14),
+        0 32px 64px rgba(0, 0, 0, 0.15),
+        0 48px 96px rgba(0, 0, 0, 0.16),
+        /* 内部光效 - 6层 */
+        inset 0 0 0 0.5px rgba(255, 255, 255, 0.08),
+        inset 0 0.5px 0 0 rgba(255, 255, 255, 0.15),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.3),
+        inset 0 2px 1px 0 rgba(255, 255, 255, 0.15),
+        inset 0 -0.5px 0 0 rgba(0, 0, 0, 0.03),
+        inset 0 -1px 0 0 rgba(0, 0, 0, 0.05);
+}
+
+.section-nav-dot:hover::after {
+    opacity: 1;
 }
 
 /* Responsive */
@@ -585,10 +1207,21 @@ section {
     .toc {
         font-size: 0.85rem;
     }
+
+    .section-nav {
+        right: 1rem;
+        padding: 0.75rem;
+        gap: 0.5rem;
+    }
+
+    .section-nav-dot {
+        width: 6px;
+        height: 6px;
+    }
 }
 
 /* Print */
 @media print {
-    .toc, .lightbox { display: none; }
+    .toc, .lightbox, .section-nav { display: none; }
     section { page-break-inside: avoid; }
 }
