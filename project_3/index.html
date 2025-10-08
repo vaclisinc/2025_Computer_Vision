@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project 3: Image Warping and Mosaicing</title>
+    <link rel="stylesheet" href="css/styles.css?v=1759909542">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="header-content">
+            <div class="header-info">
+                <a href="../index.html" class="back-link">← Back to Projects</a>
+                <h1>Project 3: Image Warping and Mosaicing</h1>
+                <p class="subtitle">CS 180 Project 3 · Song-Ze Yu</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="toc">
+        <a href="#part1-1">A.1: Shoot</a>
+        <a href="#part1-2">A.2: Homographies</a>
+        <a href="#part1-3">A.3: Warp</a>
+        <a href="#part1-4">A.4: Mosaic</a>
+        <a href="#part2-1">B.1: Harris</a>
+        <a href="#part2-2">B.2: Descriptors</a>
+        <a href="#part2-3">B.3: Matching</a>
+        <a href="#part2-4">B.4: RANSAC</a>
+    </nav>
+
+    <main>
+        <!-- Overview -->
+        <section id="overview">
+            <h2>Overview</h2>
+
+            <div class="content">
+                <p>This project explores creating panoramic image mosaics through two approaches:</p>
+
+                <div class="overview-grid">
+                    <div class="overview-card">
+                        <h3>Part A: Image Warping and Mosaicing</h3>
+                        <p>Manually select correspondences, compute homographies, warp images, and blend them into seamless panoramas.</p>
+                    </div>
+
+                    <div class="overview-card">
+                        <h3>Part B: Feature Matching for Autostitching</h3>
+                        <p style="font-style: italic; color: var(--text-muted);">Stay tuned.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- PART A: IMAGE MOSAICS -->
+
+        <!-- Part A.1 Overview -->
+        <section id="part1-1-overview" class="info-section">
+            <div class="content-centered">
+                <h2>Part A.1: Shoot and Digitize Pictures</h2>
+                <p>I captured two sets of images with projective transformations by <strong>fixing the center of projection (COP)</strong> and <strong>rotating the camera</strong> while keeping the same position.</p>
+
+                <div class="specs-grid">
+                    <div class="spec-item">
+                        <h4>Camera</h4>
+                        <p>iPhone 1× lens (24mm equivalent)</p>
+                    </div>
+                    <div class="spec-item">
+                        <h4>Method</h4>
+                        <p>Fixed COP, rotation only</p>
+                    </div>
+                    <div class="spec-item">
+                        <h4>Overlap</h4>
+                        <p>50-60% between images</p>
+                    </div>
+                    <div class="spec-item">
+                        <h4>Distortion</h4>
+                        <p>Minimal barrel distortion</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Scene 1: IHouse Library -->
+        <section class="scene-wrapper" id="scene-1">
+            <div class="content">
+                <h3>Scene 1: IHouse Library</h3>
+                <p>Indoor panorama captured with fixed center of projection</p>
+            </div>
+
+            <div class="scroll-gallery-section">
+                <div class="scroll-gallery-container" id="gallery-ihouse">
+                    <div class="scroll-gallery">
+                        <div class="scroll-gallery-item">
+                            <img src="src/img/3A_1_ihouse-library-01.jpg" alt="IHouse Library - Image 1" class="clickable">
+                            <div class="scroll-gallery-caption">Image 1 - Left view</div>
+                        </div>
+                        <div class="scroll-gallery-item">
+                            <img src="src/img/3A_1_ihouse-library-02.jpg" alt="IHouse Library - Image 2" class="clickable">
+                            <div class="scroll-gallery-caption">Image 2 - Center-left</div>
+                        </div>
+                        <div class="scroll-gallery-item">
+                            <img src="src/img/3A_1_ihouse-library-03.jpg" alt="IHouse Library - Image 3" class="clickable">
+                            <div class="scroll-gallery-caption">Image 3 - Center-right</div>
+                        </div>
+                        <div class="scroll-gallery-item">
+                            <img src="src/img/3A_1_ihouse-library-04.jpg" alt="IHouse Library - Image 4" class="clickable">
+                            <div class="scroll-gallery-caption">Image 4 - Right view</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Scene 2: CNMAT -->
+        <section class="scene-wrapper" id="scene-2">
+            <div class="content">
+                <h3>Scene 2: CNMAT Music Lab</h3>
+                <p>Outdoor panorama of the serene upstairs area</p>
+            </div>
+
+            <div class="scroll-gallery-section">
+                <div class="scroll-gallery-container" id="gallery-cnmat">
+                    <div class="scroll-gallery">
+                        <div class="scroll-gallery-item">
+                            <img src="src/img/3A_1_cnmat-upstair-01.jpg" alt="CNMAT Upstairs - Image 1" class="clickable">
+                            <div class="scroll-gallery-caption">Image 1 - Left view</div>
+                        </div>
+                        <div class="scroll-gallery-item">
+                            <img src="src/img/3A_1_cnmat-upstair-02.jpg" alt="CNMAT Upstairs - Image 2" class="clickable">
+                            <div class="scroll-gallery-caption">Image 2 - Center-left</div>
+                        </div>
+                        <div class="scroll-gallery-item">
+                            <img src="src/img/3A_1_cnmat-upstair-03.jpg" alt="CNMAT Upstairs - Image 3" class="clickable">
+                            <div class="scroll-gallery-caption">Image 3 - Center-right</div>
+                        </div>
+                        <div class="scroll-gallery-item">
+                            <img src="src/img/3A_1_cnmat-upstair-04.jpg" alt="CNMAT Upstairs - Image 4" class="clickable">
+                            <div class="scroll-gallery-caption">Image 4 - Right view</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Part A.2: Recover Homographies -->
+        <section id="part1-2">
+            <h2>Part A.2: Recover Homographies</h2>
+
+            <div class="content">
+                    <h3>Approach</h3>
+                    <p>To warp images and create panoramic mosaics, we need to compute the homography matrix <code>H</code> that maps points from one image to another. Given correspondence points between two images, we solve for the 8 unknowns in the homography using a system of linear equations.</p>
+
+                    <div class="result-item" style="max-width: 900px; margin: 2rem auto; overflow: hidden;">
+                        <img src="src/img/3A_2_draft.jpg" alt="Homography derivation notes" class="clickable" style="width: 85% !important; max-width: 85% !important; margin: 0 auto; display: block;">
+                        <div class="image-caption">Mathematical derivation of the homography system</div>
+                    </div>
+
+                    <h3>Mathematical Formulation</h3>
+                    <p>For each correspondence pair <code>(x, y) ↔ (u, v)</code>, we construct two linear equations:</p>
+                    <ul>
+                        <li><code>h₁x + h₂y + h₃ - h₇ux - h₈uy = u</code></li>
+                        <li><code>h₄x + h₅y + h₆ - h₇vx - h₈vy = v</code></li>
+                    </ul>
+                    <p>With <em>n</em> correspondence points, we build the system <code>Ah = b</code> where:</p>
+                    <ul>
+                        <li><code>A</code> is a <code>2n × 8</code> matrix containing the coordinates and their products</li>
+                        <li><code>h</code> is an <code>8 × 1</code> vector of unknown homography coefficients</li>
+                        <li><code>b</code> is a <code>2n × 1</code> vector of target coordinates</li>
+                    </ul>
+                    <p>We solve this using least-squares: <code>h = (AᵀA)⁻¹Aᵀb</code>, then reconstruct the <code>3×3</code> homography matrix with <code>h₉ = 1</code>.</p>
+
+                    <h3>Implementation</h3>
+
+                    <div class="note">
+                        <strong>Helper Functions:</strong>
+                        <ul style="margin-top: 0.5rem;">
+                            <li><code>select_correspondences()</code> — Interactive point selection using matplotlib</li>
+                            <li><code>visualize_correspondences()</code> — Draws correspondences on image pairs</li>
+                            <li><code>print_system()</code> — Displays the linear system for verification</li>
+                            <li><code>verify_homography()</code> — Computes reprojection error</li>
+                        </ul>
+                    </div>
+
+                    <div class="code-section">
+                        <div class="code-header" onclick="toggleCode(this)">
+                            <span class="toggle-icon">▼</span> Main Function: <code>computeH</code>
+                        </div>
+                        <div class="code-content">
+                            <pre><code class="language-python"># File: part2_homography.py:69-92
+
+def computeH(pts1, pts2):
+    n = len(pts1)
+    A = np.zeros((2*n, 8))
+    b = np.zeros((2*n, 1))
+
+    for i in range(n):
+        x, y = pts1[i]
+        u, v = pts2[i]
+
+        A[2*i] = [x, y, 1, 0, 0, 0, -u*x, -u*y]
+        b[2*i] = u
+
+        A[2*i+1] = [0, 0, 0, x, y, 1, -v*x, -v*y]
+        b[2*i+1] = v
+
+    h, _, _, _ = np.linalg.lstsq(A, b, rcond=None)
+
+    H = np.zeros((3, 3))
+    H[0, :] = h[:3].flatten()
+    H[1, :] = h[3:6].flatten()
+    H[2, :2] = h[6:].flatten()
+    H[2, 2] = 1
+
+    return H, A, b</code></pre>
+                        </div>
+                    </div>
+
+                    <h3>Example: IHouse-Library Panorama</h3>
+                    <p>For this demonstration, I selected 8 correspondence points between two images of the IHouse library. Since demonstrating all image pairs would be excessive, I'm showing results for images <code>01.jpg → 02.jpg</code>.</p>
+
+                    <div class="result-item" style="margin: 2rem 0; max-width: 100%; overflow: hidden;">
+                        <img src="src/img/3A_2_ihouse-library_correspondences_viz_01_to_02.png" alt="IHouse-Library correspondences visualization" class="clickable" style="width: 85% !important; max-width: 85% !important; margin: 0 auto; display: block;">
+                        <div class="image-caption">8 manually selected correspondence points visualized</div>
+                    </div>
+
+                    <h3>System of Equations & Recovered Homography</h3>
+                    <div class="note">
+                        <strong>Linear System (Ah = b):</strong>
+                        <pre style="margin-top: 0.5rem; background: #1e1e1e; color: #d4d4d4; padding: 1rem; border-radius: 6px; overflow-x: auto; font-size: 0.8rem; line-height: 1.4;"><code>A: 16×8, b: 16×1
+
+First 4 rows:
+[[ 1.305e+03  1.229e+02  1.000e+00  0.000e+00  0.000e+00  0.000e+00 -7.926e+05 -7.462e+04]
+ [ 0.000e+00  0.000e+00  0.000e+00  1.305e+03  1.229e+02  1.000e+00 -2.245e+05 -2.113e+04]
+ [ 1.578e+03  9.773e+01  1.000e+00  0.000e+00  0.000e+00  0.000e+00 -1.306e+06 -8.086e+04]
+ [ 0.000e+00  0.000e+00  0.000e+00  1.578e+03  9.773e+01  1.000e+00 -3.111e+05 -1.926e+04]]
+
+b: [607.18, 171.96, 827.34, 197.12]</code></pre>
+                    </div>
+
+                    <div class="note">
+                        <strong>Recovered Homography Matrix:</strong>
+                        <pre style="margin-top: 0.5rem; background: #1e1e1e; color: #d4d4d4; padding: 1rem; border-radius: 6px; overflow-x: auto; font-size: 0.8rem; line-height: 1.4;"><code>H_1_to_2:
+[[ 2.916e+00 -1.578e-01 -2.272e+03]
+ [ 6.617e-01  2.247e+00 -7.104e+02]
+ [ 1.153e-03 -1.504e-04  1.000e+00]]
+
+Mean reprojection error: 2.45 pixels
+Max reprojection error:  3.22 pixels</code></pre>
+                    </div>
+
+                    <p>The low reprojection errors confirm that our computed homography accurately maps the correspondence points between the two images.</p>
+            </div>
+        </section>
+
+        <!-- Part A.3: Warp the Images -->
+        <section id="part1-3">
+            <h2>Part A.3: Warp the Images</h2>
+            <p><!-- Content to be added --></p>
+        </section>
+
+        <!-- Part A.4: Blend the Images into a Mosaic -->
+        <section id="part1-4">
+            <h2>Part A.4: Blend the Images into a Mosaic</h2>
+            <p><!-- Content to be added --></p>
+        </section>
+
+        <!-- PART B: FEATURE MATCHING FOR AUTOSTITCHING -->
+
+        <!-- Part B.1: Harris Corner Detection -->
+        <section id="part2-1">
+            <h2>Part B.1: Harris Corner Detection</h2>
+            <p><!-- Content to be added --></p>
+        </section>
+
+        <!-- Part B.2: Feature Descriptor Extraction -->
+        <section id="part2-2">
+            <h2>Part B.2: Feature Descriptor Extraction</h2>
+            <p><!-- Content to be added --></p>
+        </section>
+
+        <!-- Part B.3: Feature Matching -->
+        <section id="part2-3">
+            <h2>Part B.3: Feature Matching</h2>
+            <p><!-- Content to be added --></p>
+        </section>
+
+        <!-- Part B.4: RANSAC -->
+        <section id="part2-4">
+            <h2>Part B.4: RANSAC</h2>
+            <p><!-- Content to be added --></p>
+        </section>
+    </main>
+
+    <!-- Lightbox -->
+    <div id="lightbox" class="lightbox">
+        <img id="lightbox-img">
+        <span class="close">&times;</span>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script>
+        // Toggle code blocks
+        function toggleCode(element) {
+            const codeContent = element.nextElementSibling;
+            const toggleIcon = element.querySelector('.toggle-icon');
+
+            if (codeContent.style.display === 'none') {
+                codeContent.style.display = 'block';
+                toggleIcon.textContent = '▼';
+            } else {
+                codeContent.style.display = 'none';
+                toggleIcon.textContent = '▶';
+            }
+        }
+
+        // Image lightbox
+        document.querySelectorAll('.clickable').forEach(img => {
+            img.addEventListener('click', function() {
+                const lightbox = document.getElementById('lightbox');
+                const lightboxImg = document.getElementById('lightbox-img');
+                lightbox.style.display = 'flex';
+                lightboxImg.src = this.src;
+            });
+        });
+
+        document.querySelector('.lightbox .close').addEventListener('click', function() {
+            document.getElementById('lightbox').style.display = 'none';
+        });
+
+        document.getElementById('lightbox').addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.style.display = 'none';
+            }
+        });
+
+        // Smooth scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // Apple-style horizontal scroll galleries
+        function initScrollGallery(galleryContainerId, sceneId) {
+            const sceneWrapper = document.getElementById(sceneId);
+            if (!sceneWrapper) {
+                console.error('Scene wrapper not found:', sceneId);
+                return;
+            }
+
+            const gallerySection = sceneWrapper.querySelector('.scroll-gallery-section');
+            const galleryContainer = document.getElementById(galleryContainerId);
+            if (!galleryContainer) {
+                console.error('Gallery container not found:', galleryContainerId);
+                return;
+            }
+
+            const gallery = galleryContainer.querySelector('.scroll-gallery');
+            if (!gallery) {
+                console.error('Gallery not found in:', galleryContainerId);
+                return;
+            }
+
+            console.log('Initialized gallery:', galleryContainerId, 'in scene:', sceneId);
+
+            let currentScrollPosition = 0;
+            let maxScroll = 0;
+            let isActive = false;
+
+            function calculateMaxScroll() {
+                maxScroll = gallery.scrollWidth - window.innerWidth;
+                console.log('Max scroll for', galleryContainerId, ':', maxScroll);
+            }
+
+            function updateGalleryPosition() {
+                gallery.style.transform = `translateX(-${currentScrollPosition}px)`;
+            }
+
+            function checkIfActive() {
+                if (!sceneWrapper) return false;
+                const rect = sceneWrapper.getBoundingClientRect();
+
+                // Scene is active when it's fully in viewport (snapped)
+                const active = rect.top >= -50 && rect.top <= 50;
+
+                console.log('checkIfActive:', galleryContainerId, 'rect.top:', rect.top, 'active:', active);
+                return active;
+            }
+
+            function handleWheel(e) {
+                const wasActive = isActive;
+                isActive = checkIfActive();
+
+                console.log('Wheel event triggered, isActive:', isActive, 'galleryContainerId:', galleryContainerId);
+
+                // Only handle wheel events when gallery section is in view
+                if (isActive) {
+                    const delta = e.deltaY;
+                    const canScrollRight = delta > 0 && currentScrollPosition < maxScroll;
+                    const canScrollLeft = delta < 0 && currentScrollPosition > 0;
+
+                    console.log('Delta:', delta, 'canScrollRight:', canScrollRight, 'canScrollLeft:', canScrollLeft, 'currentPos:', currentScrollPosition);
+
+                    if (canScrollRight || canScrollLeft) {
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        // Smooth horizontal scroll with easing
+                        const scrollAmount = delta * 0.6; // Slower, smoother
+                        currentScrollPosition += scrollAmount;
+                        currentScrollPosition = Math.max(0, Math.min(maxScroll, currentScrollPosition));
+
+                        // Use requestAnimationFrame for smoother rendering
+                        requestAnimationFrame(() => updateGalleryPosition());
+
+                        console.log('Updated position to:', currentScrollPosition);
+                    }
+                }
+
+                // Reset when entering scene
+                if (isActive && !wasActive) {
+                    currentScrollPosition = 0;
+                    calculateMaxScroll();
+                    updateGalleryPosition();
+                    console.log('Scene became active, reset position');
+                }
+            }
+
+            function handleScroll() {
+                const rect = sceneWrapper.getBoundingClientRect();
+
+                // Reset when scene is completely out of view
+                if (rect.bottom < -100 || rect.top > window.innerHeight + 100) {
+                    isActive = false;
+                    currentScrollPosition = 0;
+                    updateGalleryPosition();
+                }
+            }
+
+            // Calculate initial max scroll
+            calculateMaxScroll();
+            window.addEventListener('resize', calculateMaxScroll);
+            window.addEventListener('wheel', handleWheel, { passive: false });
+            window.addEventListener('scroll', handleScroll, { passive: true });
+        }
+
+        // Initialize both galleries
+        window.addEventListener('load', function() {
+            console.log('Page loaded, initializing galleries...');
+            initScrollGallery('gallery-ihouse', 'scene-1');
+            initScrollGallery('gallery-cnmat', 'scene-2');
+        });
+    </script>
+</body>
+</html>
