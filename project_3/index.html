@@ -265,16 +265,13 @@ def computeH(pts1, pts2):
                 <ul style="margin-top: 0.5rem;">
                     <li><code>select_correspondences()</code> — Interactive point selection using matplotlib ginput</li>
                     <li><code>visualize_correspondences()</code> — Draws correspondences on image pairs</li>
-                    <li><code>save_correspondences()</code> — Save selected points to avoid re-selecting</li>
-                    <li><code>load_correspondences()</code> — Load previously saved correspondence points</li>
-                    <li><code>print_system()</code> — Displays the linear system for website demo</li>
-                    <li><code>verify_homography()</code> — Computes reprojection error</li>
-                </ul>
+                    <li><code>save_correspondences(), load_correspondences()</code> — Save and load selected points in json to avoid re-selecting</li>
+                    <li><code>verify_homography(), print_system()</code> — Displays the linear system and compute reprojection error for website demo</li>                </ul>
             </div>
 
             <div class="note" style="margin-top: 1.5rem;">
                 <strong>Interactive Script (<code>part2_exec.py</code>) </strong>
-                <p style="margin-top: 0.5rem; margin-bottom: 0;">An interactive CLI to detect the scene (folder) from images folder, choose which two images to process, decide how many correspondence points to mark, automatically save correspondences for future use</li>
+                <p style="margin-top: 0.5rem; margin-bottom: 0;">An interactive CLI to detect the scene from images folder, choose which two images to process, decide how many correspondence points to mark, automatically save correspondences for future use</p>
                 </ul>
             </div>
         </section>
