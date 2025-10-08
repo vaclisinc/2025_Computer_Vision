@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project 3: Image Warping and Mosaicing</title>
+    <title>Project 3: (Auto)stitching and Photo Mosaics</title>
     <link rel="stylesheet" href="css/styles.css?v=1759909542">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
@@ -19,7 +19,8 @@
         <div class="header-content">
             <div class="header-info">
                 <a href="../index.html" class="back-link">← Back to Projects</a>
-                <h1>Project 3: Image Warping and Mosaicing</h1>
+                <br><br><br>
+                <h1>Project 3: (Auto)stitching and Photo Mosaics</h1>
                 <p class="subtitle">CS 180 Project 3 · Song-Ze Yu</p>
             </div>
 
@@ -31,19 +32,19 @@
                     <div class="part-nav-grid">
                         <a href="#part1-1-overview" class="part-nav-item">
                             <span class="part-nav-number">A.1</span>
-                            <span class="part-nav-title">Shoot</span>
+                            <span class="part-nav-title"> Shoot the Pictures</span>
                         </a>
-                        <a href="#part1-2" class="part-nav-item">
+                        <a href="#part1-2-approach" class="part-nav-item">
                             <span class="part-nav-number">A.2</span>
-                            <span class="part-nav-title">Homographies</span>
+                            <span class="part-nav-title">Recover Homographies</span>
                         </a>
                         <a href="#part1-3" class="part-nav-item">
                             <span class="part-nav-number">A.3</span>
-                            <span class="part-nav-title">Warp</span>
+                            <span class="part-nav-title">Warp the Images</span>
                         </a>
                         <a href="#part1-4" class="part-nav-item">
                             <span class="part-nav-number">A.4</span>
-                            <span class="part-nav-title">Mosaic</span>
+                            <span class="part-nav-title">Blend the Images into a Mosaic</span>
                         </a>
                     </div>
                 </div>
@@ -78,7 +79,7 @@
     <!-- Navigation -->
     <nav class="toc">
         <a href="#part1-1-overview">A.1: Shoot</a>
-        <a href="#part1-2">A.2: Homographies</a>
+        <a href="#part1-2-approach">A.2: Homographies</a>
         <a href="#part1-3">A.3: Warp</a>
         <a href="#part1-4">A.4: Mosaic</a>
         <a href="#part2-1">B.1: Harris</a>
@@ -94,7 +95,7 @@
         <!-- Part A.1 Overview -->
         <section id="part1-1-overview" class="info-section">
             <div class="content-centered">
-                <h2>Part A.1: Shoot and Digitize Pictures</h2>
+                <h2>Part A.1: Shoot the Pictures</h2>
                 <p>I captured two sets of images with projective transformations by <strong>fixing the center of projection (COP)</strong> and <strong>rotating the camera</strong> while keeping the same position.</p>
 
                 <div class="specs-grid" style="grid-template-columns: 1fr 1fr; max-width: 800px; margin: 2rem auto; gap: 3rem;">
@@ -115,8 +116,8 @@
         <!-- Scene 1: IHouse Library -->
         <section class="scene-wrapper" id="scene-1">
             <div class="content-centered">
-                <h3>Scene 1: INDOOR International House Library</h3>
-                <p>I chose this location as it holds special meaning—this is where I spent most of my time during my exchange semester.</p>
+                <h3>Scene 1: [INDOOR] International House Library</h3>
+                <p>This is where I spent most of my time during my exchange year in UC Berkeley.</p>
             </div>
 
             <div class="scroll-gallery-section">
@@ -149,7 +150,7 @@
         <!-- Scene 2: CNMAT -->
         <section class="scene-wrapper" id="scene-2">
             <div class="content-centered">
-                <h3>Scene 2: OUTDOOR CNMAT Lab</h3>
+                <h3>Scene 2: [OUTDOOR] CNMAT Lab</h3>
                 <p>This location is meaningful to me as it's where I conducted my undergraduate research.</p>
             </div>
 
@@ -180,51 +181,56 @@
             </div>
         </section>
 
-        <!-- Part A.2: Recover Homographies -->
-        <section id="part1-2">
-            <h2>Part A.2: Recover Homographies</h2>
-
+        <!-- Part A.2 - Approach -->
+        <section id="part1-2-approach">
             <div class="content">
-                    <h3>Approach</h3>
-                    <p>To warp images and create panoramic mosaics, we need to compute the homography matrix <code>H</code> that maps points from one image to another. Given correspondence points between two images, we solve for the 8 unknowns in the homography using a system of linear equations.</p>
+                <h2>Part A.2: Recover Homographies</h2>
+                <p>Compute the homography matrix <code>H</code> that maps points from one image to another.</p>
 
-                    <div class="result-item" style="max-width: 900px; margin: 2rem auto; overflow: hidden;">
-                        <img src="src/img/3A_2_draft.jpg" alt="Homography derivation notes" class="clickable" style="width: 85% !important; max-width: 85% !important; margin: 0 auto; display: block;">
-                        <div class="image-caption">Mathematical derivation of the homography system</div>
-                    </div>
+                <!-- <h3 style="text-align: center;">Approach</h3> -->
+            </div>
 
-                    <h3>Mathematical Formulation</h3>
-                    <p>For each correspondence pair <code>(x, y) ↔ (u, v)</code>, we construct two linear equations:</p>
-                    <ul>
-                        <li><code>h₁x + h₂y + h₃ - h₇ux - h₈uy = u</code></li>
-                        <li><code>h₄x + h₅y + h₆ - h₇vx - h₈vy = v</code></li>
-                    </ul>
-                    <p>With <em>n</em> correspondence points, we build the system <code>Ah = b</code> where:</p>
-                    <ul>
-                        <li><code>A</code> is a <code>2n × 8</code> matrix containing the coordinates and their products</li>
-                        <li><code>h</code> is an <code>8 × 1</code> vector of unknown homography coefficients</li>
-                        <li><code>b</code> is a <code>2n × 1</code> vector of target coordinates</li>
-                    </ul>
-                    <p>We solve this using least-squares: <code>h = (AᵀA)⁻¹Aᵀb</code>, then reconstruct the <code>3×3</code> homography matrix with <code>h₉ = 1</code>.</p>
-
-                    <h3>Implementation</h3>
-
-                    <div class="note">
-                        <strong>Helper Functions:</strong>
-                        <ul style="margin-top: 0.5rem;">
-                            <li><code>select_correspondences()</code> — Interactive point selection using matplotlib</li>
-                            <li><code>visualize_correspondences()</code> — Draws correspondences on image pairs</li>
-                            <li><code>print_system()</code> — Displays the linear system for verification</li>
-                            <li><code>verify_homography()</code> — Computes reprojection error</li>
+            <!-- Two-column layout: Mathematical Formulation + Draft -->
+            <div class="content-wide">
+                <div class="two-column-layout">
+                    <div class="column-left">
+                        <h4>Mathematical Formulation</h4>
+                        <p>For each correspondence pair <code>(x, y) ↔ (u, v)</code>, we construct two linear equations:</p>
+                        <ul>
+                            <li><code>h₁x + h₂y + h₃ - h₇ux - h₈uy = u</code></li>
+                            <li><code>h₄x + h₅y + h₆ - h₇vx - h₈vy = v</code></li>
                         </ul>
+                        <p>With <em>n</em> correspondence points, we build the system <code>Ah = b</code> where:</p>
+                        <ul>
+                            <li><code>A</code> is a <code>2n × 8</code> matrix containing the coordinates and their products</li>
+                            <li><code>h</code> is an <code>8 × 1</code> vector of unknown homography coefficients</li>
+                            <li><code>b</code> is a <code>2n × 1</code> vector of target coordinates</li>
+                        </ul>
+                        <p>We solve this using least-squares: <code>h = (AᵀA)⁻¹Aᵀb</code>, then reconstruct the <code>3×3</code> homography matrix with <code>h₉ = 1</code>.</p>
                     </div>
 
-                    <div class="code-section">
-                        <div class="code-header" onclick="toggleCode(this)">
-                            <span class="toggle-icon">▼</span> Main Function: <code>computeH</code>
+                    <div class="column-right">
+                        <div class="result-item">
+                            <img src="src/img/3A_2_draft.jpg" alt="Homography derivation notes" class="clickable">
+                            <div class="image-caption">Mathematical derivation</div>
                         </div>
-                        <div class="code-content">
-                            <pre><code class="language-python"># File: part2_homography.py:69-92
+                    </div>
+                </div>
+            </div>
+        </div>
+        </section>
+
+        <!-- Part A.2 - Implementation -->
+        <section id="part1-2-implementation" class="subsection">
+            <div class="content">
+                <h3>Implementation</h3>
+
+                <div class="code-section">
+                    <div class="code-header" onclick="toggleCode(this)">
+                        <span class="toggle-icon">▼</span> Main Function: <code>computeH</code>
+                    </div>
+                    <div class="code-content">
+                        <pre><code class="language-python"># File: part2_homography.py:69-92
 
 def computeH(pts1, pts2):
     n = len(pts1)
@@ -250,43 +256,87 @@ def computeH(pts1, pts2):
     H[2, 2] = 1
 
     return H, A, b</code></pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="note">
+                <strong>Helper Functions (in <code>part2_homography.py</code>)</strong>
+                <ul style="margin-top: 0.5rem;">
+                    <li><code>select_correspondences()</code> — Interactive point selection using matplotlib ginput</li>
+                    <li><code>visualize_correspondences()</code> — Draws correspondences on image pairs</li>
+                    <li><code>save_correspondences()</code> — Save selected points to avoid re-selecting</li>
+                    <li><code>load_correspondences()</code> — Load previously saved correspondence points</li>
+                    <li><code>print_system()</code> — Displays the linear system for website demo</li>
+                    <li><code>verify_homography()</code> — Computes reprojection error</li>
+                </ul>
+            </div>
+
+            <div class="note" style="margin-top: 1.5rem;">
+                <strong>Interactive Script (<code>part2_exec.py</code>) </strong>
+                <p style="margin-top: 0.5rem; margin-bottom: 0;">An interactive CLI to detect the scene (folder) from images folder, choose which two images to process, decide how many correspondence points to mark, automatically save correspondences for future use</li>
+                </ul>
+            </div>
+        </section>
+        
+        <!-- Part A.2 - Demo -->
+        <section id="part1-2-demo" class="subsection">
+            <div class="content">
+                <h3>Demo: IHouse-Library </h3>
+                <p>Using the interactive script, by selecting "ihouse-library" folder and picture 1 and 2, we manually click the points:</p>
+            </div>
+
+            <div class="demo-image-container">
+                <img src="src/img/3A_2_ihouse-library_correspondences_viz_01_to_02.png" alt="IHouse-Library correspondences visualization" class="clickable">
+            </div>
+
+            <!-- Two-column layout: System + Homography -->
+            <div class="content-wide">
+                <p>Then, we get the (x,y) and (u,v), which can be written as the form matrix A (16×8) and b (16×1). Let's do <code>computeH()</code>:</p>
+
+                <div class="demo-result-layout">
+                    <div class="demo-input-section">
+                        <div class="demo-section-label">INPUT: A, b</div>
+                        <div class="demo-box">
+                            <!-- <h4 class="demo-box-title">System: Ah = b (A: 16×8, b: 16×1)</h4> -->
+                            <pre class="demo-code-block"><code>First 4 rows of A:
+[[ 1.305e+03  1.229e+02  1.000e+00  0.000e+00 0.000e+00  0.000e+00 -7.926e+05 -7.462e+04]
+ [ 0.000e+00  0.000e+00  0.000e+00  1.305e+03 1.229e+02  1.000e+00 -2.245e+05 -2.113e+04]
+ [ 1.578e+03  9.773e+01  1.000e+00  0.000e+00 0.000e+00  0.000e+00 -1.306e+06 -8.086e+04]
+ [ 0.000e+00  0.000e+00  0.000e+00  1.578e+03 9.773e+01  1.000e+00 -3.111e+05 -1.926e+04]
+                                        ...                                             ]
+
+First 4 rows of b:
+[607.18
+ 171.96
+ 827.34
+ 197.12
+  ...  ]</code></pre>
                         </div>
                     </div>
 
-                    <h3>Example: IHouse-Library Panorama</h3>
-                    <p>For this demonstration, I selected 8 correspondence points between two images of the IHouse library. Since demonstrating all image pairs would be excessive, I'm showing results for images <code>01.jpg → 02.jpg</code>.</p>
+                    <div class="demo-arrow">→</div>
 
-                    <div class="result-item" style="margin: 2rem 0; max-width: 100%; overflow: hidden;">
-                        <img src="src/img/3A_2_ihouse-library_correspondences_viz_01_to_02.png" alt="IHouse-Library correspondences visualization" class="clickable" style="width: 85% !important; max-width: 85% !important; margin: 0 auto; display: block;">
-                        <div class="image-caption">8 manually selected correspondence points visualized</div>
+                    <div class="demo-output-section">
+                        <div class="demo-section-label">OUTPUT: h (Least-squares Solution)</div>
+                        <div class="demo-box">
+                            <!-- <h4 class="demo-box-title">Least-squares Solution: h</h4> -->
+                            <pre class="demo-code-block"><code>
+[[ 2.916e+00]
+ [-1.578e-01]
+ [-2.272e+03]
+ [ 6.617e-01]
+ [ 2.247e+00]
+ [-7.104e+02]
+ [ 1.153e-03]
+ [-1.504e-04]]
+
+
+Mean error: 2.45 pixels
+Max error:  3.22 pixels</code></pre>
+                        </div>
                     </div>
-
-                    <h3>System of Equations & Recovered Homography</h3>
-                    <div class="note">
-                        <strong>Linear System (Ah = b):</strong>
-                        <pre style="margin-top: 0.5rem; background: #1e1e1e; color: #d4d4d4; padding: 1rem; border-radius: 6px; overflow-x: auto; font-size: 0.8rem; line-height: 1.4;"><code>A: 16×8, b: 16×1
-
-First 4 rows:
-[[ 1.305e+03  1.229e+02  1.000e+00  0.000e+00  0.000e+00  0.000e+00 -7.926e+05 -7.462e+04]
- [ 0.000e+00  0.000e+00  0.000e+00  1.305e+03  1.229e+02  1.000e+00 -2.245e+05 -2.113e+04]
- [ 1.578e+03  9.773e+01  1.000e+00  0.000e+00  0.000e+00  0.000e+00 -1.306e+06 -8.086e+04]
- [ 0.000e+00  0.000e+00  0.000e+00  1.578e+03  9.773e+01  1.000e+00 -3.111e+05 -1.926e+04]]
-
-b: [607.18, 171.96, 827.34, 197.12]</code></pre>
-                    </div>
-
-                    <div class="note">
-                        <strong>Recovered Homography Matrix:</strong>
-                        <pre style="margin-top: 0.5rem; background: #1e1e1e; color: #d4d4d4; padding: 1rem; border-radius: 6px; overflow-x: auto; font-size: 0.8rem; line-height: 1.4;"><code>H_1_to_2:
-[[ 2.916e+00 -1.578e-01 -2.272e+03]
- [ 6.617e-01  2.247e+00 -7.104e+02]
- [ 1.153e-03 -1.504e-04  1.000e+00]]
-
-Mean reprojection error: 2.45 pixels
-Max reprojection error:  3.22 pixels</code></pre>
-                    </div>
-
-                    <p>The low reprojection errors confirm that our computed homography accurately maps the correspondence points between the two images.</p>
+                </div>
             </div>
         </section>
 
@@ -340,6 +390,13 @@ Max reprojection error:  3.22 pixels</code></pre>
         <div class="section-nav-dot" data-section="part1-1-overview" data-label="Overview"></div>
         <div class="section-nav-dot" data-section="scene-1" data-label="Scene 1"></div>
         <div class="section-nav-dot" data-section="scene-2" data-label="Scene 2"></div>
+    </div>
+
+    <!-- Section Navigation for Part A.2 -->
+    <div class="section-nav" id="part-a2-nav" style="display: none;">
+        <div class="section-nav-dot" data-section="part1-2-approach" data-label="Approach"></div>
+        <div class="section-nav-dot" data-section="part1-2-implementation" data-label="Implementation"></div>
+        <div class="section-nav-dot" data-section="part1-2-demo" data-label="Demo"></div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
@@ -561,6 +618,70 @@ Max reprojection error:  3.22 pixels</code></pre>
 
         // Initial check
         updateSectionNav();
+
+        // Section Navigation for Part A.2
+        const partA2Sections = ['part1-2-approach', 'part1-2-implementation', 'part1-2-demo'];
+        const partA2Nav = document.getElementById('part-a2-nav');
+        const partA2Dots = partA2Nav.querySelectorAll('.section-nav-dot');
+
+        // Click handlers for Part A.2 navigation dots
+        partA2Dots.forEach(dot => {
+            dot.addEventListener('click', function() {
+                const sectionId = this.getAttribute('data-section');
+                const section = document.getElementById(sectionId);
+                if (section) {
+                    section.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+
+        // Update navigation on scroll for Part A.2
+        function updatePartA2Nav() {
+            let currentSection = null;
+            let isInPartA2 = false;
+
+            // Check which section is currently in view
+            partA2Sections.forEach(sectionId => {
+                const section = document.getElementById(sectionId);
+                if (section) {
+                    const rect = section.getBoundingClientRect();
+                    // Section is active when it's near the top of viewport
+                    if (rect.top >= -100 && rect.top <= 200) {
+                        currentSection = sectionId;
+                        isInPartA2 = true;
+                    }
+                }
+            });
+
+            // Show/hide navigation based on whether we're in Part A.2
+            if (isInPartA2) {
+                partA2Nav.style.display = 'flex';
+            } else {
+                partA2Nav.style.display = 'none';
+            }
+
+            // Update active dot
+            partA2Dots.forEach(dot => {
+                const dotSection = dot.getAttribute('data-section');
+                if (dotSection === currentSection) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            });
+        }
+
+        // Update both navigations on scroll
+        window.addEventListener('scroll', function() {
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(function() {
+                updateSectionNav();
+                updatePartA2Nav();
+            }, 10);
+        }, { passive: true });
+
+        // Initial check for Part A.2
+        updatePartA2Nav();
 
         // Desktop notice - hide when scrolling down from header
         const desktopNotice = document.querySelector('.desktop-notice');
