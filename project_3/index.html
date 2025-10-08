@@ -9,6 +9,11 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
 </head>
 <body>
+    <!-- Desktop Viewing Notice -->
+    <div class="desktop-notice">
+        <p>💻 Best viewed on desktop (1920×1080 or larger) for optimal experience</p>
+    </div>
+
     <!-- Header -->
     <header>
         <div class="header-content">
@@ -22,11 +27,49 @@
                 <div class="overview-card">
                     <h3>Part A: Image Warping and Mosaicing</h3>
                     <p>Manually select correspondences, compute homographies, warp images, and blend them into seamless panoramas.</p>
+
+                    <div class="part-nav-grid">
+                        <a href="#part1-1-overview" class="part-nav-item">
+                            <span class="part-nav-number">A.1</span>
+                            <span class="part-nav-title">Shoot</span>
+                        </a>
+                        <a href="#part1-2" class="part-nav-item">
+                            <span class="part-nav-number">A.2</span>
+                            <span class="part-nav-title">Homographies</span>
+                        </a>
+                        <a href="#part1-3" class="part-nav-item">
+                            <span class="part-nav-number">A.3</span>
+                            <span class="part-nav-title">Warp</span>
+                        </a>
+                        <a href="#part1-4" class="part-nav-item">
+                            <span class="part-nav-number">A.4</span>
+                            <span class="part-nav-title">Mosaic</span>
+                        </a>
+                    </div>
                 </div>
 
                 <div class="overview-card">
                     <h3>Part B: Feature Matching for Autostitching</h3>
                     <p style="font-style: italic; color: var(--text-muted);">Stay tuned.</p>
+
+                    <div class="part-nav-grid">
+                        <a href="#part2-1" class="part-nav-item">
+                            <span class="part-nav-number">B.1</span>
+                            <span class="part-nav-title">Harris</span>
+                        </a>
+                        <a href="#part2-2" class="part-nav-item">
+                            <span class="part-nav-number">B.2</span>
+                            <span class="part-nav-title">Descriptors</span>
+                        </a>
+                        <a href="#part2-3" class="part-nav-item">
+                            <span class="part-nav-number">B.3</span>
+                            <span class="part-nav-title">Matching</span>
+                        </a>
+                        <a href="#part2-4" class="part-nav-item">
+                            <span class="part-nav-number">B.4</span>
+                            <span class="part-nav-title">RANSAC</span>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -54,22 +97,16 @@
                 <h2>Part A.1: Shoot and Digitize Pictures</h2>
                 <p>I captured two sets of images with projective transformations by <strong>fixing the center of projection (COP)</strong> and <strong>rotating the camera</strong> while keeping the same position.</p>
 
-                <div class="specs-grid">
-                    <div class="spec-item">
-                        <h4>Camera</h4>
-                        <p>iPhone 1× lens (24mm equivalent)</p>
+                <div class="specs-grid" style="grid-template-columns: 1fr 1fr; max-width: 800px; margin: 2rem auto; gap: 3rem;">
+                    <div class="spec-item" style="text-align: center;">
+                        <h4 style="font-size: 1.2rem; margin-bottom: 0.5rem;">FOCAL LENGTH:</h4>
+                        <p style="font-size: 1rem; font-weight: 500;">iPhone 14 Pro 1× lens</p>
+                        <p style="font-size: 0.9rem; color: var(--text-light); margin-top: 0.25rem;">(avoid barrel distortion by not using fisheye)</p>
                     </div>
-                    <div class="spec-item">
-                        <h4>Method</h4>
-                        <p>Fixed COP, rotation only</p>
-                    </div>
-                    <div class="spec-item">
-                        <h4>Overlap</h4>
-                        <p>50-60% between images</p>
-                    </div>
-                    <div class="spec-item">
-                        <h4>Distortion</h4>
-                        <p>Minimal barrel distortion</p>
+                    <div class="spec-item" style="text-align: center;">
+                        <h4 style="font-size: 1.2rem; margin-bottom: 0.5rem;">OVERLAP:</h4>
+                        <p style="font-size: 1rem; font-weight: 500;">40~70%</p>
+                        <p style="font-size: 0.9rem; color: var(--text-light); margin-top: 0.25rem;">Too little overlap makes registration harder.</p>
                     </div>
                 </div>
             </div>
@@ -77,12 +114,15 @@
 
         <!-- Scene 1: IHouse Library -->
         <section class="scene-wrapper" id="scene-1">
-            <div class="content">
-                <h3>Scene 1: IHouse Library</h3>
-                <p>Indoor panorama captured with fixed center of projection</p>
+            <div class="content-centered">
+                <h3>Scene 1: INDOOR International House Library</h3>
+                <p>I chose this location as it holds special meaning—this is where I spent most of my time during my exchange semester.</p>
             </div>
 
             <div class="scroll-gallery-section">
+                <div class="scroll-hint">
+                    <p>🖱️ Scroll to navigate through images horizontally</p>
+                </div>
                 <div class="scroll-gallery-container" id="gallery-ihouse">
                     <div class="scroll-gallery">
                         <div class="scroll-gallery-item">
@@ -108,12 +148,15 @@
 
         <!-- Scene 2: CNMAT -->
         <section class="scene-wrapper" id="scene-2">
-            <div class="content">
-                <h3>Scene 2: CNMAT Music Lab</h3>
-                <p>Outdoor panorama of the serene upstairs area</p>
+            <div class="content-centered">
+                <h3>Scene 2: OUTDOOR CNMAT Lab</h3>
+                <p>This location is meaningful to me as it's where I conducted my undergraduate research.</p>
             </div>
 
             <div class="scroll-gallery-section">
+                <div class="scroll-hint">
+                    <p>🖱️ Scroll to navigate through images horizontally</p>
+                </div>
                 <div class="scroll-gallery-container" id="gallery-cnmat">
                     <div class="scroll-gallery">
                         <div class="scroll-gallery-item">
@@ -518,6 +561,25 @@ Max reprojection error:  3.22 pixels</code></pre>
 
         // Initial check
         updateSectionNav();
+
+        // Desktop notice - hide when scrolling down from header
+        const desktopNotice = document.querySelector('.desktop-notice');
+        const header = document.querySelector('header');
+
+        window.addEventListener('scroll', function() {
+            if (!header || !desktopNotice) return;
+
+            const headerRect = header.getBoundingClientRect();
+
+            // Hide notice when header is scrolled past
+            if (headerRect.bottom < 0) {
+                desktopNotice.style.opacity = '0';
+                desktopNotice.style.pointerEvents = 'none';
+            } else {
+                desktopNotice.style.opacity = '1';
+                desktopNotice.style.pointerEvents = 'auto';
+            }
+        }, { passive: true });
     </script>
 </body>
 </html>
