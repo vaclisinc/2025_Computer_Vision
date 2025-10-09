@@ -38,11 +38,11 @@
                             <span class="part-nav-number">A.2</span>
                             <span class="part-nav-title">Recover Homographies</span>
                         </a>
-                        <a href="#part1-3" class="part-nav-item">
+                        <a href="#part1-3-approach" class="part-nav-item">
                             <span class="part-nav-number">A.3</span>
                             <span class="part-nav-title">Warp the Images</span>
                         </a>
-                        <a href="#part1-4" class="part-nav-item">
+                        <a href="#part1-4-approach" class="part-nav-item">
                             <span class="part-nav-number">A.4</span>
                             <span class="part-nav-title">Blend the Images into a Mosaic</span>
                         </a>
@@ -80,8 +80,8 @@
     <nav class="toc">
         <a href="#part1-1-overview">A.1: Shoot</a>
         <a href="#part1-2-approach">A.2: Homographies</a>
-        <a href="#part1-3">A.3: Warp</a>
-        <a href="#part1-4">A.4: Mosaic</a>
+        <a href="#part1-3-approach">A.3: Warp</a>
+        <a href="#part1-4-approach">A.4: Mosaic</a>
         <a href="#part2-1">B.1: Harris</a>
         <a href="#part2-2">B.2: Descriptors</a>
         <a href="#part2-3">B.3: Matching</a>
@@ -224,13 +224,14 @@
         <section id="part1-2-implementation" class="subsection">
             <div class="content">
                 <h3>Implementation</h3>
+            </div>
 
-                <div class="code-section">
-                    <div class="code-header" onclick="toggleCode(this)">
-                        <span class="toggle-icon">▼</span> Main Function: <code>computeH</code>
-                    </div>
-                    <div class="code-content">
-                        <pre><code class="language-python"># File: part2_homography.py:69-92
+            <div class="code-section">
+                <div class="code-header" onclick="toggleCode(this)">
+                    <span class="toggle-icon">▼</span> Main Function: <code>computeH</code>
+                </div>
+                <div class="code-content">
+                    <pre><code class="language-python"># File: part2_homography.py:69-92
 
 def computeH(pts1, pts2):
     n = len(pts1)
@@ -256,7 +257,6 @@ def computeH(pts1, pts2):
     H[2, 2] = 1
 
     return H, A, b</code></pre>
-                    </div>
                 </div>
             </div>
 
@@ -338,15 +338,484 @@ Max error:  3.22 pixels</code></pre>
         </section>
 
         <!-- Part A.3: Warp the Images -->
-        <section id="part1-3">
-            <h2>Part A.3: Warp the Images</h2>
-            <p><!-- Content to be added --></p>
+        <section id="part1-3-approach">
+            <div class="content">
+                <h2>Part A.3: Warp the Images</h2>
+                <p>In this part, we apply our Homography transformation in Part A.2 and warp two additional rectangle items using inverse warping with nearest neighbor and bilinear interpolation for vertification.</p>
+            </div>
+
+            <!-- Two-column layout: Mathematical Formulation + Draft -->
+            <div class="content-wide">
+                <div class="two-column-layout">
+                    <div class="column-left">
+
+                        <h4>Inverse Warping</h4>
+                        <p>For each pixel <code>(u, v)</code> in our desired output image, we compute the corresponding source location using:</p>
+                        <ul>
+                            <li><code>[x_i, y_i, 1]ᵀ = H⁻¹ · [u, v, 1]ᵀ</code></li>
+                            <li>Normalize: <code>(x, y) = (x_i/w, y_i/w)</code> where <code>w</code> is the homogeneous coordinate</li>
+                        </ul>
+
+                        <h4>Nearest Neighbor</h4>
+                        <p>Round to the nearest integer coordinates:</p>
+                        <ul>
+                            <li><code>x' = round(x), y' = round(y)</code></li>
+                            <li>Sample: <code>output[u,v] = input[y', x']</code></li>
+                            <!-- <li>Result: Fast but produces jagged edges</li> -->
+                        </ul>
+
+                        <h4>Bilinear Interpolation</h4>
+                        <p>Weighted average of 4 neighboring pixels:</p>
+                        <ul>
+                            <li>Get floor coordinates: <code>x₀ = ⌊x⌋, y₀ = ⌊y⌋</code></li>
+                            <li>Compute weights: <code>dx = x - x₀, dy = y - y₀</code></li>
+                            <li>Four corner weights:
+                                <ul>
+                                    <li><code>w₀₀ = (1-dx)(1-dy)</code></li>
+                                    <li><code>w₀₁ = (1-dx)·dy</code></li>
+                                    <li><code>w₁₀ = dx·(1-dy)</code></li>
+                                    <li><code>w₁₁ = dx·dy</code></li>
+                                </ul>
+                            </li>
+                            <!-- <li>Result: Smoother transitions, anti-aliased edges</li> -->
+                        </ul>
+                    </div>
+
+                    <div class="column-right">
+                        <div class="result-item">
+                            <img src="src/img/3A_3_draft.jpg" alt="Inverse warping and interpolation notes" class="clickable">
+                            <div class="image-caption">Mathematical derivation and visual explanation</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Part A.3 - Implementation -->
+        <section id="part1-3-implementation" class="subsection">
+            <div class="content">
+                <h3>Implementation</h3>
+            </div>
+
+            <div class="code-section">
+                <div class="code-header" onclick="toggleCode(this)">
+                    <span class="toggle-icon">▼</span> Main Function: <code>warpImageNearestNeighbor</code>
+                </div>
+                <div class="code-content">
+                    <pre><code class="language-python">def warpImageNearestNeighbor(im, H, output_shape=None):
+    h, w = im.shape[:2]
+    has_color = len(im.shape) == 3
+
+    if output_shape is None:
+        out_h, out_w, offset = compute_output_bounds(im.shape, H)
+        T_offset = np.array([
+            [1, 0, -offset[0]],
+            [0, 1, -offset[1]],
+            [0, 0, 1]
+        ])
+        H_adjusted = T_offset @ H
+    else:
+        out_h, out_w = output_shape
+        H_adjusted = H
+
+    if has_color:
+        out_im = np.zeros((out_h, out_w, im.shape[2]))
+    else:
+        out_im = np.zeros((out_h, out_w))
+    alpha = np.zeros((out_h, out_w))
+
+    H_inv = np.linalg.inv(H_adjusted)
+
+    y_coords, x_coords = np.meshgrid(np.arange(out_h), np.arange(out_w), indexing='ij')
+    coords = np.stack([x_coords, y_coords, np.ones_like(x_coords)], axis=-1)
+
+    src_h = coords @ H_inv.T
+    denom = src_h[..., 2]
+
+    with np.errstate(divide='ignore', invalid='ignore'):
+        src_coords = src_h[..., :2] / denom[..., np.newaxis]
+
+    safe_denom = np.isfinite(src_coords).all(axis=-1)
+
+    src_x = np.round(src_coords[..., 0]).astype(int)
+    src_y = np.round(src_coords[..., 1]).astype(int)
+
+    valid = safe_denom & (src_x >= 0) & (src_x < w) & (src_y >= 0) & (src_y < h)
+    out_im[valid] = im[src_y[valid], src_x[valid]]
+    alpha[valid] = 1
+
+    if has_color:
+        result = np.zeros((out_h, out_w, 4), dtype=out_im.dtype)
+        result[..., :3] = out_im
+        result[..., 3] = alpha
+    else:
+        result = np.zeros((out_h, out_w, 2), dtype=out_im.dtype)
+        result[..., 0] = out_im
+        result[..., 1] = alpha
+
+    return result</code></pre>
+                </div>
+            </div>
+
+            <div class="code-section">
+                <div class="code-header" onclick="toggleCode(this)">
+                    <span class="toggle-icon">▼</span> Main Function: <code>warpImageBilinear</code>
+                </div>
+                <div class="code-content">
+                    <pre><code class="language-python">def warpImageBilinear(im, H, output_shape=None):
+    h, w = im.shape[:2]
+    has_color = len(im.shape) == 3
+
+    if output_shape is None:
+        out_h, out_w, offset = compute_output_bounds(im.shape, H)
+        T_offset = np.array([
+            [1, 0, -offset[0]],
+            [0, 1, -offset[1]],
+            [0, 0, 1]
+        ])
+        H_adjusted = T_offset @ H
+    else:
+        out_h, out_w = output_shape
+        H_adjusted = H
+
+    if has_color:
+        out_im = np.zeros((out_h, out_w, im.shape[2]))
+    else:
+        out_im = np.zeros((out_h, out_w))
+    alpha = np.zeros((out_h, out_w))
+
+    H_inv = np.linalg.inv(H_adjusted)
+
+    y_coords, x_coords = np.meshgrid(np.arange(out_h), np.arange(out_w), indexing='ij')
+    coords = np.stack([x_coords, y_coords, np.ones_like(x_coords)], axis=-1)
+
+    src_h = coords @ H_inv.T
+    denom = src_h[..., 2]
+
+    with np.errstate(divide='ignore', invalid='ignore'):
+        src_coords = src_h[..., :2] / denom[..., np.newaxis]
+
+    safe_denom = np.isfinite(src_coords).all(axis=-1)
+
+    src_x = src_coords[..., 0]
+    src_y = src_coords[..., 1]
+
+    x0 = np.floor(src_x).astype(int)
+    x1 = x0 + 1
+    y0 = np.floor(src_y).astype(int)
+    y1 = y0 + 1
+
+    valid = safe_denom & (x0 >= 0) & (x1 < w) & (y0 >= 0) & (y1 < h)
+
+    dx = src_x - x0
+    dy = src_y - y0
+
+    w00 = (1 - dx) * (1 - dy)
+    w01 = (1 - dx) * dy
+    w10 = dx * (1 - dy)
+    w11 = dx * dy
+
+    if has_color:
+        out_im[valid] = (
+            w00[valid, np.newaxis] * im[y0[valid], x0[valid]] +
+            w01[valid, np.newaxis] * im[y1[valid], x0[valid]] +
+            w10[valid, np.newaxis] * im[y0[valid], x1[valid]] +
+            w11[valid, np.newaxis] * im[y1[valid], x1[valid]]
+        )
+    else:
+        out_im[valid] = (
+            w00[valid] * im[y0[valid], x0[valid]] +
+            w01[valid] * im[y1[valid], x0[valid]] +
+            w10[valid] * im[y0[valid], x1[valid]] +
+            w11[valid] * im[y1[valid], x1[valid]]
+        )
+
+    alpha[valid] = 1
+
+    if has_color:
+        result = np.zeros((out_h, out_w, 4), dtype=out_im.dtype)
+        result[..., :3] = out_im
+        result[..., 3] = alpha
+    else:
+        result = np.zeros((out_h, out_w, 2), dtype=out_im.dtype)
+        result[..., 0] = out_im
+        result[..., 1] = alpha
+
+    return result</code></pre>
+                </div>
+            </div>
+
+            <div class="code-section">
+                <div class="code-header" onclick="toggleCode(this)">
+                    <span class="toggle-icon">▼</span> Helper Function: <code>compute_output_bounds</code>
+                </div>
+                <div class="code-content">
+                    <pre><code class="language-python">def compute_output_bounds(im_shape, H):
+    h, w = im_shape[:2]
+    corners = np.array([
+        [0, 0, 1],
+        [w-1, 0, 1],
+        [0, h-1, 1],
+        [w-1, h-1, 1]
+    ])
+
+    warped_corners = (H @ corners.T).T
+    warped_corners = warped_corners[:, :2] / warped_corners[:, 2:3]
+
+    min_x_i = int(np.floor(warped_corners[:, 0].min()))
+    min_y_i = int(np.floor(warped_corners[:, 1].min()))
+    max_x_i = int(np.ceil(warped_corners[:, 0].max()))
+    max_y_i = int(np.ceil(warped_corners[:, 1].max()))
+
+    out_w = (max_x_i - min_x_i) + 1
+    out_h = (max_y_i - min_y_i) + 1
+
+    offset = np.array([min_x_i, min_y_i])
+
+    return out_h, out_w, offset</code></pre>
+                </div>
+            </div>
+
+            <div class="note" style="margin-top: 1.5rem;">
+                <strong>Interactive Script Usage</strong>
+                <p style="margin-top: 0.5rem; margin-bottom: 0;">Similar to Part A.2, we used <code>part2_computeH</code> and the CLI script to select the four corners of rectangular objects for rectification.</p>
+            </div>
+        </section>
+
+        <!-- Part A.3 - Demo -->
+        <section id="part1-3-demo" class="subsection">
+            <div class="content">
+                <h3>Demo: Inverse Warping Comparison</h3>
+                <p>We demonstrate both interpolation methods on a sample image. Notice the difference in edge quality:</p>
+            </div>
+
+            <div class="content-wide">
+                <h4 style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem;">Demo 1</h4>
+                <div class="image-grid" style="grid-template-columns: 1fr 1fr; gap: 2rem; margin: 0 auto;">
+                    <div class="result-item" style="position: relative;">
+                        <div class="scroll-hint" style="position: absolute; top: 1rem; left: 50%; transform: translateX(-50%); z-index: 10; margin: 0;">
+                            <p>🖱️ Click to enlarge</p>
+                        </div>
+                        <img src="src/img/3A_3_S__31866900_0_demo_nn.png" alt="Demo - Nearest Neighbor" class="clickable">
+                        <div class="image-caption"><strong>Nearest Neighbor (Runtime: 0.117s)</strong><br>Fast but produces jagged edges</div>
+                    </div>
+                    <div class="result-item" style="position: relative;">
+                        <div class="scroll-hint" style="position: absolute; top: 1rem; left: 50%; transform: translateX(-50%); z-index: 10; margin: 0;">
+                            <p>🖱️ Click to enlarge</p>
+                        </div>
+                        <img src="src/img/3A_3_S__31866900_0_demo_bilinear.png" alt="Demo - Bilinear" class="clickable">
+                        <div class="image-caption"><strong>Bilinear Interpolation (Runtime: 0.260s)</strong><br>Smoother, anti-aliased results</div>
+                    </div>
+                </div>
+
+                <h4 style="text-align: center; margin-top: 4rem; margin-bottom: 1.5rem;">Demo 2</h4>
+                <div class="image-grid" style="grid-template-columns: 1fr 1fr; gap: 2rem; margin: 0 auto;">
+                    <div class="result-item" style="position: relative;">
+                        <div class="scroll-hint" style="position: absolute; top: 1rem; left: 50%; transform: translateX(-50%); z-index: 10; margin: 0;">
+                            <p>🖱️ Click to enlarge</p>
+                        </div>
+                        <img src="src/img/3A_3_S__31866901_0_demo_nn.png" alt="Demo 2 - Nearest Neighbor" class="clickable">
+                        <div class="image-caption"><strong>Nearest Neighbor (Runtime: 0.039s)</strong><br>Fast but produces jagged edges</div>
+                    </div>
+                    <div class="result-item" style="position: relative;">
+                        <div class="scroll-hint" style="position: absolute; top: 1rem; left: 50%; transform: translateX(-50%); z-index: 10; margin: 0;">
+                            <p>🖱️ Click to enlarge</p>
+                        </div>
+                        <img src="src/img/3A_3_S__31866901_0_demo_bilinear.png" alt="Demo 2 - Bilinear" class="clickable">
+                        <div class="image-caption"><strong>Bilinear Interpolation (Runtime: 0.088s)</strong><br>Smoother, anti-aliased results</div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Part A.3 - Results -->
+        <section id="part1-3-results" class="subsection">
+            <!-- <div class="content"> -->
+                <h3>Results: Image Rectification</h3>
+                <p>Below are rectified and cropped images from two different scenes, including nearest neighbor and bilinear interpolation methods.</p>
+            <!-- </div> -->
+
+            <div class="content-wide">
+                <h4 style="text-align: center; margin-top: 3rem; margin-bottom: 2rem;">Scene 1: Rectification Comparison</h4>
+                <div class="image-grid" style="grid-template-columns: 1fr 1fr; gap: 2rem; max-width: 1000px; margin: 0 auto;">
+                    <div class="result-item">
+                        <img src="src/img/3A_3_S__31866900_0_rectified_nn.png" alt="Scene 1 - Nearest Neighbor" class="clickable">
+                        <div class="image-caption"><strong>Nearest Neighbor</strong><br>Visible pixelation and jagged edges</div>
+                    </div>
+                    <div class="result-item">
+                        <img src="src/img/3A_3_S__31866900_0_rectified_bilinear.png" alt="Scene 1 - Bilinear" class="clickable">
+                        <div class="image-caption"><strong>Bilinear Interpolation</strong><br>Smooth transitions and clean edges</div>
+                    </div>
+                </div>
+
+                <h4 style="text-align: center; margin-top: 4rem; margin-bottom: 2rem;">Scene 2: Rectification Comparison</h4>
+                <div class="image-grid" style="grid-template-columns: 1fr 1fr; gap: 2rem; max-width: 1000px; margin: 0 auto;">
+                    <div class="result-item">
+                        <img src="src/img/3A_3_S__31866901_0_rectified_nn.png" alt="Scene 2 - Nearest Neighbor" class="clickable">
+                        <div class="image-caption"><strong>Nearest Neighbor</strong><br>Sharp but aliased appearance</div>
+                    </div>
+                    <div class="result-item">
+                        <img src="src/img/3A_3_S__31866901_0_rectified_bilinear.png" alt="Scene 2 - Bilinear" class="clickable">
+                        <div class="image-caption"><strong>Bilinear Interpolation</strong><br>Natural, artifact-free result</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="note" style="margin-top: 3rem;">
+                <strong>Observations</strong>
+                <ul style="margin-top: 0.5rem;">
+                    <li><strong>Bilinear interpolation</strong> produces smoother, more visually pleasing results with anti-aliased edges</li>
+                    <li><strong>Nearest neighbor</strong> is faster but exhibits noticeable jagged edges and stair-step artifacts</li>
+                    <li>The difference is most apparent along diagonal lines and curved edges</li>
+                    <li>For final mosaic creation, bilinear interpolation is preferred despite slightly higher computational cost</li>
+                </ul>
+            </div>
         </section>
 
         <!-- Part A.4: Blend the Images into a Mosaic -->
-        <section id="part1-4">
-            <h2>Part A.4: Blend the Images into a Mosaic</h2>
-            <p><!-- Content to be added --></p>
+        <section id="part1-4-approach">
+            <div class="content">
+                <h2>Part A.4: Blend the Images into a Mosaic</h2>
+                <p>We reused components from earlier parts of the project:</p>
+
+                <ol style="max-width: 900px; margin: 1.5rem auto 2rem auto; line-height: 1.8;">
+                    <li>Using saved correspondences and homographies that we manually clicked and stored in <strong>Part A.2</strong>.</li>
+                    <li>Warping the left and right images onto the middle image using the verified warping function from <strong>Part A.3</strong>.</li>
+                </ol>
+
+                <p>After aligning all images, we implemented <strong>weighted averaging</strong> to blend them together instead of simply overlapping.</p>
+
+                <p>In Part A.3, we already created an <strong>alpha mask</strong> for each image to define its visible region. The alpha values are further smoothed using a <strong>distance transform</strong>, giving higher weights near the image center and gradually fading toward the edges.</p>
+
+            </div>
+        </section>
+
+        <!-- Part A.4 - Implementation -->
+        <section id="part1-4-implementation" class="subsection">
+            <div class="content">
+                <h3>Implementation</h3>
+            </div>
+
+            <div class="code-section">
+                <div class="code-header" onclick="toggleCode(this)">
+                    <span class="toggle-icon">▼</span> Distance Transform: <code>create_distance_alpha</code>
+                </div>
+                <div class="code-content">
+                    <pre><code class="language-python">def create_distance_alpha(alpha_mask):
+    """Convert binary alpha mask to distance-weighted alpha values"""
+    dist = scipy.ndimage.distance_transform_edt(alpha_mask)
+    max_dist = dist.max()
+    if max_dist > 0:
+        return dist / max_dist
+    return alpha_mask.astype(float)</code></pre>
+                </div>
+            </div>
+
+            <div class="code-section">
+                <div class="code-header" onclick="toggleCode(this)">
+                    <span class="toggle-icon">▼</span> Weighted Blending: <code>blend_images_weighted</code>
+                </div>
+                <div class="code-content">
+                    <pre><code class="language-python">def blend_images_weighted(images_with_alpha, use_distance_blend=True):
+    """Blend multiple images using distance-weighted alpha blending"""
+    ref_h, ref_w = images_with_alpha[0].shape[:2]
+    has_color = len(images_with_alpha[0].shape) == 3 and images_with_alpha[0].shape[2] == 4
+
+    if has_color:
+        output = np.zeros((ref_h, ref_w, 3))
+    else:
+        output = np.zeros((ref_h, ref_w))
+
+    total_weight = np.zeros((ref_h, ref_w))
+
+    for img in images_with_alpha:
+        if has_color:
+            rgb = img[..., :3]
+            alpha = img[..., 3]
+        else:
+            rgb = img[..., 0]
+            alpha = img[..., 1]
+
+        # Apply distance-based weighting
+        if use_distance_blend:
+            alpha = create_distance_alpha(alpha > 0) * alpha
+
+        output += rgb * alpha[..., np.newaxis] if has_color else rgb * alpha
+        total_weight += alpha
+
+    # Normalize by total weight
+    valid = total_weight > 0
+    if has_color:
+        output[valid] /= total_weight[valid, np.newaxis]
+    else:
+        output[valid] /= total_weight[valid]
+
+    return output</code></pre>
+                </div>
+            </div>
+
+            <div class="code-section">
+                <div class="code-header" onclick="toggleCode(this)">
+                    <span class="toggle-icon">▼</span> Mosaic Creation: <code>create_mosaic</code>
+                </div>
+                <div class="code-content">
+                    <pre><code class="language-python">def create_mosaic(images, H_list, ref_idx=0, use_distance_blend=True):
+    """Create a mosaic from multiple images with computed homographies"""
+    # Compute the bounding box for all warped images
+    mosaic_h, mosaic_w, offset = compute_mosaic_bounds(images, H_list, ref_idx)
+
+    # Adjust homographies to account for offset
+    T_offset = np.array([[1, 0, -offset[0]], [0, 1, -offset[1]], [0, 0, 1]])
+
+    warped_images = []
+
+    # Warp each image to the common reference frame
+    for i, im in enumerate(images):
+        if i == ref_idx:
+            H_adjusted = T_offset
+        else:
+            H_adjusted = T_offset @ H_list[i]
+
+        warped = warpImageBilinear(im, H_adjusted, (mosaic_h, mosaic_w))
+        warped_images.append(warped)
+
+    # Blend all warped images
+    mosaic = blend_images_weighted(warped_images, use_distance_blend)
+
+    return mosaic, offset</code></pre>
+                </div>
+            </div>
+
+            <div class="note" style="margin-top: 1.5rem;">
+                <strong>Helper Function</strong>
+                <ul style="margin-top: 0.5rem;">
+                    <li><code>compute_mosaic_bounds()</code> — Warps all image corners to find the bounding box of the final mosaic</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Part A.4 - Results -->
+        <section id="part1-4-results" class="subsection">
+            <div class="content">
+                <h3>Results: Final Mosaics</h3>
+                <p>Below are the final panoramic mosaics created by blending three images from each scene. The distance-weighted alpha blending creates seamless transitions in overlapping regions.</p>
+            </div>
+
+            <div class="content-wide">
+                <h4 style="text-align: center; margin-top: 3rem; margin-bottom: 2rem;">Mosaic 1: CNMAT Lab (Image 1, 2, 3)</h4>
+                <div class="result-item" style="max-width: 1200px; margin: 0 auto;">
+                    <img src="src/img/3A_4_mosaic2_cnmat_upstair_1_2_3_mosaic.png" alt="CNMAT Lab Mosaic" class="clickable">
+                    <!-- <div class="image-caption">Seamless panorama of CNMAT upstairs area combining images 1, 2, and 3</div> -->
+                </div>
+
+                <h4 style="text-align: center; margin-top: 4rem; margin-bottom: 2rem;">Mosaic 2: International House Library (Image 2, 3, 4)</h4>
+                <div class="result-item" style="max-width: 1200px; margin: 0 auto;">
+                    <img src="src/img/3A_4_mosaic3_ihouse_library_2_3_4_mosaic.png" alt="IHouse Library Mosaic" class="clickable">
+                    <!-- <div class="image-caption">Wide-angle view of IHouse Library combining images 2, 3, and 4</div> -->
+                </div>
+            </div>
+
         </section>
 
         <!-- PART B: FEATURE MATCHING FOR AUTOSTITCHING -->
@@ -394,6 +863,21 @@ Max error:  3.22 pixels</code></pre>
         <div class="section-nav-dot" data-section="part1-2-approach" data-label="Approach"></div>
         <div class="section-nav-dot" data-section="part1-2-implementation" data-label="Implementation"></div>
         <div class="section-nav-dot" data-section="part1-2-demo" data-label="Demo"></div>
+    </div>
+
+    <!-- Section Navigation for Part A.3 -->
+    <div class="section-nav" id="part-a3-nav" style="display: none;">
+        <div class="section-nav-dot" data-section="part1-3-approach" data-label="Approach"></div>
+        <div class="section-nav-dot" data-section="part1-3-implementation" data-label="Implementation"></div>
+        <div class="section-nav-dot" data-section="part1-3-demo" data-label="Demo"></div>
+        <div class="section-nav-dot" data-section="part1-3-results" data-label="Results"></div>
+    </div>
+
+    <!-- Section Navigation for Part A.4 -->
+    <div class="section-nav" id="part-a4-nav" style="display: none;">
+        <div class="section-nav-dot" data-section="part1-4-approach" data-label="Approach"></div>
+        <div class="section-nav-dot" data-section="part1-4-implementation" data-label="Implementation"></div>
+        <div class="section-nav-dot" data-section="part1-4-results" data-label="Results"></div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
@@ -574,16 +1058,28 @@ Max error:  3.22 pixels</code></pre>
         function updateSectionNav() {
             let currentSection = null;
             let isInPartA1 = false;
+            let maxVisibleArea = 0;
 
             // Check which section is currently in view
             partA1Sections.forEach(sectionId => {
                 const section = document.getElementById(sectionId);
                 if (section) {
                     const rect = section.getBoundingClientRect();
-                    // Section is active when it's near the top of viewport
-                    if (rect.top >= -100 && rect.top <= 200) {
-                        currentSection = sectionId;
+
+                    // Check if we're anywhere within this section's range
+                    if (rect.top <= 200 && rect.bottom >= 0) {
                         isInPartA1 = true;
+                    }
+
+                    // Find the section with the most visible area in viewport
+                    const viewportHeight = window.innerHeight;
+                    const visibleTop = Math.max(0, rect.top);
+                    const visibleBottom = Math.min(viewportHeight, rect.bottom);
+                    const visibleArea = Math.max(0, visibleBottom - visibleTop);
+
+                    if (visibleArea > maxVisibleArea) {
+                        maxVisibleArea = visibleArea;
+                        currentSection = sectionId;
                     }
                 }
             });
@@ -636,16 +1132,28 @@ Max error:  3.22 pixels</code></pre>
         function updatePartA2Nav() {
             let currentSection = null;
             let isInPartA2 = false;
+            let maxVisibleArea = 0;
 
             // Check which section is currently in view
             partA2Sections.forEach(sectionId => {
                 const section = document.getElementById(sectionId);
                 if (section) {
                     const rect = section.getBoundingClientRect();
-                    // Section is active when it's near the top of viewport
-                    if (rect.top >= -100 && rect.top <= 200) {
-                        currentSection = sectionId;
+
+                    // Check if we're anywhere within this section's range
+                    if (rect.top <= 200 && rect.bottom >= 0) {
                         isInPartA2 = true;
+                    }
+
+                    // Find the section with the most visible area in viewport
+                    const viewportHeight = window.innerHeight;
+                    const visibleTop = Math.max(0, rect.top);
+                    const visibleBottom = Math.min(viewportHeight, rect.bottom);
+                    const visibleArea = Math.max(0, visibleBottom - visibleTop);
+
+                    if (visibleArea > maxVisibleArea) {
+                        maxVisibleArea = visibleArea;
+                        currentSection = sectionId;
                     }
                 }
             });
@@ -668,17 +1176,153 @@ Max error:  3.22 pixels</code></pre>
             });
         }
 
-        // Update both navigations on scroll
+        // Section Navigation for Part A.3
+        const partA3Sections = ['part1-3-approach', 'part1-3-implementation', 'part1-3-demo', 'part1-3-results'];
+        const partA3Nav = document.getElementById('part-a3-nav');
+        const partA3Dots = partA3Nav.querySelectorAll('.section-nav-dot');
+
+        // Click handlers for Part A.3 navigation dots
+        partA3Dots.forEach(dot => {
+            dot.addEventListener('click', function() {
+                const sectionId = this.getAttribute('data-section');
+                const section = document.getElementById(sectionId);
+                if (section) {
+                    section.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+
+        // Update navigation on scroll for Part A.3
+        function updatePartA3Nav() {
+            let currentSection = null;
+            let isInPartA3 = false;
+            let maxVisibleArea = 0;
+
+            // Check if Part A.4 has started
+            const partA4FirstSection = document.getElementById('part1-4-approach');
+            const isPartA4Started = partA4FirstSection && partA4FirstSection.getBoundingClientRect().top < 100;
+
+            // Check which section is currently in view
+            partA3Sections.forEach(sectionId => {
+                const section = document.getElementById(sectionId);
+                if (section) {
+                    const rect = section.getBoundingClientRect();
+
+                    // Check if we're anywhere within this section's range (and Part A.4 hasn't started)
+                    if (rect.top <= 200 && rect.bottom >= 0 && !isPartA4Started) {
+                        isInPartA3 = true;
+                    }
+
+                    // Find the section with the most visible area in viewport
+                    const viewportHeight = window.innerHeight;
+                    const visibleTop = Math.max(0, rect.top);
+                    const visibleBottom = Math.min(viewportHeight, rect.bottom);
+                    const visibleArea = Math.max(0, visibleBottom - visibleTop);
+
+                    if (visibleArea > maxVisibleArea) {
+                        maxVisibleArea = visibleArea;
+                        currentSection = sectionId;
+                    }
+                }
+            });
+
+            // Show/hide navigation based on whether we're in Part A.3
+            if (isInPartA3) {
+                partA3Nav.style.display = 'flex';
+            } else {
+                partA3Nav.style.display = 'none';
+            }
+
+            // Update active dot
+            partA3Dots.forEach(dot => {
+                const dotSection = dot.getAttribute('data-section');
+                if (dotSection === currentSection) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            });
+        }
+
+        // Section Navigation for Part A.4
+        const partA4Sections = ['part1-4-approach', 'part1-4-implementation', 'part1-4-results'];
+        const partA4Nav = document.getElementById('part-a4-nav');
+        const partA4Dots = partA4Nav.querySelectorAll('.section-nav-dot');
+
+        // Click handlers for Part A.4 navigation dots
+        partA4Dots.forEach(dot => {
+            dot.addEventListener('click', function() {
+                const sectionId = this.getAttribute('data-section');
+                const section = document.getElementById(sectionId);
+                if (section) {
+                    section.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+
+        // Update navigation on scroll for Part A.4
+        function updatePartA4Nav() {
+            let currentSection = null;
+            let isInPartA4 = false;
+            let maxVisibleArea = 0;
+
+            // Check which section is currently in view
+            partA4Sections.forEach(sectionId => {
+                const section = document.getElementById(sectionId);
+                if (section) {
+                    const rect = section.getBoundingClientRect();
+
+                    // Check if we're anywhere within this section's range
+                    if (rect.top <= 200 && rect.bottom >= 0) {
+                        isInPartA4 = true;
+                    }
+
+                    // Find the section with the most visible area in viewport
+                    const viewportHeight = window.innerHeight;
+                    const visibleTop = Math.max(0, rect.top);
+                    const visibleBottom = Math.min(viewportHeight, rect.bottom);
+                    const visibleArea = Math.max(0, visibleBottom - visibleTop);
+
+                    if (visibleArea > maxVisibleArea) {
+                        maxVisibleArea = visibleArea;
+                        currentSection = sectionId;
+                    }
+                }
+            });
+
+            // Show/hide navigation based on whether we're in Part A.4
+            if (isInPartA4) {
+                partA4Nav.style.display = 'flex';
+            } else {
+                partA4Nav.style.display = 'none';
+            }
+
+            // Update active dot
+            partA4Dots.forEach(dot => {
+                const dotSection = dot.getAttribute('data-section');
+                if (dotSection === currentSection) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            });
+        }
+
+        // Update all navigations on scroll
         window.addEventListener('scroll', function() {
             clearTimeout(scrollTimeout);
             scrollTimeout = setTimeout(function() {
                 updateSectionNav();
                 updatePartA2Nav();
+                updatePartA3Nav();
+                updatePartA4Nav();
             }, 10);
         }, { passive: true });
 
-        // Initial check for Part A.2
+        // Initial check for Part A.2, A.3, and A.4
         updatePartA2Nav();
+        updatePartA3Nav();
+        updatePartA4Nav();
 
         // Desktop notice - hide when scrolling down from header
         const desktopNotice = document.querySelector('.desktop-notice');
