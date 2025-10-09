@@ -465,11 +465,17 @@ section {
     background: linear-gradient(180deg, var(--accent) 0%, rgba(41, 151, 255, 0.3) 100%);
 }
 
-.note strong {
+.note > strong {
     display: block;
     font-weight: 600;
     font-size: 1.1rem;
     margin-bottom: 0.75rem;
+    color: var(--accent);
+}
+
+.note p strong {
+    display: inline;
+    font-weight: 600;
     color: var(--accent);
 }
 

@@ -662,32 +662,29 @@ Max error:  3.22 pixels</code></pre>
                 </div>
             </div>
 
-            <div class="note" style="margin-top: 3rem;">
-                <strong>Observations</strong>
-                <ul style="margin-top: 0.5rem;">
-                    <li><strong>Bilinear interpolation</strong> produces smoother, more visually pleasing results with anti-aliased edges</li>
-                    <li><strong>Nearest neighbor</strong> is faster but exhibits noticeable jagged edges and stair-step artifacts</li>
-                    <li>The difference is most apparent along diagonal lines and curved edges</li>
-                    <li>For final mosaic creation, bilinear interpolation is preferred despite slightly higher computational cost</li>
-                </ul>
-            </div>
         </section>
 
         <!-- Part A.4: Blend the Images into a Mosaic -->
         <section id="part1-4-approach">
             <div class="content">
                 <h2>Part A.4: Blend the Images into a Mosaic</h2>
-                <p>We reused components from earlier parts of the project:</p>
+            </div>
 
-                <ol style="max-width: 900px; margin: 1.5rem auto 2rem auto; line-height: 1.8;">
-                    <li>Using saved correspondences and homographies that we manually clicked and stored in <strong>Part A.2</strong>.</li>
-                    <li>Warping the left and right images onto the middle image using the verified warping function from <strong>Part A.3</strong>.</li>
-                </ol>
+            <div class="content-wide" style="max-width: 1000px; margin: 0 auto;">
+                <div class="note" style="margin-top: 2rem;">
+                    <strong>Reusing Components</strong>
+                    <p style="margin-top: 0.5rem;">We reused components from earlier parts of the project:</p>
+                    <ol style="margin-top: 0.5rem;">
+                        <li>Using saved correspondences and homographies that we manually clicked and stored in <strong>Part A.2</strong>.</li>
+                        <li>Warping the left and right images onto the middle image using the verified warping function from <strong>Part A.3</strong>.</li>
+                    </ol>
+                </div>
 
-                <p>After aligning all images, we implemented <strong>weighted averaging</strong> to blend them together instead of simply overlapping.</p>
-
-                <p>In Part A.3, we already created an <strong>alpha mask</strong> for each image to define its visible region. The alpha values are further smoothed using a <strong>distance transform</strong>, giving higher weights near the image center and gradually fading toward the edges.</p>
-
+                <div class="note" style="margin-top: 1.5rem;">
+                    <strong>Implementation Approach</strong>
+                    <p style="margin-top: 0.5rem;">After aligning all images, we implemented <strong>weighted averaging</strong> to blend them together instead of simply overlapping.</p>
+                    <p style="margin-top: 0.5rem;">In Part A.3, we already created an <strong>alpha mask</strong> for each image to define its visible region. The alpha values are further smoothed using a <strong>distance transform</strong>, giving higher weights near the image center and gradually fading toward the edges.</p>
+                </div>
             </div>
         </section>
 
