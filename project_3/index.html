@@ -819,8 +819,213 @@ Max error:  3.22 pixels</code></pre>
 
         <!-- Part B.1: Harris Corner Detection -->
         <section id="part2-1">
-            <h2>Part B.1: Harris Corner Detection</h2>
-            <p><!-- Content to be added --></p>
+            <div class="content">
+                <h2>Part B.1: Harris Corner Detection</h2>
+                <p>Automatic feature detection using Harris corners and Adaptive Non-Maximal Suppression (ANMS) to identify distinctive points for matching.</p>
+            </div>
+
+            <!-- Two-column layout: Mathematical Formulation + Theory -->
+            <div class="content-wide">
+                <div class="two-column-layout">
+                    <div class="column-left">
+                        <h4>Harris Corner Detection</h4>
+                        <p>For each pixel, we compute the structure tensor matrix <code>M</code> using image gradients:</p>
+                        <div style="text-align: center; margin: 1.5rem 0; font-family: 'JetBrains Mono', monospace;">
+                            <div style="display: inline-block; position: relative;">
+                                <span style="font-size: 1.2rem;">M = </span>
+                                <span style="font-size: 2rem; vertical-align: middle;">[</span>
+                                <div style="display: inline-block; vertical-align: middle; text-align: center;">
+                                    <div><code>∑I²ₓ&nbsp;&nbsp;&nbsp;&nbsp;∑IₓIᵧ</code></div>
+                                    <div><code>∑IₓIᵧ&nbsp;&nbsp;&nbsp;∑I²ᵧ</code></div>
+                                </div>
+                                <span style="font-size: 2rem; vertical-align: middle;">]</span>
+                            </div>
+                        </div>
+                        <p>The Harris response is calculated as:</p>
+                        <ul>
+                            <li><code>R = det(M) / trace(M)</code></li>
+                            <li><code>R = (M₁₁·M₂₂ - M²₁₂) / (M₁₁ + M₂₂)</code></li>
+                        </ul>
+                        <p>Corners have large positive R values, edges have near-zero values, and flat regions have small values.</p>
+
+                        <h4 style="margin-top: 2rem;">Adaptive Non-Maximal Suppression</h4>
+                        <p>ANMS ensures spatial distribution of corners by:</p>
+                        <ul>
+                            <li>For each corner, find the minimum distance to a stronger corner (response > c × current)</li>
+                            <li>Select the <code>n</code> points with largest minimum distances</li>
+                            <li>This gives well-distributed features across the image</li>
+                        </ul>
+
+                        <div class="note" style="margin-top: 1rem; background: rgba(244, 172, 183, 0.1); border-left: 3px solid var(--accent);">
+                            <strong>Intuition:</strong> Why does ANMS work?
+                            <p style="margin-top: 0.5rem;">If a corner point has a large minimum distance to any stronger corner, it means:</p>
+                            <ul style="margin-top: 0.5rem;">
+                                <li>The point is relatively isolated and unique in its local region</li>
+                                <li>It's not surrounded by many other strong corners (which would be redundant)</li>
+                                <li>It likely represents a distinctive feature that's important for matching</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="column-right">
+                        <div class="note" style="margin-top: 0;">
+                            <strong>Algorithm Overview</strong>
+                            <ol style="margin-top: 0.5rem;">
+                                <li><strong>Gradient Computation</strong>: Calculate Iₓ and Iᵧ using Sobel filters</li>
+                                <li><strong>Structure Tensor</strong>: Build M matrix within a local window</li>
+                                <li><strong>Response Calculation</strong>: Compute R for each pixel</li>
+                                <li><strong>Peak Detection</strong>: Find local maxima above threshold</li>
+                                <li><strong>ANMS Selection</strong>: Choose spatially distributed subset</li>
+                            </ol>
+                        </div>
+
+                        <div class="note" style="margin-top: 1.5rem;">
+                            <strong>Implementation Choice</strong>
+                            <p style="margin-top: 0.5rem;">We use <code>skimage.feature.corner_harris</code> for robustness and efficiency, with custom ANMS implementation for spatial distribution.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Part B.1 - Implementation -->
+        <section id="part2-1-implementation" class="subsection">
+            <div class="content">
+                <h3>Implementation</h3>
+            </div>
+
+            <div class="code-section">
+                <div class="code-header" onclick="toggleCode(this)">
+                    <span class="toggle-icon">▼</span> Harris Corner Detection: <code>get_harris_corners</code>
+                </div>
+                <div class="code-content">
+                    <pre><code class="language-python"># from harris.py ref code
+def get_harris_corners(im, edge_discard=20, min_dis=1, threshold=None):
+    """
+    This function takes a b&w image and an optional amount to discard
+    on the edge (default is 5 pixels), and finds all harris corners
+    in the image. Harris corners near the edge are discarded and the
+    coordinates of the remaining corners are returned. A 2d array (h)
+    containing the h value of every pixel is also returned.
+
+    h is the same shape as the original image, im.
+    coords is 2 x n (ys, xs).
+    """
+    assert edge_discard >= 20
+
+    # find harris corners
+    h = corner_harris(im, method='eps', sigma=1)
+    coords = peak_local_max(h, min_distance=min_dis, threshold_rel=threshold)
+
+    # discard points on edge
+    edge = edge_discard  # pixels
+    mask = (coords[:, 0] > edge) & \
+           (coords[:, 0] < im.shape[0] - edge) & \
+           (coords[:, 1] > edge) & \
+           (coords[:, 1] < im.shape[1] - edge)
+    coords = coords[mask].T
+    return h, coords</code></pre>
+                </div>
+            </div>
+
+            <div class="code-section">
+                <div class="code-header" onclick="toggleCode(this)">
+                    <span class="toggle-icon">▼</span> ANMS Implementation: <code>anms</code>
+                </div>
+                <div class="code-content">
+                    <pre><code class="language-python">def anms(h, coords, c=0.9, max_pts=500):
+    """
+    Adaptive Non-Maximal Suppression
+    Select spatially distributed corners based on their response values
+    """
+    if coords.shape[1] <= max_pts:
+        return coords
+
+    h_vals = h[coords[0], coords[1]]
+    n = coords.shape[1]
+
+    coords_t = coords.T
+    dists = dist2(coords_t, coords_t)
+
+    r = np.zeros(n)
+    for i in range(n):
+        # Find points with stronger response than c * current point
+        stronger = h_vals > c * h_vals[i]
+        stronger[i] = False  # Exclude self
+
+        if np.any(stronger):
+            r[i] = np.min(dists[i, stronger])
+        else:
+            r[i] = np.inf
+
+    # Handle infinite values
+    r[r == np.inf] = np.max(r[r != np.inf]) + 1 if np.any(r != np.inf) else 0
+
+    # Select top max_pts points with largest minimum distances
+    selected = np.argpartition(-r, max_pts)[:max_pts]
+
+    return coords[:, selected]</code></pre>
+                </div>
+            </div>
+
+            <div class="code-section">
+                <div class="code-header" onclick="toggleCode(this)">
+                    <span class="toggle-icon">▼</span> Distance Calculation: <code>dist2</code>
+                </div>
+                <div class="code-content">
+                    <pre><code class="language-python">def dist2(x, c):
+    """
+    Calculates squared distance between two sets of points.
+    Returns M x L matrix where entry (i,j) is squared distance
+    from point i in x to point j in c.
+    """
+    ndata, dimx = x.shape
+    ncenters, dimc = c.shape
+    assert dimx == dimc, 'Data dimension does not match dimension of centers'
+
+    return (np.ones((ncenters, 1)) * np.sum((x**2).T, axis=0)).T + \
+            np.ones((ndata, 1)) * np.sum((c**2).T, axis=0) - \
+            2 * np.inner(x, c)</code></pre>
+                </div>
+            </div>
+
+            <div class="note" style="margin-top: 1.5rem;">
+                <strong>Optimization Strategy</strong>
+                <p style="margin-top: 0.5rem;">We can significantly improve performance by pre-filtering corners using <code>peak_local_max</code> parameters:</p>
+                <ul style="margin-top: 0.5rem;">
+                    <li><code>threshold_rel</code> — Filters out weak corners below relative threshold</li>
+                    <li><code>min_distance</code> — Ensures minimum spacing between detected corners</li>
+                </ul>
+                <p style="margin-top: 0.5rem;">This pre-filtering removes noise points and reduces ANMS computation time from <strong>3m 29.9s</strong> to just <strong>0.4s</strong> for n=500 points.</p>
+            </div>
+        </section>
+
+        <!-- Part B.1 - Demo/Results -->
+        <section id="part2-1-demo" class="subsection">
+            <div class="content">
+                <h3>Demo: Performance Comparison</h3>
+                <p>Comparing Harris corner detection with and without pre-filtering optimization on the same scene.</p>
+            </div>
+
+            <div class="content-wide">
+                <h4 style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem;">Without Pre-filtering (Raw Harris Corners)</h4>
+                <div class="result-item" style="max-width: 1000px; margin: 0 auto;">
+                    <img src="src/img/B1-harris_anms_without_filter_comparison.png" alt="Harris corners without filtering" class="clickable">
+                    <div class="image-caption">
+                        <strong>Runtime: 3m 29.9s</strong><br>
+                        Many noisy corners detected, ANMS takes significant time to process all points
+                    </div>
+                </div>
+
+                <h4 style="text-align: center; margin-top: 3rem; margin-bottom: 1.5rem;">With Pre-filtering (Optimized)</h4>
+                <div class="result-item" style="max-width: 1000px; margin: 0 auto;">
+                    <img src="src/img/B1-harris_anms_with_filter_comparison.png" alt="Harris corners with filtering" class="clickable">
+                    <div class="image-caption">
+                        <strong>Runtime: 0.4s</strong><br>
+                        Pre-filtered corners are higher quality, ANMS runs 500× faster with better spatial distribution
+                    </div>
+                </div>
+            </div>
         </section>
 
         <!-- Part B.2: Feature Descriptor Extraction -->
@@ -875,6 +1080,13 @@ Max error:  3.22 pixels</code></pre>
         <div class="section-nav-dot" data-section="part1-4-approach" data-label="Approach"></div>
         <div class="section-nav-dot" data-section="part1-4-implementation" data-label="Implementation"></div>
         <div class="section-nav-dot" data-section="part1-4-results" data-label="Results"></div>
+    </div>
+
+    <!-- Section Navigation for Part B.1 -->
+    <div class="section-nav" id="part-b1-nav" style="display: none;">
+        <div class="section-nav-dot" data-section="part2-1" data-label="Approach"></div>
+        <div class="section-nav-dot" data-section="part2-1-implementation" data-label="Implementation"></div>
+        <div class="section-nav-dot" data-section="part2-1-demo" data-label="Demo"></div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
@@ -1305,6 +1517,70 @@ Max error:  3.22 pixels</code></pre>
             });
         }
 
+        // Section Navigation for Part B.1
+        const partB1Sections = ['part2-1', 'part2-1-implementation', 'part2-1-demo'];
+        const partB1Nav = document.getElementById('part-b1-nav');
+        const partB1Dots = partB1Nav.querySelectorAll('.section-nav-dot');
+
+        // Click handlers for Part B.1 navigation dots
+        partB1Dots.forEach(dot => {
+            dot.addEventListener('click', function() {
+                const sectionId = this.getAttribute('data-section');
+                const section = document.getElementById(sectionId);
+                if (section) {
+                    section.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+
+        // Update navigation on scroll for Part B.1
+        function updatePartB1Nav() {
+            let currentSection = null;
+            let isInPartB1 = false;
+            let maxVisibleArea = 0;
+
+            // Check which section is currently in view
+            partB1Sections.forEach(sectionId => {
+                const section = document.getElementById(sectionId);
+                if (section) {
+                    const rect = section.getBoundingClientRect();
+
+                    // Check if we're anywhere within this section's range
+                    if (rect.top <= 200 && rect.bottom >= 0) {
+                        isInPartB1 = true;
+                    }
+
+                    // Find the section with the most visible area in viewport
+                    const viewportHeight = window.innerHeight;
+                    const visibleTop = Math.max(0, rect.top);
+                    const visibleBottom = Math.min(viewportHeight, rect.bottom);
+                    const visibleArea = Math.max(0, visibleBottom - visibleTop);
+
+                    if (visibleArea > maxVisibleArea) {
+                        maxVisibleArea = visibleArea;
+                        currentSection = sectionId;
+                    }
+                }
+            });
+
+            // Show/hide navigation based on whether we're in Part B.1
+            if (isInPartB1) {
+                partB1Nav.style.display = 'flex';
+            } else {
+                partB1Nav.style.display = 'none';
+            }
+
+            // Update active dot
+            partB1Dots.forEach(dot => {
+                const dotSection = dot.getAttribute('data-section');
+                if (dotSection === currentSection) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            });
+        }
+
         // Update all navigations on scroll
         window.addEventListener('scroll', function() {
             clearTimeout(scrollTimeout);
@@ -1313,13 +1589,15 @@ Max error:  3.22 pixels</code></pre>
                 updatePartA2Nav();
                 updatePartA3Nav();
                 updatePartA4Nav();
+                updatePartB1Nav();
             }, 10);
         }, { passive: true });
 
-        // Initial check for Part A.2, A.3, and A.4
+        // Initial check for Part A.2, A.3, A.4, and B.1
         updatePartA2Nav();
         updatePartA3Nav();
         updatePartA4Nav();
+        updatePartB1Nav();
 
         // Desktop notice - hide when scrolling down from header
         const desktopNotice = document.querySelector('.desktop-notice');
