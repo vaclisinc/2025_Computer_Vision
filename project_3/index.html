@@ -1030,8 +1030,107 @@ def get_harris_corners(im, edge_discard=20, min_dis=1, threshold=None):
 
         <!-- Part B.2: Feature Descriptor Extraction -->
         <section id="part2-2">
-            <h2>Part B.2: Feature Descriptor Extraction</h2>
-            <p><!-- Content to be added --></p>
+                <h2>Part B.2: Feature Descriptor Extraction</h2>
+ 
+            <!-- Two-column layout: Theory + Explanation -->
+            <div class="content-wide">
+                <div class="two-column-layout">
+                    <div class="column-left">
+                        <!-- <h4>MOPS Descriptor Strategy</h4> -->
+                        <p>Based on Section 4 of the MOPS paper, we extract descriptors using a multi-scale approach:</p>
+                        <ul>
+                            <li><strong>40×40 window</strong> centered at each feature point</li>
+                            <li><strong>Gaussian blur (σ=1.5)</strong> for noise reduction</li>
+                            <li><strong>5× downsampling</strong> to create an 8×8 descriptor</li>
+                            <li><strong>Normalization</strong> for illumination invariance</li>
+                        </ul>
+                    </div>
+
+                    <div class="column-right">
+                        <div class="note" style="margin-top: 1rem; background: rgba(216, 226, 220, 0.3); border-left: 3px solid var(--border);">
+                            <strong>Why sample from a larger window?</strong>
+                            <div style="margin-top: 1.5rem; text-align: center;">
+                            <img src="src/img/B2-mops_descriptor_illustration.jpg" alt="MOPS descriptor extraction" style="max-width: 100%; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Part B.2 - Implementation -->
+        <section id="part2-2-implementation" class="subsection">
+            <div class="content">
+                <h3>Implementation</h3>
+            </div>
+
+            <div class="code-section">
+                <div class="code-header" onclick="toggleCode(this)">
+                    <span class="toggle-icon">▼</span> Feature Descriptor Extraction: <code>extract_feature_descriptors</code>
+                </div>
+                <div class="code-content">
+                    <pre><code class="language-python">def extract_feature_descriptors(im, coords):
+    """
+    Extract MOPS-style feature descriptors from detected corners.
+    Returns 64-dimensional normalized descriptors for each valid corner.
+    """
+    h, w = im.shape
+    blurred = gaussian_filter(im, sigma=1.5)
+
+    descriptors = []
+    valid_coords = []
+
+    for i in range(coords.shape[1]):
+        y, x = coords[0, i], coords[1, i]
+
+        # Check if 40x40 window fits within image bounds
+        if 20 <= y < h-20 and 20 <= x < w-20:
+            # Extract 40x40 window centered at corner
+            window = blurred[y-20:y+20, x-20:x+20]
+
+            # Downsample by factor of 5 to get 8x8 descriptor
+            descriptor = window[::5, ::5][:8, :8].flatten()
+
+            # Normalize descriptor to zero mean and unit variance
+            mean, std = descriptor.mean(), descriptor.std()
+            descriptor = (descriptor - mean) / std if std > 0 else descriptor - mean
+
+            descriptors.append(descriptor)
+            valid_coords.append([y, x])
+
+    return np.array(descriptors), np.array(valid_coords).T</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- Part B.2 - Demo/Results -->
+        <section id="part2-2-demo" class="subsection">
+                <h3>Demo: Feature Extraction Process</h3>
+                <p>For demonstration purposes, we deliberately used relaxed parameters to show both good and bad descriptors: min_dis=3, threshold=None, max_pts=32.</p>
+
+
+                <h4 style="text-align: center; margin-top: 2rem; margin-bottom: 1.5rem;">Harris Corners with ANMS (Including Weak Points)</h4>
+                <div class="result-item" style="max-width: 1000px; margin: 0 auto;">
+                    <img src="src/img/B2-harris_anms_without_filter_comparison.jpg" alt="Harris corners including weak points" class="clickable">
+                    <div class="image-caption">
+                        Detected corners including some weak/noisy points for descriptor analysis
+                    </div>
+                </div>
+                <div class="result-item" style="max-width: 1200px; margin: 0 auto; margin-top: 3rem; margin-bottom: 1.5rem;">
+                    <img src="src/img/B2-feature_extraction_process.png" alt="Feature extraction visualization" class="clickable">
+                    <div class="image-caption">
+                        Complete pipeline: Corner detection → 40×40 patches → Gaussian filter → 8×8 normalized features
+                    </div>
+                </div>
+
+                <div class="result-item" style="max-width: 1000px; margin: 0 auto; margin-top: 3rem; margin-bottom: 1.5rem;">
+                    <img src="src/img/B2-32-descriptors.png" alt="Grid of 32 normalized descriptors" class="clickable">
+                    <div class="image-caption">
+                        Visualization of 32 extracted descriptors (8×8 each), showing variety in texture patterns.<br>
+                        Darker regions indicate lower normalized values, lighter regions indicate higher values.
+                    </div>
+                </div>
+            </div>
+
         </section>
 
         <!-- Part B.3: Feature Matching -->
@@ -1087,6 +1186,13 @@ def get_harris_corners(im, edge_discard=20, min_dis=1, threshold=None):
         <div class="section-nav-dot" data-section="part2-1" data-label="Approach"></div>
         <div class="section-nav-dot" data-section="part2-1-implementation" data-label="Implementation"></div>
         <div class="section-nav-dot" data-section="part2-1-demo" data-label="Demo"></div>
+    </div>
+
+    <!-- Section Navigation for Part B.2 -->
+    <div class="section-nav" id="part-b2-nav" style="display: none;">
+        <div class="section-nav-dot" data-section="part2-2" data-label="Approach"></div>
+        <div class="section-nav-dot" data-section="part2-2-implementation" data-label="Implementation"></div>
+        <div class="section-nav-dot" data-section="part2-2-demo" data-label="Demo"></div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
@@ -1581,6 +1687,70 @@ def get_harris_corners(im, edge_discard=20, min_dis=1, threshold=None):
             });
         }
 
+        // Section Navigation for Part B.2
+        const partB2Sections = ['part2-2', 'part2-2-implementation', 'part2-2-demo'];
+        const partB2Nav = document.getElementById('part-b2-nav');
+        const partB2Dots = partB2Nav.querySelectorAll('.section-nav-dot');
+
+        // Click handlers for Part B.2 navigation dots
+        partB2Dots.forEach(dot => {
+            dot.addEventListener('click', function() {
+                const sectionId = this.getAttribute('data-section');
+                const section = document.getElementById(sectionId);
+                if (section) {
+                    section.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+
+        // Update navigation on scroll for Part B.2
+        function updatePartB2Nav() {
+            let currentSection = null;
+            let isInPartB2 = false;
+            let maxVisibleArea = 0;
+
+            // Check which section is currently in view
+            partB2Sections.forEach(sectionId => {
+                const section = document.getElementById(sectionId);
+                if (section) {
+                    const rect = section.getBoundingClientRect();
+
+                    // Check if we're anywhere within this section's range
+                    if (rect.top <= 200 && rect.bottom >= 0) {
+                        isInPartB2 = true;
+                    }
+
+                    // Find the section with the most visible area in viewport
+                    const viewportHeight = window.innerHeight;
+                    const visibleTop = Math.max(0, rect.top);
+                    const visibleBottom = Math.min(viewportHeight, rect.bottom);
+                    const visibleArea = Math.max(0, visibleBottom - visibleTop);
+
+                    if (visibleArea > maxVisibleArea) {
+                        maxVisibleArea = visibleArea;
+                        currentSection = sectionId;
+                    }
+                }
+            });
+
+            // Show/hide navigation based on whether we're in Part B.2
+            if (isInPartB2) {
+                partB2Nav.style.display = 'flex';
+            } else {
+                partB2Nav.style.display = 'none';
+            }
+
+            // Update active dot
+            partB2Dots.forEach(dot => {
+                const dotSection = dot.getAttribute('data-section');
+                if (dotSection === currentSection) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            });
+        }
+
         // Update all navigations on scroll
         window.addEventListener('scroll', function() {
             clearTimeout(scrollTimeout);
@@ -1590,14 +1760,16 @@ def get_harris_corners(im, edge_discard=20, min_dis=1, threshold=None):
                 updatePartA3Nav();
                 updatePartA4Nav();
                 updatePartB1Nav();
+                updatePartB2Nav();
             }, 10);
         }, { passive: true });
 
-        // Initial check for Part A.2, A.3, A.4, and B.1
+        // Initial check for Part A.2, A.3, A.4, B.1, and B.2
         updatePartA2Nav();
         updatePartA3Nav();
         updatePartA4Nav();
         updatePartB1Nav();
+        updatePartB2Nav();
 
         // Desktop notice - hide when scrolling down from header
         const desktopNotice = document.querySelector('.desktop-notice');
