@@ -51,7 +51,7 @@
 
                 <div class="overview-card">
                     <h3>Part B: Feature Matching for Autostitching</h3>
-                    <p style="font-style: italic; color: var(--text-muted);">Stay tuned.</p>
+                    <p>Automatically detect Harris corners, extract MOPS descriptors, match features using Lowe's ratio test, and robustly compute homographies with RANSAC.</p>
 
                     <div class="part-nav-grid">
                         <a href="#part2-1" class="part-nav-item">
@@ -1031,7 +1031,7 @@ def get_harris_corners(im, edge_discard=20, min_dis=1, threshold=None):
         <!-- Part B.2: Feature Descriptor Extraction -->
         <section id="part2-2">
                 <h2>Part B.2: Feature Descriptor Extraction</h2>
- 
+
             <!-- Two-column layout: Theory + Explanation -->
             <div class="content-wide">
                 <div class="two-column-layout">
@@ -1240,8 +1240,206 @@ def match_features(descriptors1, descriptors2, ratio_threshold=0.7):
 
         <!-- Part B.4: RANSAC -->
         <section id="part2-4">
-            <h2>Part B.4: RANSAC</h2>
-            <p><!-- Content to be added --></p>
+                <h2>Part B.4: RANSAC (Random Sample Consensus)</h2>
+                <p>Even with Lowe's ratio test, some incorrect matches may remain. RANSAC iteratively finds the homography that best fits the largest subset of matches.</p>
+
+            <!-- Two-column layout: Algorithm + Explanation -->
+            <div class="content-wide">
+                <div class="two-column-layout">
+                    <div class="column-left">
+                        <h4>RANSAC Algorithm</h4>
+                        <p>The algorithm repeatedly samples small subsets of matches to find the best homography:</p>
+
+                        <div style="margin: 1.5rem 0; padding: 1rem; background: rgba(41, 151, 255, 0.05); border-left: 3px solid var(--accent); border-radius: 8px;">
+                            <ol style="margin: 0; padding-left: 1.5rem; line-height: 2;">
+                                <li><strong style="color: var(--accent);">Select 4 pairs</strong> (at random)</li>
+                                <li><strong style="color: var(--accent);">Compute homography H</strong></li>
+                                <li><strong style="color: var(--accent);">Check how well H explains</strong><br>
+                                    <span style="font-size: 0.9rem; color: var(--text-secondary);">(Count inliers, good matches)</span>
+                                </li>
+                                <li><strong style="color: var(--accent);">Keep the best H</strong> (most inliers)</li>
+                                <li><strong style="color: var(--accent);">Recompute H</strong> (with all inliers)</li>
+                            </ol>
+                        </div>
+
+                    </div>
+
+                    <div class="column-right">
+                        <div class="note" style="margin-top: 0; background: rgba(216, 226, 220, 0.3); border-left: 3px solid var(--border);">
+                            <strong>Integration with Part A</strong>
+                            <p style="margin-top: 0.5rem;">RANSAC reuses the <code>computeH()</code> function from Part A.2 to compute homographies from point correspondences.</p>
+                        </div>
+
+                        <div class="note" style="margin-top: 1.5rem; background: rgba(255, 255, 255, 0.03);">
+                            <strong>Reprojection Error</strong>
+                            <p style="margin-top: 0.5rem; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;">
+                                error = ||H·p₁ - p₂||
+                            </p>
+                            <p style="margin-top: 0.5rem; font-size: 0.9rem;">Points with error < threshold are classified as inliers</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Part B.4 - Implementation -->
+        <section id="part2-4-implementation" class="subsection">
+            <div class="content">
+                <h3>Implementation</h3>
+            </div>
+
+            <div class="code-section">
+                <div class="code-header" onclick="toggleCode(this)">
+                    <span class="toggle-icon">▼</span> RANSAC Homography: <code>ransac_homography</code>
+                </div>
+                <div class="code-content">
+                    <pre><code class="language-python">def ransac_homography(matches, coords1, coords2, n_iters=5000, threshold=3.0):
+    """
+    Robustly estimate homography using RANSAC.
+    Returns the best homography and a boolean mask of inliers.
+    """
+    if len(matches) < 4:
+        return None, np.zeros(len(matches), dtype=bool)
+
+    # Convert (y,x) to (x,y) for computeH
+    pts1 = np.array([[coords1[1, m[0]], coords1[0, m[0]]] for m in matches])
+    pts2 = np.array([[coords2[1, m[1]], coords2[0, m[1]]] for m in matches])
+
+    best_H = None
+    best_inliers = np.zeros(len(matches), dtype=bool)
+    max_inliers = 0
+
+    
+    for _ in range(n_iters):
+        # 1. Randomly sample 4 matches
+        idx = np.random.choice(len(matches), 4, replace=False)
+
+        # 2. Compute homography using Part A.2's computeH
+        H, _, _ = computeH(pts1[idx], pts2[idx])
+
+        # 3. Compute reprojection errors
+        pt1_h = np.column_stack([pts1, np.ones(len(pts1))])
+        pt2_proj = (H @ pt1_h.T).T
+        pt2_proj = pt2_proj[:, :2] / pt2_proj[:, 2:]
+        errors = np.linalg.norm(pt2_proj - pts2, axis=1)
+
+        # 3. Count inliers
+        inliers = errors < threshold
+        
+        # 4. Keep the best H
+        if np.sum(inliers) > max_inliers:
+            max_inliers = np.sum(inliers)
+            best_inliers = inliers
+            best_H = H
+        
+        # 5. Loop back to step 1
+
+    # Refine with all inliers
+    if max_inliers >= 4:
+        best_H, _, _ = computeH(pts1[best_inliers], pts2[best_inliers])
+
+    print(f"  RANSAC: {max_inliers}/{len(matches)} inliers")
+    return best_H, best_inliers</code></pre>
+                </div>
+            </div>
+
+            <div class="code-section">
+                <div class="code-header" onclick="toggleCode(this)">
+                    <span class="toggle-icon">▼</span> Automatic Stitching Pipeline: <code>stitch_images</code>
+                </div>
+                <div class="code-content">
+                    <pre><code class="language-python">def stitch_images(image_paths, ref_idx=None, ratio_threshold=0.7, ransac_iters=5000,
+                  ransac_threshold=3.0, max_pts=1000, feather_width=150):
+    """
+    Fully automatic image stitching pipeline using Harris corners, MOPS descriptors,
+    Lowe's ratio test, and RANSAC.
+    """
+    images = [sk.img_as_float(skio.imread(p)) for p in image_paths]
+
+    if ref_idx is None:
+        ref_idx = len(images) // 2
+
+    n = len(images)
+    pairwise_H = [[None] * n for _ in range(n)]
+
+    for i in range(n - 1):
+        im1_gray = sk.color.rgb2gray(images[i]) if len(images[i].shape) == 3 else images[i]
+        im2_gray = sk.color.rgb2gray(images[i+1]) if len(images[i+1].shape) == 3 else images[i+1]
+
+        # B.1 Detect Harris corners
+        h1, coords1 = get_harris_corners(im1_gray, edge_discard=20, min_dis=10, threshold=0.01)
+        h2, coords2 = get_harris_corners(im2_gray, edge_discard=20, min_dis=10, threshold=0.01)
+
+        # B.2 Apply ANMS
+        coords1_anms = anms(h1, coords1, max_pts=max_pts)
+        coords2_anms = anms(h2, coords2, max_pts=max_pts)
+
+        # B.2 Extract MOPS descriptors
+        descriptors1, coords1_valid = extract_feature_descriptors(im1_gray, coords1_anms)
+        descriptors2, coords2_valid = extract_feature_descriptors(im2_gray, coords2_anms)
+
+        # B.3 Match features using Lowe's ratio test
+        matches, _ = match_features(descriptors1, descriptors2, ratio_threshold=ratio_threshold)
+        print(f"  Matches: {len(matches)}")
+
+        # B.4 Robustly estimate homography using RANSAC
+        H, inliers = ransac_homography(matches, coords1_valid, coords2_valid,
+                                      n_iters=ransac_iters, threshold=ransac_threshold)
+
+        if H is not None:
+            pairwise_H[i][i+1] = H
+            pairwise_H[i+1][i] = np.linalg.inv(H)
+
+    # Chain homographies relative to reference image
+    H_list = [None] * n
+    H_list[ref_idx] = np.eye(3)
+
+    # Left side of reference
+    for i in range(ref_idx - 1, -1, -1):
+        if pairwise_H[i][i+1] is not None:
+            H_list[i] = pairwise_H[i][i+1] @ H_list[i+1]
+
+    # Right side of reference
+    for i in range(ref_idx + 1, n):
+        if pairwise_H[i][i-1] is not None:
+            H_list[i] = pairwise_H[i][i-1] @ H_list[i-1]
+
+    # Create final mosaic using Part A.4's create_mosaic
+    mosaic, _ = create_mosaic(images, H_list, ref_idx, use_distance_blend=True,
+                             feather_width=feather_width)
+
+    return mosaic</code></pre>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Part B.4 - Results -->
+        <section id="part2-4-results" class="subsection">
+            <div class="content">
+                <h3>Results: Automatic Image Stitching</h3>
+                <p>Below are panoramic mosaics created using the fully automatic stitching pipeline. Compare these with the manual results from Part A.4 to see the effectiveness of automatic feature matching.</p>
+            </div>
+
+            <div class="content-wide">
+                <!-- <h4 style="text-align: center; margin-top: 3rem; margin-bottom: 2rem;">Mosaic 1: International House Library</h4> -->
+                <div class="result-item" style="max-width: 1200px; margin: 0 auto;">
+                    <img src="src/img/B4-mosaic1-ihouse-library.png" alt="Auto-stitched IHouse Library panorama" class="clickable">
+                    <div class="image-caption">Automatically stitched panorama using Harris corners, MOPS descriptors, and RANSAC</div>
+                </div>
+
+                <!-- <h4 style="text-align: center; margin-top: 4rem; margin-bottom: 2rem;">Mosaic 2: CNMAT Lab</h4> -->
+                <div class="result-item" style="max-width: 1200px; margin: 0 auto; margin-top: 4rem;">
+                    <img src="src/img/B4-mosaic2-cnmat-upstair.png" alt="Auto-stitched CNMAT Lab panorama" class="clickable">
+                    <div class="image-caption">Seamless outdoor panorama created with fully automatic feature matching and alignment</div>
+                </div>
+
+                <!-- <h4 style="text-align: center; margin-top: 4rem; margin-bottom: 2rem;">Mosaic 3: International House Room</h4> -->
+                <div class="result-item" style="max-width: 700px; margin: 0 auto; margin-top: 4rem; margin-bottom: 2rem;">
+                    <img src="src/img/B4-mosaic3-ihouse-room.png" alt="Auto-stitched IHouse Room panorama" class="clickable">
+                    <div class="image-caption">Indoor scene panorama demonstrating robust feature matching in challenging lighting conditions</div>
+                </div>
+            </div>
         </section>
     </main>
 
@@ -1299,6 +1497,13 @@ def match_features(descriptors1, descriptors2, ratio_threshold=0.7):
         <div class="section-nav-dot" data-section="part2-3" data-label="Approach"></div>
         <div class="section-nav-dot" data-section="part2-3-implementation" data-label="Implementation"></div>
         <div class="section-nav-dot" data-section="part2-3-demo" data-label="Demo"></div>
+    </div>
+
+    <!-- Section Navigation for Part B.4 -->
+    <div class="section-nav" id="part-b4-nav" style="display: none;">
+        <div class="section-nav-dot" data-section="part2-4" data-label="Approach"></div>
+        <div class="section-nav-dot" data-section="part2-4-implementation" data-label="Implementation"></div>
+        <div class="section-nav-dot" data-section="part2-4-results" data-label="Results"></div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
@@ -1921,6 +2126,70 @@ def match_features(descriptors1, descriptors2, ratio_threshold=0.7):
             });
         }
 
+        // Section Navigation for Part B.4
+        const partB4Sections = ['part2-4', 'part2-4-implementation', 'part2-4-results'];
+        const partB4Nav = document.getElementById('part-b4-nav');
+        const partB4Dots = partB4Nav.querySelectorAll('.section-nav-dot');
+
+        // Click handlers for Part B.4 navigation dots
+        partB4Dots.forEach(dot => {
+            dot.addEventListener('click', function() {
+                const sectionId = this.getAttribute('data-section');
+                const section = document.getElementById(sectionId);
+                if (section) {
+                    section.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+
+        // Update navigation on scroll for Part B.4
+        function updatePartB4Nav() {
+            let currentSection = null;
+            let isInPartB4 = false;
+            let maxVisibleArea = 0;
+
+            // Check which section is currently in view
+            partB4Sections.forEach(sectionId => {
+                const section = document.getElementById(sectionId);
+                if (section) {
+                    const rect = section.getBoundingClientRect();
+
+                    // Check if we're anywhere within this section's range
+                    if (rect.top <= 200 && rect.bottom >= 0) {
+                        isInPartB4 = true;
+                    }
+
+                    // Find the section with the most visible area in viewport
+                    const viewportHeight = window.innerHeight;
+                    const visibleTop = Math.max(0, rect.top);
+                    const visibleBottom = Math.min(viewportHeight, rect.bottom);
+                    const visibleArea = Math.max(0, visibleBottom - visibleTop);
+
+                    if (visibleArea > maxVisibleArea) {
+                        maxVisibleArea = visibleArea;
+                        currentSection = sectionId;
+                    }
+                }
+            });
+
+            // Show/hide navigation based on whether we're in Part B.4
+            if (isInPartB4) {
+                partB4Nav.style.display = 'flex';
+            } else {
+                partB4Nav.style.display = 'none';
+            }
+
+            // Update active dot
+            partB4Dots.forEach(dot => {
+                const dotSection = dot.getAttribute('data-section');
+                if (dotSection === currentSection) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            });
+        }
+
         // Update all navigations on scroll
         window.addEventListener('scroll', function() {
             clearTimeout(scrollTimeout);
@@ -1932,16 +2201,18 @@ def match_features(descriptors1, descriptors2, ratio_threshold=0.7):
                 updatePartB1Nav();
                 updatePartB2Nav();
                 updatePartB3Nav();
+                updatePartB4Nav();
             }, 10);
         }, { passive: true });
 
-        // Initial check for Part A.2, A.3, A.4, B.1, B.2, and B.3
+        // Initial check for Part A.2, A.3, A.4, B.1, B.2, B.3, and B.4
         updatePartA2Nav();
         updatePartA3Nav();
         updatePartA4Nav();
         updatePartB1Nav();
         updatePartB2Nav();
         updatePartB3Nav();
+        updatePartB4Nav();
 
         // Desktop notice - hide when scrolling down from header
         const desktopNotice = document.querySelector('.desktop-notice');
