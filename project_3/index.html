@@ -1135,8 +1135,107 @@ def get_harris_corners(im, edge_discard=20, min_dis=1, threshold=None):
 
         <!-- Part B.3: Feature Matching -->
         <section id="part2-3">
-            <h2>Part B.3: Feature Matching</h2>
-            <p><!-- Content to be added --></p>
+                <h2>Part B.3: Feature Matching</h2>
+                <p>Our goal is to find pairs of features that look similar and are thus likely to be good matches between two images.</p>
+
+            <!-- Two-column layout: Theory + Explanation -->
+            <div class="content-wide">
+                <div class="two-column-layout">
+                    <div class="column-left">
+                        <h4>Lowe's Ratio Test</h4>
+                        <p>To distinguish reliable matches from ambiguous ones, we use the <strong>ratio test</strong> proposed by David Lowe:</p>
+                        <ul>
+                            <li>For each feature in image 1, find its <strong>nearest neighbor</strong> and <strong>second nearest neighbor</strong> in image 2</li>
+                            <li>Compute the ratio: <code>r = dist(1st NN) / dist(2nd NN)</code></li>
+                            <li>If <code>r < threshold</code>, accept it as a good match</li>
+                        </ul>
+
+                        <h4 style="margin-top: 2rem;">Choosing the Threshold</h4>
+                        <p>According to Figure 6(b) from the MOPS paper, we can observe the distribution of matching errors for correct and incorrect matches. The ratio of <code>1-NN / 2-NN</code> provides a good metric for distinguishing matches:</p>
+                        <ul>
+                            <li><strong>Ratio ≈ 0.7</strong> appears to be a good choice</li>
+                            <li>At this threshold, we start to see a small amount of errors mixed in</li>
+                            <li>This balance gives us enough matching points without being too conservative</li>
+                        </ul>
+
+                    </div>
+
+                    <div class="column-right">
+                        <div class="result-item" style="margin-top: 0;">
+                            <img src="src/img/B3-mops-figure6b.png" alt="MOPS paper Figure 6" class="clickable">
+                            <div class="image-caption">Figure 6 from the MOPS paper showing distribution of matching errors. Graph (b) shows that ratio 1-NN/2-NN is a good metric for distinguishing correct matches.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Part B.3 - Implementation -->
+        <section id="part2-3-implementation" class="subsection">
+            <div class="content">
+                <h3>Implementation</h3>
+            </div>
+
+            <div class="code-section">
+                <div class="code-header" onclick="toggleCode(this)">
+                    <span class="toggle-icon">▼</span> Feature Matching: <code>match_features</code>
+                </div>
+                <div class="code-content">
+                    <pre><code class="language-python"># Lowe's ratio test
+def match_features(descriptors1, descriptors2, ratio_threshold=0.7):
+    """
+    Match features using Lowe's ratio test.
+    For each feature in descriptors1, find the best and second-best matches
+    in descriptors2. Accept the match if the ratio of distances is below threshold.
+    """
+    if len(descriptors1) == 0 or len(descriptors2) == 0:
+        return np.array([]).reshape(0, 2)
+
+    # Compute all pairwise distances
+    distances = np.sqrt(dist2(descriptors1, descriptors2))
+    matches = []
+
+    for i in range(len(descriptors1)):
+        # Find two nearest neighbors
+        sorted_indices = np.argsort(distances[i])
+
+        if len(sorted_indices) >= 2:
+            # Ratio test: first/second nearest neighbor
+            ratio = distances[i, sorted_indices[0]] / distances[i, sorted_indices[1]]
+
+            if ratio < ratio_threshold:
+                matches.append([i, sorted_indices[0]])
+
+    return np.array(matches) if matches else np.array([]).reshape(0, 2)</code></pre>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Part B.3 - Demo/Results -->
+        <section id="part2-3-demo" class="subsection">
+            <div class="content">
+                <h3>Demo: Feature Matching Results</h3>
+                <p>Below we show the matched features between two images from the IHouse Library scene using different visualization approaches.</p>
+            </div>
+
+            <div class="content-wide">
+                <div class="result-item" style="max-width: 1200px; margin: 0 auto;">
+                    <img src="src/img/B3-all-feature-matches.png" alt="All feature matches" class="clickable">
+                    <div class="image-caption">
+                        <strong>All matched features with ratio threshold = 0.7</strong><br>
+                        Visualizes all feature correspondences found between the two images. The many overlapping lines can make it difficult to assess individual match quality.
+                    </div>
+                </div>
+
+                <div class="result-item" style="max-width: 1200px; margin: 0 auto; margin-top: 3rem; margin-bottom: 1.5rem;">
+                    <img src="src/img/B3-top10-feature-matches.png" alt="Top 10 feature matches" class="clickable">
+                    <div class="image-caption">
+                        <strong>Best 10 matches ranked by lowest ratio values</strong><br>
+                        By selecting only the matches with the lowest ratios, we can verify by eye that these correspondences are indeed correct. This demonstrates that lower Lowe ratios correlate with more accurate matches.
+                    </div>
+                </div>
+            </div>
         </section>
 
         <!-- Part B.4: RANSAC -->
@@ -1193,6 +1292,13 @@ def get_harris_corners(im, edge_discard=20, min_dis=1, threshold=None):
         <div class="section-nav-dot" data-section="part2-2" data-label="Approach"></div>
         <div class="section-nav-dot" data-section="part2-2-implementation" data-label="Implementation"></div>
         <div class="section-nav-dot" data-section="part2-2-demo" data-label="Demo"></div>
+    </div>
+
+    <!-- Section Navigation for Part B.3 -->
+    <div class="section-nav" id="part-b3-nav" style="display: none;">
+        <div class="section-nav-dot" data-section="part2-3" data-label="Approach"></div>
+        <div class="section-nav-dot" data-section="part2-3-implementation" data-label="Implementation"></div>
+        <div class="section-nav-dot" data-section="part2-3-demo" data-label="Demo"></div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
@@ -1751,6 +1857,70 @@ def get_harris_corners(im, edge_discard=20, min_dis=1, threshold=None):
             });
         }
 
+        // Section Navigation for Part B.3
+        const partB3Sections = ['part2-3', 'part2-3-implementation', 'part2-3-demo'];
+        const partB3Nav = document.getElementById('part-b3-nav');
+        const partB3Dots = partB3Nav.querySelectorAll('.section-nav-dot');
+
+        // Click handlers for Part B.3 navigation dots
+        partB3Dots.forEach(dot => {
+            dot.addEventListener('click', function() {
+                const sectionId = this.getAttribute('data-section');
+                const section = document.getElementById(sectionId);
+                if (section) {
+                    section.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+
+        // Update navigation on scroll for Part B.3
+        function updatePartB3Nav() {
+            let currentSection = null;
+            let isInPartB3 = false;
+            let maxVisibleArea = 0;
+
+            // Check which section is currently in view
+            partB3Sections.forEach(sectionId => {
+                const section = document.getElementById(sectionId);
+                if (section) {
+                    const rect = section.getBoundingClientRect();
+
+                    // Check if we're anywhere within this section's range
+                    if (rect.top <= 200 && rect.bottom >= 0) {
+                        isInPartB3 = true;
+                    }
+
+                    // Find the section with the most visible area in viewport
+                    const viewportHeight = window.innerHeight;
+                    const visibleTop = Math.max(0, rect.top);
+                    const visibleBottom = Math.min(viewportHeight, rect.bottom);
+                    const visibleArea = Math.max(0, visibleBottom - visibleTop);
+
+                    if (visibleArea > maxVisibleArea) {
+                        maxVisibleArea = visibleArea;
+                        currentSection = sectionId;
+                    }
+                }
+            });
+
+            // Show/hide navigation based on whether we're in Part B.3
+            if (isInPartB3) {
+                partB3Nav.style.display = 'flex';
+            } else {
+                partB3Nav.style.display = 'none';
+            }
+
+            // Update active dot
+            partB3Dots.forEach(dot => {
+                const dotSection = dot.getAttribute('data-section');
+                if (dotSection === currentSection) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            });
+        }
+
         // Update all navigations on scroll
         window.addEventListener('scroll', function() {
             clearTimeout(scrollTimeout);
@@ -1761,15 +1931,17 @@ def get_harris_corners(im, edge_discard=20, min_dis=1, threshold=None):
                 updatePartA4Nav();
                 updatePartB1Nav();
                 updatePartB2Nav();
+                updatePartB3Nav();
             }, 10);
         }, { passive: true });
 
-        // Initial check for Part A.2, A.3, A.4, B.1, and B.2
+        // Initial check for Part A.2, A.3, A.4, B.1, B.2, and B.3
         updatePartA2Nav();
         updatePartA3Nav();
         updatePartA4Nav();
         updatePartB1Nav();
         updatePartB2Nav();
+        updatePartB3Nav();
 
         // Desktop notice - hide when scrolling down from header
         const desktopNotice = document.querySelector('.desktop-notice');
