@@ -336,20 +336,6 @@ c2w = [R | t] = [R₀₀  R₀₁  R₀₂  tₓ]
                 <h2>Part 0.4: Dataset Preparation</h2>
 
                 <p>The final step is to <strong>undistort all images</strong> and package everything into a dataset format ready for NeRF training. This combines all previous steps from Part 0.1 to 0.3.</p>
-                                <h3>Dataset Structure</h3>
-
-                <div class="result-box">
-                    <h4>Output: my_data.npz</h4>
-                    <p>The packaged dataset contains:</p>
-                    <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
-                        <li><code class="code-inline">images_train</code>: Training images (undistorted RGB)</li>
-                        <li><code class="code-inline">c2ws_train</code>: Camera-to-world matrices for training (0.7)</li>
-                        <li><code class="code-inline">images_val</code>: Validation images</li>
-                        <li><code class="code-inline">c2ws_val</code>: Camera-to-world matrices for validation (0.15)</li>
-                        <li><code class="code-inline">c2ws_test</code>: Camera-to-world matrices for test (0.15)</li>
-                        <li><code class="code-inline">focal</code>: Focal length (from intrinsic matrix)</li>
-                    </ul>
-                </div>
 
                 <h3>Implementation</h3>
 
@@ -433,8 +419,20 @@ c2w = [R | t] = [R₀₀  R₀₁  R₀₂  tₓ]
             all_c2ws[test_idx], focal)</code></pre>
                     </div>
                 </div>
-                </div>
+                <h3>Dataset Structure</h3>
 
+                <div class="result-box">
+                    <h4>Output: my_data.npz</h4>
+                    <p>The packaged dataset contains:</p>
+                    <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
+                        <li><code class="code-inline">images_train</code>: Training images (undistorted RGB)</li>
+                        <li><code class="code-inline">c2ws_train</code>: Camera-to-world matrices for training (0.7)</li>
+                        <li><code class="code-inline">images_val</code>: Validation images</li>
+                        <li><code class="code-inline">c2ws_val</code>: Camera-to-world matrices for validation (0.15)</li>
+                        <li><code class="code-inline">c2ws_test</code>: Camera-to-world matrices for test (0.15)</li>
+                        <li><code class="code-inline">focal</code>: Focal length (from intrinsic matrix)</li>
+                    </ul>
+                </div>
             </div>
         </section>
 
