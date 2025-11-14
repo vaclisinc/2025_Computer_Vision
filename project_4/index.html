@@ -210,14 +210,231 @@
         <section id="part0-3" class="info-section">
             <div class="content-centered">
                 <h2>Part 0.3: Camera Pose Estimation</h2>
-                <p>[Your content here]</p>
+
+                <p>The goal of this step is to estimate the <strong>extrinsic parameters</strong> (rotation and translation) for each camera pose. This is known as the <strong>Perspective-n-Point (PnP)</strong> problem: given a set of 3D points in world coordinates and their corresponding 2D projections in an image, we solve for the camera's position and orientation in 3D space.</p>
+
+                <h3>Implementation</h3>
+
+                <div class="observation-box">
+                    <h4>Important: World-to-Camera vs Camera-to-World</h4>
+                    <For>OpenCV's <code class="code-inline">solvePnP()</code> returns the <strong>world-to-camera (w2c)</strong> transformation.<br>For NeRF, we need the <strong>camera-to-world (c2w)</strong> transformation, so we must invert the result:</p>
+                    <pre style="background: white; padding: 0.75rem; border-radius: 4px; margin: 0.5rem 0; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; line-height: 1.8;">
+c2w = [R | t] = [R₀₀  R₀₁  R₀₂  tₓ]
+      [0 | 1]   [R₁₀  R₁₁  R₁₂  tᵧ]
+                [R₂₀  R₂₁  R₂₂  t_z]
+                [ 0    0    0    1 ]</pre>
+                </div>
+
+                <div class="code-block collapsible">
+                    <h4 class="code-toggle" onclick="toggleCode(this)">
+                        <span class="toggle-icon">▶</span> Pose Estimation Implementation
+                    </h4>
+                    <div class="code-content" style="display: none;">
+                        <pre><code class="language-python">def estimate_camera_poses(img_dir, mtx, dist, tag_size=0.02):
+    aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
+    aruco_params = cv2.aruco.DetectorParameters()
+    detector = cv2.aruco.ArucoDetector(aruco_dict, aruco_params)
+
+    # 3D coordinates of single ArUco tag
+    tag_3d = np.array([
+        [0, 0, 0],
+        [tag_size, 0, 0],
+        [tag_size, tag_size, 0],
+        [0, tag_size, 0]
+    ], dtype=np.float32)
+
+    img_files = sorted(glob.glob(os.path.join(img_dir, '*.jpg')))
+    poses = []
+    images = []
+
+    for i, img_path in enumerate(img_files):
+        img = cv2.imread(img_path)
+        if img is None:
+            continue
+
+        corners, ids, _ = detector.detectMarkers(img)
+
+        if ids is not None and len(ids) > 0:
+            img_points = corners[0].reshape(-1, 2)
+
+            # Solve PnP for world-to-camera transformation
+            success, rvec, tvec = cv2.solvePnP(
+                tag_3d, img_points, mtx, dist
+            )
+
+            if success:
+                R, _ = cv2.Rodrigues(rvec)
+
+                # Build w2c matrix
+                w2c = np.eye(4)
+                w2c[:3, :3] = R
+                w2c[:3, 3] = tvec.flatten()
+
+                # Invert to get c2w for NeRF
+                c2w = np.linalg.inv(w2c)
+
+                poses.append({
+                    'idx': i,
+                    'filename': os.path.basename(img_path),
+                    'c2w': c2w
+                })
+                images.append(img)
+
+    return poses, images</code></pre>
+                    </div>
+                </div>
+
+                <h3>Visualization with Viser</h3>
+
+                <p>To verify our pose estimation, we visualize all camera frustums in 3D space using <code class="code-inline">viser</code>.</p>
+
+                <div class="code-block collapsible">
+                    <h4 class="code-toggle" onclick="toggleCode(this)">
+                        <span class="toggle-icon">▶</span> 3D Frustum Visualization
+                    </h4>
+                    <div class="code-content" style="display: none;">
+                        <pre><code class="language-python">def visualize_camera_poses(poses, images, mtx):
+    server = viser.ViserServer(share=True)
+
+    H, W = images[0].shape[:2]
+
+    for i, (pose_data, img) in enumerate(zip(poses, images)):
+        c2w = pose_data['c2w']
+        server.scene.add_camera_frustum(
+            f"/cameras/{i}",
+            fov=2 * np.arctan2(H / 2, mtx[0, 0]),
+            aspect=W / H,
+            scale=0.02,
+            wxyz=viser.transforms.SO3.from_matrix(c2w[:3, :3]).wxyz,
+            position=c2w[:3, 3],
+            image=img
+        )
+
+    try:
+        while True:
+            time.sleep(0.1)</code></pre>
+                    </div>
+                </div>
+
+                <h3>Results</h3>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin: 1.5rem 0;">
+                    <figure>
+                        <img src="src/img/0-3-viser-demo1.jpg" alt="Camera Frustums View 1" class="clickable" style="height: 350px; object-fit: cover;">
+                        <figcaption>▲ 3D visualization of camera frustums (view 1)</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="src/img/0-3-viser-demo2.jpg" alt="Camera Frustums View 2" class="clickable" style="height: 350px; object-fit: cover;">
+                        <figcaption>▲ 3D visualization of camera frustums (view 2)</figcaption>
+                    </figure>
+                </div>
             </div>
         </section>
 
         <section id="part0-4" class="info-section">
             <div class="content-centered">
                 <h2>Part 0.4: Dataset Preparation</h2>
-                <p>[Your content here]</p>
+
+                <p>The final step is to <strong>undistort all images</strong> and package everything into a dataset format ready for NeRF training. This combines all previous steps from Part 0.1 to 0.3.</p>
+                                <h3>Dataset Structure</h3>
+
+                <div class="result-box">
+                    <h4>Output: my_data.npz</h4>
+                    <p>The packaged dataset contains:</p>
+                    <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
+                        <li><code class="code-inline">images_train</code>: Training images (undistorted RGB)</li>
+                        <li><code class="code-inline">c2ws_train</code>: Camera-to-world matrices for training (0.7)</li>
+                        <li><code class="code-inline">images_val</code>: Validation images</li>
+                        <li><code class="code-inline">c2ws_val</code>: Camera-to-world matrices for validation (0.15)</li>
+                        <li><code class="code-inline">c2ws_test</code>: Camera-to-world matrices for test (0.15)</li>
+                        <li><code class="code-inline">focal</code>: Focal length (from intrinsic matrix)</li>
+                    </ul>
+                </div>
+
+                <h3>Implementation</h3>
+
+                <div class="code-block collapsible">
+                    <h4 class="code-toggle" onclick="toggleCode(this)">
+                        <span class="toggle-icon">▶</span> Dataset Creation Implementation
+                    </h4>
+                    <div class="code-content" style="display: none;">
+                        <pre><code class="language-python">def create_nerf_dataset(img_dir, mtx, dist, tag_size=0.06,
+                        train_ratio=0.7, val_ratio=0.15,
+                        output_path='output/my_data.npz'):
+    aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
+    aruco_params = cv2.aruco.DetectorParameters()
+    detector = cv2.aruco.ArucoDetector(aruco_dict, aruco_params)
+
+    tag_3d = np.array([
+        [0, 0, 0],
+        [tag_size, 0, 0],
+        [tag_size, tag_size, 0],
+        [0, tag_size, 0]
+    ], dtype=np.float32)
+
+    img_files = sorted(glob.glob(os.path.join(img_dir, '*.jpg')))
+    all_images = []
+    all_c2ws = []
+
+    for img_path in img_files:
+        img = cv2.imread(img_path)
+        if img is None:
+            continue
+
+        corners, ids, _ = detector.detectMarkers(img)
+
+        if ids is not None and len(ids) > 0:
+            img_points = corners[0].reshape(-1, 2)
+            success, rvec, tvec = cv2.solvePnP(tag_3d, img_points, mtx, dist)
+
+            if success:
+                # Key steps: undistort and convert color
+                undistorted = cv2.undistort(img, mtx, dist)
+                undistorted_rgb = cv2.cvtColor(undistorted, cv2.COLOR_BGR2RGB)
+
+                # Compute c2w matrix
+                R, _ = cv2.Rodrigues(rvec)
+                w2c = np.eye(4)
+                w2c[:3, :3] = R
+                w2c[:3, 3] = tvec.flatten()
+                c2w = np.linalg.inv(w2c)
+
+                all_images.append(undistorted_rgb)
+                all_c2ws.append(c2w)
+
+    all_images = np.array(all_images)
+    all_c2ws = np.array(all_c2ws)
+
+    # Split into train/val/test
+    n_total = len(all_images)
+    n_train = int(n_total * train_ratio)
+    n_val = int(n_total * val_ratio)
+
+    idx = np.random.permutation(n_total)
+    train_idx = idx[:n_train]
+    val_idx = idx[n_train:n_train + n_val]
+    test_idx = idx[n_train + n_val:]
+
+    focal = mtx[0, 0]
+
+    # Save as .npz
+    np.savez(
+        output_path,
+        images_train=all_images[train_idx],
+        c2ws_train=all_c2ws[train_idx],
+        images_val=all_images[val_idx],
+        c2ws_val=all_c2ws[val_idx],
+        c2ws_test=all_c2ws[test_idx],
+        focal=focal
+    )
+
+    return (all_images[train_idx], all_c2ws[train_idx],
+            all_images[val_idx], all_c2ws[val_idx],
+            all_c2ws[test_idx], focal)</code></pre>
+                    </div>
+                </div>
+                </div>
+
             </div>
         </section>
 
