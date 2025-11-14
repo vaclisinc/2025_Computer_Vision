@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project 4: Neural Radiance Fields (NeRF)</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="header-content">
+            <div class="header-info">
+                <a href="../index.html" class="back-link">← Back to Projects</a>
+                <h1>Neural Radiance Fields (NeRF)</h1>
+                <p class="subtitle">CS 180 Project 4 · Song-Ze Yu</p>
+            </div>
+
+            <div class="overview-grid">
+                <div class="overview-card">
+                    <h3>Part 0: Camera Calibration & 3D Scan</h3>
+                    <p>Calibrate camera using ArUco markers, capture 3D object scan, estimate camera poses, and prepare dataset.</p>
+                    <div class="part-nav-grid">
+                        <a href="#part0-1" class="part-nav-item">
+                            <span class="part-nav-number">0.1</span>
+                            <span class="part-nav-title">Calibration</span>
+                        </a>
+                        <a href="#part0-2" class="part-nav-item">
+                            <span class="part-nav-number">0.2</span>
+                            <span class="part-nav-title">3D Scan</span>
+                        </a>
+                        <a href="#part0-3" class="part-nav-item">
+                            <span class="part-nav-number">0.3</span>
+                            <span class="part-nav-title">Pose</span>
+                        </a>
+                        <a href="#part0-4" class="part-nav-item">
+                            <span class="part-nav-number">0.4</span>
+                            <span class="part-nav-title">Dataset</span>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="overview-card">
+                    <h3>Part 1: Neural Field for 2D Images</h3>
+                    <p>Train MLP with positional encoding to represent 2D images as continuous functions.</p>
+                    <div class="part-nav-grid">
+                        <a href="#part1" class="part-nav-item">
+                            <span class="part-nav-number">1</span>
+                            <span class="part-nav-title">Implementation & Results</span>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="overview-card">
+                    <h3>Part 2: Neural Radiance Field (3D)</h3>
+                    <p>Generate rays, sample points, and render novel views through volume rendering.</p>
+                    <div class="part-nav-grid">
+                        <a href="#part2-1" class="part-nav-item">
+                            <span class="part-nav-number">2.1</span>
+                            <span class="part-nav-title">Rays</span>
+                        </a>
+                        <a href="#part2-2" class="part-nav-item">
+                            <span class="part-nav-number">2.2</span>
+                            <span class="part-nav-title">Sampling</span>
+                        </a>
+                        <a href="#part2-3" class="part-nav-item">
+                            <span class="part-nav-number">2.3</span>
+                            <span class="part-nav-title">Data</span>
+                        </a>
+                        <a href="#part2-4" class="part-nav-item">
+                            <span class="part-nav-number">2.4</span>
+                            <span class="part-nav-title">Network</span>
+                        </a>
+                        <a href="#part2-5" class="part-nav-item">
+                            <span class="part-nav-number">2.5</span>
+                            <span class="part-nav-title">Render</span>
+                        </a>
+                        <a href="#part2-6" class="part-nav-item">
+                            <span class="part-nav-number">2.6</span>
+                            <span class="part-nav-title">Custom</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="toc">
+        <a href="#part0-1">0.1 Calibration</a>
+        <a href="#part0-2">0.2 3D Scan</a>
+        <a href="#part0-3">0.3 Pose</a>
+        <a href="#part0-4">0.4 Dataset</a>
+        <a href="#part1">1 Neural Field for 2D</a>
+        <a href="#part2-1">2.1 Rays</a>
+        <a href="#part2-2">2.2 Sampling</a>
+        <a href="#part2-3">2.3 Data</a>
+        <a href="#part2-4">2.4 Network</a>
+        <a href="#part2-5">2.5 Render</a>
+        <a href="#part2-6">2.6 Custom</a>
+    </nav>
+
+    <main>
+        <!-- PART 0: CAMERA CALIBRATION & 3D SCAN -->
+
+        <section id="part0-1" class="info-section">
+            <div class="content-centered">
+                <h2>Part 0.1: Camera Calibration</h2>
+
+                <p>The goal of camera calibration is to estimate the <strong>intrinsic matrix</strong> and <strong>distortion coefficients</strong> of the camera. These parameters are essential for later stages (pose estimation and 3D reconstruction) and must remain constant throughout the entire capture process — this is why the assignment spec emphasizes <strong>not adjusting the camera's focal length/zoom</strong>.</p>
+
+                <p>By capturing multiple images of ArUco calibration tags from different angles and distances, we can solve for the camera's internal parameters using known 3D-to-2D correspondences.</p>
+
+                <figure style="text-align: center; margin-top: 2rem;">
+                    <img src="src/img/0-1-tags.jpg" alt="ArUco Tag Calibration" class="clickable" style="width: 70%;">
+                    <figcaption>▲ Sample calibration images showing ArUco tag detection from various angles and distances (33 images total)</figcaption>
+                </figure>
+                <h3>Implementation</h3>
+
+                <div class="observation-box">
+                    <h4>Note: OpenCV Version Compatibility</h4>
+                    <p>The spec uses syntax for OpenCV <strong>&lt; 4.7.0</strong>. My implementation uses the updated API for newer versions. See <a href="https://stackoverflow.com/questions/76186376/attributeerror-module-cv2-aruco-has-no-attribute-detectmarkers-python" target="_blank">this StackOverflow discussion</a> for details.</p>
+                </div>
+
+                <div class="code-block collapsible">
+                    <h4 class="code-toggle" onclick="toggleCode(this)">
+                        <span class="toggle-icon">▶</span> Camera Calibration Implementation
+                    </h4>
+                    <div class="code-content" style="display: none;">
+                        <pre><code class="language-python">def calibrate_camera(img_dir, tag_size=0.06):
+    # Updated API for OpenCV >= 4.7.0
+    aruco_dict = cv2.aruco.getPredefinedDictionary(cv2.aruco.DICT_4X4_50)
+    aruco_params = cv2.aruco.DetectorParameters()
+    detector = cv2.aruco.ArucoDetector(aruco_dict, aruco_params)
+
+    obj_points = []  # 3D points in real world space
+    img_points = []  # 2D points in image plane
+
+    # Define 3D coordinates of ArUco tag corners
+    tag_3d = np.array([
+        [0, 0, 0],
+        [tag_size, 0, 0],
+        [tag_size, tag_size, 0],
+        [0, tag_size, 0]
+    ], dtype=np.float32)
+
+    img_files = sorted(glob.glob(os.path.join(img_dir, '*.jpg')))
+    img_shape = None
+
+    # Detect tags in all calibration images
+    for img_path in img_files:
+        img = cv2.imread(img_path)
+        if img_shape is None:
+            img_shape = img.shape[:2]
+
+        corners, ids, _ = detector.detectMarkers(img)
+
+        if ids is not None:
+            for corner in corners:
+                obj_points.append(tag_3d)
+                img_points.append(corner.reshape(-1, 2))
+
+    # Solve for camera intrinsics and distortion
+    ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(
+        obj_points, img_points, img_shape[::-1], None, None
+    )
+
+    return mtx, dist, rvecs, tvecs</code></pre>
+                    </div>
+                </div>
+
+                <h3>Results</h3>
+
+                <div class="result-box">
+                    <p><strong>Images processed:</strong> 33/33 images (100% detection rate)</p>
+                    <p><strong>Total tag detections:</strong> 198 tags</p>
+                    <p><strong>Reprojection Error:</strong> 0.786 pixels</p>
+
+                    <p style="margin-top: 1.5rem;"><strong>Camera Intrinsic Matrix (K):</strong></p>
+                    <pre style="background: white; padding: 0.75rem; border-radius: 4px; margin: 0.5rem 0; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;">
+[[957.34    0.00  795.40]
+ [  0.00  949.21  594.72]
+ [  0.00    0.00    1.00]]</pre>
+
+                    <p style="margin-top: 1rem;"><strong>Distortion Coefficients:</strong> [k₁, k₂, p₁, p₂, k₃]</p>
+                    <pre style="background: white; padding: 0.75rem; border-radius: 4px; margin: 0.5rem 0; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem;">
+[0.261, -1.723, 0.018, 0.027, 2.748]</pre>
+                </div>
+
+
+            </div>
+        </section>
+
+        <section id="part0-2" class="info-section">
+            <div class="content-centered">
+                <h2>Part 0.2: Capturing a 3D Object Scan</h2>
+
+                <p>For this part, I captured images of a cute <strong>CalHacks 12.0 Bear</strong> (from the hackathon a few weeks ago!) placed next to a single ArUco tag. I took <strong>38 images</strong> from various angles and distances while maintaining consistent camera settings.</p>
+
+                <figure style="text-align: center;">
+                    <img src="src/img/0-2-calbear.jpg" alt="CalHacks Bear 3D Scan" class="clickable" style="width: 60%;">
+                    <figcaption>▲ CalHacks 12.0 Bear captured from multiple viewpoints (38 images total)</figcaption>
+                </figure>
+
+            </div>
+        </section>
+
+        <section id="part0-3" class="info-section">
+            <div class="content-centered">
+                <h2>Part 0.3: Camera Pose Estimation</h2>
+                <p>[Your content here]</p>
+            </div>
+        </section>
+
+        <section id="part0-4" class="info-section">
+            <div class="content-centered">
+                <h2>Part 0.4: Dataset Preparation</h2>
+                <p>[Your content here]</p>
+            </div>
+        </section>
+
+        <!-- PART 1: NEURAL FIELD FOR 2D IMAGES -->
+
+        <section id="part1" class="info-section">
+            <div class="content-centered">
+                <h2>Part 1: Neural Field for 2D Images</h2>
+                <p>[Your content here]</p>
+            </div>
+        </section>
+
+        <!-- PART 2: NEURAL RADIANCE FIELD (3D) -->
+
+        <section id="part2-1" class="info-section">
+            <div class="content-centered">
+                <h2>Part 2.1: Ray Generation</h2>
+                <p>[Your content here]</p>
+            </div>
+        </section>
+
+        <section id="part2-2" class="info-section">
+            <div class="content-centered">
+                <h2>Part 2.2: Point Sampling</h2>
+                <p>[Your content here]</p>
+            </div>
+        </section>
+
+        <section id="part2-3" class="info-section">
+            <div class="content-centered">
+                <h2>Part 2.3: Data Loading</h2>
+                <p>[Your content here]</p>
+            </div>
+        </section>
+
+        <section id="part2-4" class="info-section">
+            <div class="content-centered">
+                <h2>Part 2.4: NeRF Network</h2>
+                <p>[Your content here]</p>
+            </div>
+        </section>
+
+        <section id="part2-5" class="info-section">
+            <div class="content-centered">
+                <h2>Part 2.5: Volume Rendering</h2>
+                <p>[Your content here]</p>
+            </div>
+        </section>
+
+        <section id="part2-6" class="info-section">
+            <div class="content-centered">
+                <h2>Part 2.6: Training with Custom Data</h2>
+                <p>[Your content here]</p>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Lightbox -->
+    <div id="lightbox" class="lightbox">
+        <img id="lightbox-img">
+        <span class="close">&times;</span>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script>
+        // Toggle code blocks
+        function toggleCode(element) {
+            const codeContent = element.nextElementSibling;
+            const toggleIcon = element.querySelector('.toggle-icon');
+            if (codeContent.style.display === 'none') {
+                codeContent.style.display = 'block';
+                toggleIcon.textContent = '▼';
+            } else {
+                codeContent.style.display = 'none';
+                toggleIcon.textContent = '▶';
+            }
+        }
+
+        // Image lightbox
+        document.querySelectorAll('.clickable').forEach(img => {
+            img.addEventListener('click', function() {
+                const lightbox = document.getElementById('lightbox');
+                const lightboxImg = document.getElementById('lightbox-img');
+                lightbox.style.display = 'flex';
+                lightboxImg.src = this.src;
+            });
+        });
+
+        document.querySelector('.lightbox .close').addEventListener('click', function() {
+            document.getElementById('lightbox').style.display = 'none';
+        });
+
+        document.getElementById('lightbox').addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.style.display = 'none';
+            }
+        });
+
+        // Smooth scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+    </script>
+</body>
+</html>
