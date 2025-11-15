@@ -339,8 +339,8 @@ code.code-inline {
 .result-box {
     background: var(--bg-code);
     border-left: 3px solid var(--accent);
-    padding: 1.25rem;
-    margin: 1.5rem 0;
+    padding: 0.75rem 1.25rem;
+    margin: 0.75rem 0;
     border-radius: 4px;
 }
 

@@ -90,10 +90,10 @@
     <!-- Navigation -->
     <nav class="toc">
         <a href="#part0-1">0.1 Calibration</a>
-        <a href="#part0-2">0.2 3D Scan</a>
+        <a href="#part0-2">0.2 Photos</a>
         <a href="#part0-3">0.3 Pose</a>
         <a href="#part0-4">0.4 Dataset</a>
-        <a href="#part1">1 Neural Field for 2D</a>
+        <a href="#part1">1 2D NeRF</a>
         <a href="#part2-1">2.1 Rays</a>
         <a href="#part2-2">2.2 Sampling</a>
         <a href="#part2-3">2.3 Data</a>
@@ -441,7 +441,352 @@ c2w = [R | t] = [R₀₀  R₀₁  R₀₂  tₓ]
         <section id="part1" class="info-section">
             <div class="content-centered">
                 <h2>Part 1: Neural Field for 2D Images</h2>
-                <p>[Your content here]</p>
+
+                <p>Before jumping into 3D NeRF, which learns the mapping <code class="code-inline">F: {x, y, z, θ, φ} → {r, g, b, σ}</code>, we start with 2D as a simpler introduction. In 2D, we only need to solve <code class="code-inline">F: {u, v} → {r, g, b}</code>, where <code class="code-inline">{u, v}</code> represents 2D pixel coordinates.</p>
+
+                <!-- Positional Encoding -->
+                <h3>1.1 Sinusoidal Positional Encoding (PE)</h3>
+
+                <p>Positional encoding helps neural networks capture high-frequency details by transforming input coordinates into a higher-dimensional space using sinusoidal functions. Without PE, MLPs struggle to represent fine details in images.</p>
+
+                <p>The encoding applies sine and cosine functions at different frequencies:</p>
+                <figure>
+                    <img src="src/img/1-pe.jpg" alt="2D Neural Field Architecture" class="clickable">
+                </figure>
+                <div class="code-block">
+                    <details open>
+                        <summary class="code-toggle">
+                            <span class="toggle-icon">▼</span>
+                            <strong>Positional Encoding Implementation</strong>
+                        </summary>
+                        <div class="code-content">
+                            <pre><code class="language-python">class PositionalEncoding(nn.Module):
+    def __init__(self, L=10):
+        super().__init__()
+        self.L = L
+
+    def forward(self, x):
+        out = [x]
+        for i in range(self.L):
+            out.append(torch.sin(2**i * np.pi * x))
+            out.append(torch.cos(2**i * np.pi * x))
+        return torch.cat(out, dim=-1)</code></pre>
+                        </div>
+                    </details>
+                </div>
+
+                <p>For <code class="code-inline">L=10</code> frequency bands, a 2D coordinate is transformed from dimension 2 to dimension <code class="code-inline">2 + 2×L×2 = 42</code>.</p>
+
+                <!-- MLP Architecture -->
+                <h3>1.2 Multilayer Perceptron (MLP) Architecture</h3>
+
+                <p>Our neural field network follows the architecture shown below:</p>
+
+                <figure>
+                    <img src="src/img/1-mlp_img.jpg" alt="2D Neural Field Architecture" class="clickable">
+                    <figcaption>Network architecture: 2D coordinates → PE → 3 hidden layers (256 units) → RGB output</figcaption>
+                </figure>
+
+                <p>The network consists of:</p>
+                <ul>
+                    <li><strong>Input:</strong> 2D pixel coordinates (u, v)</li>
+                    <li><strong>Positional Encoding:</strong> Expands input to 42 dimensions</li>
+                    <li><strong>Hidden Layers:</strong> 3 fully-connected layers with 256 units each, using ReLU activation</li>
+                    <li><strong>Output Layer:</strong> Maps to RGB values (3 channels) with Sigmoid activation to ensure [0,1] range</li>
+                </ul>
+
+                <div class="code-block">
+                    <details open>
+                        <summary class="code-toggle">
+                            <span class="toggle-icon">▼</span>
+                            <strong>Neural Field 2D Implementation</strong>
+                        </summary>
+                        <div class="code-content">
+                            <pre><code class="language-python">class NeuralField2D(nn.Module):
+    def __init__(self, L=10, hidden_dim=256):
+        super().__init__()
+        self.pe = PositionalEncoding(L)
+        pe_dim = 2 + 2 * L * 2  # 42 dimensions
+
+        self.mlp = nn.Sequential(
+            nn.Linear(pe_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, 3),
+            nn.Sigmoid()
+        )
+
+    def forward(self, coords):
+        encoded = self.pe(coords)
+        return self.mlp(encoded)</code></pre>
+                        </div>
+                    </details>
+                </div>
+
+                <!-- Dataloader -->
+                <h3>1.3 Pixel Dataloader</h3>
+
+                <p>Since high-resolution images are memory-intensive, we implement a dataloader that randomly samples <code class="code-inline">N</code> pixels at every iteration for training. This approach:</p>
+                <ul>
+                    <li>Returns <code class="code-inline">N×2</code> normalized 2D coordinates in [0,1]</li>
+                    <li>Returns corresponding <code class="code-inline">N×3</code> RGB color values in [0,1]</li>
+                    <li>Enables efficient mini-batch training without loading entire images</li>
+                </ul>
+
+                <div class="code-block">
+                    <details open>
+                        <summary class="code-toggle">
+                            <span class="toggle-icon">▼</span>
+                            <strong>Pixel Dataloader Implementation</strong>
+                        </summary>
+                        <div class="code-content">
+                            <pre><code class="language-python">class PixelDataloader:
+    def __init__(self, img, batch_size=10000):
+        self.img = img / 255.0  # Normalize to [0,1]
+        self.H, self.W = img.shape[:2]
+        self.batch_size = batch_size
+
+        # Create normalized coordinate grid
+        y, x = np.meshgrid(np.arange(self.H), np.arange(self.W), indexing='ij')
+        self.coords = np.stack([x / self.W, y / self.H], axis=-1).reshape(-1, 2)
+        self.colors = self.img.reshape(-1, 3)
+
+    def sample(self):
+        """Randomly sample batch_size pixels"""
+        idx = np.random.choice(len(self.coords), self.batch_size, replace=False)
+        coords = torch.FloatTensor(self.coords[idx])
+        colors = torch.FloatTensor(self.colors[idx])
+        return coords, colors
+
+    def get_all(self):
+        """Get all pixels (for validation/visualization)"""
+        coords = torch.FloatTensor(self.coords)
+        colors = torch.FloatTensor(self.colors)
+        return coords, colors</code></pre>
+                        </div>
+                    </details>
+                </div>
+
+                <!-- Training -->
+                <h3>1.4 Training: Loss Function, Optimizer, and Metric</h3>
+
+                <p>We train the neural field to minimize the difference between predicted and ground truth pixel colors using:</p>
+                <ul>
+                    <li><strong>Loss Function:</strong> Mean Squared Error (MSE) between predicted and actual RGB values</li>
+                    <li><strong>Metric:</strong> Peak Signal-to-Noise Ratio (PSNR) = <code class="code-inline">10 × log₁₀(1/MSE)</code></li>
+                    <li><strong>Optimizer:</strong> Adam with learning rate <code class="code-inline">1e-2</code></li>
+                    <li><strong>Training:</strong> 1000-3000 iterations with batch size of 10,000 pixels</li>
+                </ul>
+
+                <div class="code-block">
+                    <details open>
+                        <summary class="code-toggle">
+                            <span class="toggle-icon">▼</span>
+                            <strong>Training Loop Implementation</strong>
+                        </summary>
+                        <div class="code-content">
+                            <pre><code class="language-python">def train_neural_field(img_path, L=10, hidden_dim=256, lr=1e-2, iters=3000, batch_size=10000, save_dir='images'):
+    os.makedirs(save_dir, exist_ok=True)
+
+    device = torch.device('cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu')
+    print(f'Using device: {device}')
+
+    img = skio.imread(img_path)
+    if img.ndim == 2:
+        img = np.stack([img] * 3, axis=-1)
+
+    H, W = img.shape[:2]
+
+    model = NeuralField2D(L=L, hidden_dim=hidden_dim).to(device)
+    dataloader = PixelDataloader(img, N=batch_size)
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+    criterion = nn.MSELoss()
+
+    psnr_history = []
+    save_iters = [0, 100, 500, 1000, 2000, iters-1]
+
+    for it in range(iters):
+        coords, colors = dataloader.sample()
+        coords, colors = coords.to(device), colors.to(device)
+
+        pred_colors = model(coords)
+        loss = criterion(pred_colors, colors)
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        psnr = psnr_from_mse(loss)
+        psnr_history.append(psnr.item())
+
+        if it % 100 == 0 or it == iters - 1:
+            print(f'Iter {it:4d}: Loss={loss.item():.6f}, PSNR={psnr.item():.2f} dB')
+
+        # Save visualization at key iterations
+        if it in save_iters:
+            with torch.no_grad():
+                y, x = np.meshgrid(np.arange(H), np.arange(W), indexing='ij')
+                test_coords = np.stack([x / W, y / H], axis=-1).reshape(-1, 2)
+                test_coords = torch.FloatTensor(test_coords).to(device)
+
+                pred = []
+                for i in range(0, len(test_coords), batch_size):
+                    pred.append(model(test_coords[i:i+batch_size]).cpu())
+                pred = torch.cat(pred, dim=0)
+
+                pred_img = pred.reshape(H, W, 3).numpy()
+
+                # Save comparison: GT, Prediction, Error
+                plt.figure(figsize=(12, 4))
+                plt.subplot(1, 3, 1)
+                plt.imshow(img / 255.0)
+                plt.title('Ground Truth')
+                plt.axis('off')
+
+                plt.subplot(1, 3, 2)
+                plt.imshow(pred_img)
+                plt.title(f'Prediction (iter {it})')
+                plt.axis('off')
+
+                plt.subplot(1, 3, 3)
+                plt.imshow(np.abs(img / 255.0 - pred_img))
+                plt.title('Error')
+                plt.axis('off')
+
+                plt.tight_layout()
+                plt.savefig(f'{save_dir}/iter_{it:04d}.png', bbox_inches='tight', dpi=150)
+                plt.close()
+
+    # Save PSNR curve
+    plt.figure(figsize=(10, 6))
+    plt.plot(psnr_history)
+    plt.xlabel('Iteration')
+    plt.ylabel('PSNR (dB)')
+    plt.title('Training PSNR')
+    plt.grid(True)
+    plt.savefig(f'{save_dir}/psnr_curve.png', bbox_inches='tight', dpi=150)
+    plt.close()
+
+    return model, psnr_history</code></pre>
+                        </div>
+                    </details>
+                </div>
+
+                <!-- Results -->
+                <h3>1.5 Results and Analysis</h3>
+
+                <h4>1) Model Architecture</h4>
+                <div class="result-box">
+                    <ul>
+                        <li> <strong>Positional Encoding:</strong> L = 10 frequency bands (input dimension: 42)</li>
+                        <li> <strong>Network Depth:</strong> 3 hidden layers</li>
+                        <li> <strong>Layer Width:</strong> 256 units per hidden layer</li>
+                        <li> <strong>Activation:</strong> ReLU (hidden layers), Sigmoid (output layer)</li>
+                        <li> <strong>Learning Rate:</strong> 1e-2 (Adam optimizer)</li>
+                        <li> <strong>Batch Size:</strong> 10,000 pixels per iteration</li>
+                        <li> <strong>Training Iterations:</strong> 3,000</li>
+                    </ul>
+                </div>
+
+                <h4>2) Training Progression</h4>
+                <p>The following images show how the neural field learns to reconstruct the image over time. </p>
+
+                <p style="margin-bottom: 0.5rem;"><strong>Test Image (Fox):</strong></p>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin: 0.5rem 0 1.5rem 0;">
+                    <figure>
+                        <img src="src/img/1-fox/iter_0000.png" alt="Fox - Iteration 0" class="clickable">
+                        <figcaption>Iteration 0</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="src/img/1-fox/iter_0100.png" alt="Fox - Iteration 100" class="clickable">
+                        <figcaption>Iteration 100</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="src/img/1-fox/iter_0500.png" alt="Fox - Iteration 500" class="clickable">
+                        <figcaption>Iteration 500</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="src/img/1-fox/iter_1000.png" alt="Fox - Iteration 1000" class="clickable">
+                        <figcaption>Iteration 1000</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="src/img/1-fox/iter_2000.png" alt="Fox - Iteration 2000" class="clickable">
+                        <figcaption>Iteration 2000</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="src/img/1-fox/iter_2999.png" alt="Fox - Iteration 2999" class="clickable">
+                        <figcaption>Iteration 2999 (Final)</figcaption>
+                    </figure>
+                </div>
+
+                <p style="margin-bottom: 0.5rem;"><strong>My Own Image (CalHacks Bear):</strong></p>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin: 0.5rem 0 1.5rem 0;">
+                    <figure>
+                        <img src="src/img/1-calbear/iter_0000.png" alt="CalBear - Iteration 0" class="clickable">
+                        <figcaption>Iteration 0</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="src/img/1-calbear/iter_0100.png" alt="CalBear - Iteration 100" class="clickable">
+                        <figcaption>Iteration 100</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="src/img/1-calbear/iter_0500.png" alt="CalBear - Iteration 500" class="clickable">
+                        <figcaption>Iteration 500</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="src/img/1-calbear/iter_1000.png" alt="CalBear - Iteration 1000" class="clickable">
+                        <figcaption>Iteration 1000</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="src/img/1-calbear/iter_2000.png" alt="CalBear - Iteration 2000" class="clickable">
+                        <figcaption>Iteration 2000</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="src/img/1-calbear/iter_2999.png" alt="CalBear - Iteration 2999" class="clickable">
+                        <figcaption>Iteration 2999 (Final)</figcaption>
+                    </figure>
+                </div>
+
+                <h4>3) Hyperparameter Tuning</h4>
+                <p>We experiment with different values of L and layer width to understand their impact on reconstruction quality. <br>Using very low values reveals how these hyperparameters affect the model's ability to capture fine details.</p>
+
+                <p style="margin-bottom: 0.5rem;"><strong>Fox Image - Hyperparameter Comparison:</strong></p>
+                <figure>
+                    <img src="src/img/1-fox/hyperparam_comparison.png" alt="Fox - Hyperparameter Grid" class="clickable" style="max-height: 60vh; width: auto;">
+                    <figcaption>2×2 grid comparing different L values and layer widths on the fox image</figcaption>
+                </figure>
+
+                <p style="margin-bottom: 0.5rem;"><strong>CalHacks Bear - Hyperparameter Comparison:</strong></p>
+                <figure>
+                    <img src="src/img/1-calbear/hyperparam_comparison.png" alt="CalBear - Hyperparameter Grid" class="clickable" style="max-height: 60vh; width: auto;">
+                    <figcaption>2×2 grid comparing different L values and layer widths on the CalHacks bear</figcaption>
+                </figure>
+
+                <div class="observation-box">
+                    <h4>Observations</h4>
+                    <ul>
+                        <li><strong>Positional Encoding (L):</strong> Lower L values struggle to capture high-frequency details, resulting in blurry outputs. Higher L values enable the network to represent fine textures and edges.</li>
+                        <li><strong>Layer Width:</strong> Narrower networks (fewer neurons per layer) have limited capacity, leading to smoother, less detailed reconstructions. Wider networks can fit more complex patterns.</li>
+                    </ul>
+                </div>
+
+                <h4>4) Training PSNR Curves</h4>
+                <p>This shows reconstruction quality improvement during training. Higher PSNR indicates better image quality.</p>
+
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; margin: 1.5rem 0;">
+                    <figure>
+                        <img src="src/img/1-fox/psnr_curve.png" alt="Fox PSNR Curve" class="clickable">
+                        <figcaption>Fox training PSNR progression</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="src/img/1-calbear/psnr_curve.png" alt="CalBear PSNR Curve" class="clickable">
+                        <figcaption>CalHacks bear training PSNR progression</figcaption>
+                    </figure>
+                </div>
+
             </div>
         </section>
 
