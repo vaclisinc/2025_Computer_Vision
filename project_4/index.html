@@ -923,21 +923,6 @@ def get_rays(H, W, focal, c2w):
                         </div>
                     </details>
                 </div>
-
-                <p>Quick sanity script: load Lego, grab the first pose, and make sure the shapes all line up (plus the directions are unit length).</p>
-<pre><code class="language-python">data = np.load('dataset/lego_200x200.npz')
-c2ws_train = torch.FloatTensor(data['c2ws_train'])
-focal = float(data['focal'])
-H, W = 200, 200
-
-c2w = c2ws_train[0]
-rays_o, rays_d = get_rays(H, W, focal, c2w)
-
-print(f'Ray origins shape: {rays_o.shape}')
-print(f'Ray directions shape: {rays_d.shape}')
-print(f'First ray origin: {rays_o[0]}')
-print(f'First ray direction: {rays_d[0]}')
-print(f'Ray direction norm: {torch.norm(rays_d[0])}')</code></pre>
             </div>
         </section>
 
@@ -1085,14 +1070,10 @@ class NeRFDataloader:
                 <h2>Part 2.4: NeRF Network</h2>
                 <p>The network now needs to map 3D locations and view directions to both color and density. Compared to Part&nbsp;1’s tiny MLP, this model is deeper, runs on 3D coordinates, and conditions its RGB prediction on the viewing direction.</p>
 
-                <div class="observation-box">
-                    <h4>Design Notes</h4>
-                    <ul>
-                        <li>Separate positional encodings for spatial coordinates (<code class="code-inline">L_pos = 10</code>) and view directions (<code class="code-inline">L_dir = 4</code>), following the spec.</li>
-                        <li>An 8-layer MLP with a skip connection that concatenates the encoded position halfway through so high-frequency details don&rsquo;t fade.</li>
-                        <li>Two heads: a density head (ReLUed to keep <code class="code-inline">sigma ≥ 0</code>) and a color head conditioned on both features and direction encodings.</li>
-                    </ul>
-                </div>
+                <figure style="text-align: center; margin: 1.5rem 0;">
+                    <img src="src/img/2-mlp_nerf.png" alt="NeRF MLP architecture" class="clickable" style="max-width: 900px;">
+                    <figcaption>▲ Architecture from the spec</figcaption>
+                </figure>
 
                 <div class="code-block">
                     <details open>
@@ -1166,36 +1147,18 @@ model = NeRF(L_pos=10, L_dir=4, hidden_dim=256)</code></pre>
                         </div>
                     </details>
                 </div>
-
-                <p>And a quick smoke test just to confirm shapes, ranges, and parameter counts before plugging the network into the renderer:</p>
-
-<pre><code class="language-python">pts = torch.randn(1024, 3)
-dirs = torch.randn(1024, 3)
-dirs = dirs / torch.norm(dirs, dim=-1, keepdim=True)
-
-rgb, sigma = model(pts, dirs)
-
-print(f'RGB shape: {rgb.shape}')
-print(f'Sigma shape: {sigma.shape}')
-print(f'RGB range: [{rgb.min():.3f}, {rgb.max():.3f}]')
-print(f'Sigma range: [{sigma.min():.3f}, {sigma.max():.3f}]')
-print(f'Total parameters: {sum(p.numel() for p in model.parameters()):,}')</code></pre>
             </div>
         </section>
 
         <section id="part2-5" class="info-section">
             <div class="content-centered">
                 <h2>Part 2.5: Volume Rendering</h2>
-                <p>This is where the neural outputs turn into actual pixels. Given densities <code class="code-inline">σ</code>, colors <code class="code-inline">c</code>, and depths <code class="code-inline">z</code> sampled along every ray, we integrate them with the discrete volume-rendering equation from the handout.</p>
+                <p>This is where the neural outputs turn into actual pixels. Given densities <code class="code-inline">σ</code>, colors <code class="code-inline">c</code>, and depths <code class="code-inline">z</code> sampled along every ray, we integrate them with the discrete volume-rendering equation from the handout:</p>
 
-                <div class="observation-box">
-                    <h4>Key steps</h4>
-                    <ul>
-                        <li>Compute interval lengths <code class="code-inline">δ<sub>i</sub></code> from <code class="code-inline">z</code> (add a huge tail distance for the last sample).</li>
-                        <li>Convert densities to alpha values via <code class="code-inline">α = 1 - exp(-σ δ)</code>, multiply by cumulative transmittance to get per-sample weights.</li>
-                        <li>Weighted sums of RGB and depth give the rendered image and depth map; the accumulated opacity tells how much foreground we captured. An optional white background fills the remainder when <code class="code-inline">acc &lt; 1</code>.</li>
-                    </ul>
-                </div>
+                <figure style="text-align: center; margin: 1.5rem 0;">
+                    <img src="src/img/2-5-formula.jpg" alt="Volume rendering equation" class="clickable" style="max-width: 900px;">
+                    <figcaption>▲ Discrete approximation of the continuous volume-rendering integral used in NeRF.</figcaption>
+                </figure>
 
                 <div class="code-block">
                     <details open>
@@ -1236,23 +1199,7 @@ def volume_rendering(rgb, sigma, z_vals, rays_d, white_bkgd=False):
 
     if white_bkgd:
         rgb_map = rgb_map + (1.0 - acc_map.unsqueeze(-1))
-    return rgb_map, depth_map, acc_map
-
-if __name__ == '__main__':
-    N, n_samples = 1024, 64
-    rgb = torch.rand(N, n_samples, 3)
-    sigma = torch.rand(N, n_samples, 1) * 5
-    z_vals = torch.linspace(2.0, 6.0, n_samples).unsqueeze(0).expand(N, -1)
-    rays_d = torch.randn(N, 3)
-    rays_d = rays_d / torch.norm(rays_d, dim=-1, keepdim=True)
-
-    rgb_map, depth_map, acc_map = volume_rendering(rgb, sigma, z_vals, rays_d)
-    print(f'RGB map shape: {rgb_map.shape}')
-    print(f'Depth map shape: {depth_map.shape}')
-    print(f'Acc map shape: {acc_map.shape}')
-    print(f'RGB range: [{rgb_map.min():.3f}, {rgb_map.max():.3f}]')
-    print(f'Depth range: [{depth_map.min():.3f}, {depth_map.max():.3f}]')
-    print(f'Acc range: [{acc_map.min():.3f}, {acc_map.max():.3f}]')</code></pre>
+    return rgb_map, depth_map, acc_map</code></pre>
                         </div>
                     </details>
                 </div>
