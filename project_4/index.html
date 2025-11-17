@@ -118,6 +118,10 @@
         <a href="#part2-6">2.6 Custom</a>
     </nav>
 
+    <p style="text-align: center; color: #666; font-size: 0.9rem; margin: 1rem 0;">
+        Tip: every thumbnail on this page is clickable—tap to view the original resolution.
+    </p>
+
     <main>
         <!-- PART 0: CAMERA CALIBRATION & 3D SCAN -->
 
@@ -1632,6 +1636,18 @@ def run_lego(multi_gpu=False):
                     <img src="src/img/2-miffy_two_fixed/novel_views.gif" alt="Miffy novel views" class="clickable" style="max-width: 600px;">
                     <figcaption>▲ Novel-view animation rendered from the custom Miffy NeRF.</figcaption>
                 </figure>
+
+                <div class="observation-box">
+                    <h4>Debug Notes</h4>
+                    <p>I actually shot five different datasets before this run finally converged. The Lafufu set worked from day one, but my captures kept collapsing because the detector latched onto different ArUco IDs in the same sequence. In hindsight the issue was obvious: I taped down a sheet with <strong>six</strong> tags, so depending on perspective the “active” tag would change mid-frame.</p>
+                    <figure style="text-align: center; margin: 1rem 0;">
+                        <img src="src/img/2-6-miffy-debug.png" alt="Miffy debug collage" class="clickable" style="max-width: 100%;">
+                        <figcaption>▲ Debug frames showing the tag ID jump when multiple tags are visible.</figcaption>
+                    </figure>
+                    <p>Once I re-shot with <strong>a single tag</strong> in the scene the pipeline behaved—proof that capture setup matters as much as the NeRF code. (Still not sure why the staff’s Lafufu dataset works with six tags.)</p>
+                </div>
+
+                <p>All assets for this run live under <code class="code-inline">src/img/2-miffy_two_fixed/</code>; every thumbnail here can be clicked to open the lightbox.</p>
             </div>
         </section>
 
