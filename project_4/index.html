@@ -46,9 +46,25 @@
                     <h3>Part 1: Neural Field for 2D Images</h3>
                     <p>Train MLP with positional encoding to represent 2D images as continuous functions.</p>
                     <div class="part-nav-grid">
-                        <a href="#part1" class="part-nav-item">
-                            <span class="part-nav-number">1</span>
-                            <span class="part-nav-title">Implementation & Results</span>
+                        <a href="#part1-1" class="part-nav-item">
+                            <span class="part-nav-number">1.1</span>
+                            <span class="part-nav-title">Positional Encoding</span>
+                        </a>
+                        <a href="#part1-2" class="part-nav-item">
+                            <span class="part-nav-number">1.2</span>
+                            <span class="part-nav-title">MLP</span>
+                        </a>
+                        <a href="#part1-3" class="part-nav-item">
+                            <span class="part-nav-number">1.3</span>
+                            <span class="part-nav-title">Dataloader</span>
+                        </a>
+                        <a href="#part1-4" class="part-nav-item">
+                            <span class="part-nav-number">1.4</span>
+                            <span class="part-nav-title">Training</span>
+                        </a>
+                        <a href="#part1-5" class="part-nav-item">
+                            <span class="part-nav-number">1.5</span>
+                            <span class="part-nav-title">Results</span>
                         </a>
                     </div>
                 </div>
@@ -197,12 +213,45 @@
             <div class="content-centered">
                 <h2>Part 0.2: Capturing a 3D Object Scan</h2>
 
-                <p>For this part, I captured images of a cute <strong>CalHacks 12.0 Bear</strong> (from the hackathon a few weeks ago!) placed next to a single ArUco tag. I took <strong>38 images</strong> from various angles and distances while maintaining consistent camera settings.</p>
+                <p>I placed my <strong>Miffy</strong> doll next to the calibration tag and shot <strong>38 photos</strong> while orbiting the bunny, keeping exposure/focus fixed so the poses stay consistent. The raw captures live at <code class="code-inline">images/0-miffy-two/</code>. (Fun fact: I first tried the CalHacks 12.0 bear, but the busy background made training unstable, so I re-shot with Miffy—Part&nbsp;1 still uses the bear!)</p>
 
                 <figure style="text-align: center;">
-                    <img src="src/img/0-2-calbear.jpg" alt="CalHacks Bear 3D Scan" class="clickable" style="width: 60%;">
-                    <figcaption>▲ CalHacks 12.0 Bear captured from multiple viewpoints (38 images total)</figcaption>
+                    <img src="src/img/0-2-miffy-calbear.jpg" alt="Miffy and CalBear comparison" class="clickable" style="width: 70%;">
+                    <figcaption>▲ Left: new Miffy capture used for Part&nbsp;2.     ▲ Right: original CalHacks bear from Part&nbsp;1.</figcaption>
                 </figure>
+
+                <p>Before training Part&nbsp;2, I resize the photos down to <code class="code-inline">373×280</code> so they match the intrinsics of the provided Lego dataset. A tiny Pillow script batches the conversion:</p>
+
+                <div class="code-block">
+                    <details open>
+                        <summary class="code-toggle">
+                            <span class="toggle-icon">▼</span>
+                            <strong>Batch resizing script</strong>
+                        </summary>
+                        <div class="code-content">
+<pre><code class="language-python">import os
+from PIL import Image
+
+input_folder = "images/0-miffy-two"
+output_folder = "images/0-miffy-two-resize"
+target_size = (373, 280)
+
+os.makedirs(output_folder, exist_ok=True)
+
+for filename in os.listdir(input_folder):
+    if filename.lower().endswith((".jpg", ".jpeg", ".png")):
+        img_path = os.path.join(input_folder, filename)
+        img = Image.open(img_path)
+        img_resized = img.resize(target_size, Image.LANCZOS)
+        img_resized.save(os.path.join(output_folder, filename))
+        print(f"Done: {filename}")
+
+print("All images resized!")</code></pre>
+                        </div>
+                    </details>
+                </div>
+
+                <p>The resized set in <code class="code-inline">images/0-miffy-two-resize/</code> becomes the dataset I feed into the NeRF dataloader later on.</p>
 
             </div>
         </section>
@@ -320,11 +369,11 @@ c2w = [R | t] = [R₀₀  R₀₁  R₀₂  tₓ]
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin: 1.5rem 0;">
                     <figure>
-                        <img src="src/img/0-3-viser-demo1.jpg" alt="Camera Frustums View 1" class="clickable" style="height: 350px; object-fit: cover;">
+                        <img src="src/img/0-3-viser-demo1.png" alt="Camera Frustums View 1" class="clickable" style="height: 300px; object-fit: cover;">
                         <figcaption>▲ 3D visualization of camera frustums (view 1)</figcaption>
                     </figure>
                     <figure>
-                        <img src="src/img/0-3-viser-demo2.jpg" alt="Camera Frustums View 2" class="clickable" style="height: 350px; object-fit: cover;">
+                        <img src="src/img/0-3-viser-demo2.png" alt="Camera Frustums View 2" class="clickable" style="height: 300px; object-fit: cover;">
                         <figcaption>▲ 3D visualization of camera frustums (view 2)</figcaption>
                     </figure>
                 </div>
@@ -411,7 +460,8 @@ c2w = [R | t] = [R₀₀  R₀₁  R₀₂  tₓ]
         images_val=all_images[val_idx],
         c2ws_val=all_c2ws[val_idx],
         c2ws_test=all_c2ws[test_idx],
-        focal=focal
+        # focal=focal
+        K=mtx
     )
 
     return (all_images[train_idx], all_c2ws[train_idx],
@@ -430,7 +480,7 @@ c2w = [R | t] = [R₀₀  R₀₁  R₀₂  tₓ]
                         <li><code class="code-inline">images_val</code>: Validation images</li>
                         <li><code class="code-inline">c2ws_val</code>: Camera-to-world matrices for validation (0.15)</li>
                         <li><code class="code-inline">c2ws_test</code>: Camera-to-world matrices for test (0.15)</li>
-                        <li><code class="code-inline">focal</code>: Focal length (from intrinsic matrix)</li>
+                        <li><code class="code-inline">K</code>: Full intrinsic matrix (switched from scalar focal because it made Part&nbsp;2.6 result better)</li>
                     </ul>
                 </div>
             </div>
@@ -445,9 +495,9 @@ c2w = [R | t] = [R₀₀  R₀₁  R₀₂  tₓ]
                 <p>Before jumping into 3D NeRF, which learns the mapping <code class="code-inline">F: {x, y, z, θ, φ} → {r, g, b, σ}</code>, we start with 2D as a simpler introduction. In 2D, we only need to solve <code class="code-inline">F: {u, v} → {r, g, b}</code>, where <code class="code-inline">{u, v}</code> represents 2D pixel coordinates.</p>
 
                 <!-- Positional Encoding -->
-                <h3>1.1 Sinusoidal Positional Encoding (PE)</h3>
+                <h3 id="part1-1">1.1 Sinusoidal Positional Encoding (PE)</h3>
 
-                <p>Positional encoding helps neural networks capture high-frequency details by transforming input coordinates into a higher-dimensional space using sinusoidal functions. Without PE, MLPs struggle to represent fine details in images.</p>
+                <br>Positional encoding helps neural networks capture <strong>high-frequency details</strong> by transforming input coordinates into a higher-dimensional space using sinusoidal functions. Without PE, MLPs struggle to represent fine details in images.</p>
 
                 <p>The encoding applies sine and cosine functions at different frequencies:</p>
                 <figure>
@@ -478,13 +528,13 @@ c2w = [R | t] = [R₀₀  R₀₁  R₀₂  tₓ]
                 <p>For <code class="code-inline">L=10</code> frequency bands, a 2D coordinate is transformed from dimension 2 to dimension <code class="code-inline">2 + 2×L×2 = 42</code>.</p>
 
                 <!-- MLP Architecture -->
-                <h3>1.2 Multilayer Perceptron (MLP) Architecture</h3>
+                <h3 id="part1-2">1.2 Multilayer Perceptron (MLP) Architecture</h3>
 
                 <p>Our neural field network follows the architecture shown below:</p>
 
                 <figure>
                     <img src="src/img/1-mlp_img.jpg" alt="2D Neural Field Architecture" class="clickable">
-                    <figcaption>Network architecture: 2D coordinates → PE → 3 hidden layers (256 units) → RGB output</figcaption>
+                    <figcaption>▲ Network architecture: 2D coordinates → PE → 3 hidden layers (256 units) → RGB output</figcaption>
                 </figure>
 
                 <p>The network consists of:</p>
@@ -527,7 +577,7 @@ c2w = [R | t] = [R₀₀  R₀₁  R₀₂  tₓ]
                 </div>
 
                 <!-- Dataloader -->
-                <h3>1.3 Pixel Dataloader</h3>
+                <h3 id="part1-3">1.3 Pixel Dataloader</h3>
 
                 <p>Since high-resolution images are memory-intensive, we implement a dataloader that randomly samples <code class="code-inline">N</code> pixels at every iteration for training. This approach:</p>
                 <ul>
@@ -571,7 +621,7 @@ c2w = [R | t] = [R₀₀  R₀₁  R₀₂  tₓ]
                 </div>
 
                 <!-- Training -->
-                <h3>1.4 Training: Loss Function, Optimizer, and Metric</h3>
+                <h3 id="part1-4">1.4 Training: Loss Function, Optimizer, and Metric</h3>
 
                 <p>We train the neural field to minimize the difference between predicted and ground truth pixel colors using:</p>
                 <ul>
@@ -676,94 +726,97 @@ c2w = [R | t] = [R₀₀  R₀₁  R₀₂  tₓ]
                 </div>
 
                 <!-- Results -->
-                <h3>1.5 Results and Analysis</h3>
+                <h3 id="part1-5">1.5 Results and Analysis</h3>
 
                 <h4>1) Model Architecture</h4>
-                <div class="result-box">
-                    <ul>
-                        <li> <strong>Positional Encoding:</strong> L = 10 frequency bands (input dimension: 42)</li>
-                        <li> <strong>Network Depth:</strong> 3 hidden layers</li>
-                        <li> <strong>Layer Width:</strong> 256 units per hidden layer</li>
-                        <li> <strong>Activation:</strong> ReLU (hidden layers), Sigmoid (output layer)</li>
-                        <li> <strong>Learning Rate:</strong> 1e-2 (Adam optimizer)</li>
-                        <li> <strong>Batch Size:</strong> 10,000 pixels per iteration</li>
-                        <li> <strong>Training Iterations:</strong> 3,000</li>
+                <div class="result-box" style="padding: 1.25rem;">
+                    <ul style="line-height: 1.6; margin: 0 0 0 1.25rem;">
+                        <li><strong>Positional Encoding:</strong> L = 10 frequency bands (input dimension: 42)</li>
+                        <li><strong>Network Depth:</strong> 3 hidden layers</li>
+                        <li><strong>Layer Width:</strong> 256 units per hidden layer</li>
+                        <li><strong>Activation:</strong> ReLU (hidden layers), Sigmoid (output layer)</li>
+                        <li><strong>Learning Rate:</strong> 1e-2 (Adam optimizer)</li>
+                        <li><strong>Batch Size:</strong> 10,000 pixels per iteration</li>
+                        <li><strong>Training Iterations:</strong> 3,000</li>
                     </ul>
                 </div>
 
                 <h4>2) Training Progression</h4>
-                <p>The following images show how the neural field learns to reconstruct the image over time. </p>
+                <p>The following grids show how the neural field sharpens each image across training iterations.</p>
 
-                <p style="margin-bottom: 0.5rem;"><strong>Test Image (Fox):</strong></p>
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin: 0.5rem 0 1.5rem 0;">
-                    <figure>
-                        <img src="src/img/1-fox/iter_0000.png" alt="Fox - Iteration 0" class="clickable">
-                        <figcaption>Iteration 0</figcaption>
-                    </figure>
-                    <figure>
-                        <img src="src/img/1-fox/iter_0100.png" alt="Fox - Iteration 100" class="clickable">
-                        <figcaption>Iteration 100</figcaption>
-                    </figure>
-                    <figure>
-                        <img src="src/img/1-fox/iter_0500.png" alt="Fox - Iteration 500" class="clickable">
-                        <figcaption>Iteration 500</figcaption>
-                    </figure>
-                    <figure>
-                        <img src="src/img/1-fox/iter_1000.png" alt="Fox - Iteration 1000" class="clickable">
-                        <figcaption>Iteration 1000</figcaption>
-                    </figure>
-                    <figure>
-                        <img src="src/img/1-fox/iter_2000.png" alt="Fox - Iteration 2000" class="clickable">
-                        <figcaption>Iteration 2000</figcaption>
-                    </figure>
-                    <figure>
-                        <img src="src/img/1-fox/iter_2999.png" alt="Fox - Iteration 2999" class="clickable">
-                        <figcaption>Iteration 2999 (Final)</figcaption>
-                    </figure>
+                <div style="margin-bottom: 1.5rem;">
+                    <p style="font-weight: 600; margin-bottom: 0.5rem;">Test Image (Fox)</p>
+                    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.9rem;">
+                        <figure style="margin: 0;">
+                            <img src="src/img/1-fox/iter_0000.png" alt="Fox - Iteration 0" class="clickable">
+                            <figcaption>▲ Iter 0</figcaption>
+                        </figure>
+                        <figure style="margin: 0;">
+                            <img src="src/img/1-fox/iter_0100.png" alt="Fox - Iteration 100" class="clickable">
+                            <figcaption>▲ Iter 100</figcaption>
+                        </figure>
+                        <figure style="margin: 0;">
+                            <img src="src/img/1-fox/iter_0500.png" alt="Fox - Iteration 500" class="clickable">
+                            <figcaption>▲ Iter 500</figcaption>
+                        </figure>
+                        <figure style="margin: 0;">
+                            <img src="src/img/1-fox/iter_1000.png" alt="Fox - Iteration 1000" class="clickable">
+                            <figcaption>▲ Iter 1000</figcaption>
+                        </figure>
+                        <figure style="margin: 0;">
+                            <img src="src/img/1-fox/iter_2000.png" alt="Fox - Iteration 2000" class="clickable">
+                            <figcaption>▲ Iter 2000</figcaption>
+                        </figure>
+                        <figure style="margin: 0;">
+                            <img src="src/img/1-fox/iter_2999.png" alt="Fox - Iteration 2999" class="clickable">
+                            <figcaption>▲ Iter 2999</figcaption>
+                        </figure>
+                    </div>
                 </div>
 
-                <p style="margin-bottom: 0.5rem;"><strong>My Own Image (CalHacks Bear):</strong></p>
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin: 0.5rem 0 1.5rem 0;">
-                    <figure>
-                        <img src="src/img/1-calbear/iter_0000.png" alt="CalBear - Iteration 0" class="clickable">
-                        <figcaption>Iteration 0</figcaption>
-                    </figure>
-                    <figure>
-                        <img src="src/img/1-calbear/iter_0100.png" alt="CalBear - Iteration 100" class="clickable">
-                        <figcaption>Iteration 100</figcaption>
-                    </figure>
-                    <figure>
-                        <img src="src/img/1-calbear/iter_0500.png" alt="CalBear - Iteration 500" class="clickable">
-                        <figcaption>Iteration 500</figcaption>
-                    </figure>
-                    <figure>
-                        <img src="src/img/1-calbear/iter_1000.png" alt="CalBear - Iteration 1000" class="clickable">
-                        <figcaption>Iteration 1000</figcaption>
-                    </figure>
-                    <figure>
-                        <img src="src/img/1-calbear/iter_2000.png" alt="CalBear - Iteration 2000" class="clickable">
-                        <figcaption>Iteration 2000</figcaption>
-                    </figure>
-                    <figure>
-                        <img src="src/img/1-calbear/iter_2999.png" alt="CalBear - Iteration 2999" class="clickable">
-                        <figcaption>Iteration 2999 (Final)</figcaption>
-                    </figure>
+                <div style="margin-bottom: 1.5rem;">
+                    <p style="font-weight: 600; margin-bottom: 0.5rem;">My Own Image (CalHacks Bear)</p>
+                    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.9rem;">
+                        <figure style="margin: 0;">
+                            <img src="src/img/1-calbear/iter_0000.png" alt="CalBear - Iteration 0" class="clickable">
+                            <figcaption>▲ Iter 0</figcaption>
+                        </figure>
+                        <figure style="margin: 0;">
+                            <img src="src/img/1-calbear/iter_0100.png" alt="CalBear - Iteration 100" class="clickable">
+                            <figcaption>▲ Iter 100</figcaption>
+                        </figure>
+                        <figure style="margin: 0;">
+                            <img src="src/img/1-calbear/iter_0500.png" alt="CalBear - Iteration 500" class="clickable">
+                            <figcaption>▲ Iter 500</figcaption>
+                        </figure>
+                        <figure style="margin: 0;">
+                            <img src="src/img/1-calbear/iter_1000.png" alt="CalBear - Iteration 1000" class="clickable">
+                            <figcaption>▲ Iter 1000</figcaption>
+                        </figure>
+                        <figure style="margin: 0;">
+                            <img src="src/img/1-calbear/iter_2000.png" alt="CalBear - Iteration 2000" class="clickable">
+                            <figcaption>▲ Iter 2000</figcaption>
+                        </figure>
+                        <figure style="margin: 0;">
+                            <img src="src/img/1-calbear/iter_2999.png" alt="CalBear - Iteration 2999" class="clickable">
+                            <figcaption>▲ Iter 2999</figcaption>
+                        </figure>
+                    </div>
                 </div>
 
                 <h4>3) Hyperparameter Tuning</h4>
                 <p>We experiment with different values of L and layer width to understand their impact on reconstruction quality. <br>Using very low values reveals how these hyperparameters affect the model's ability to capture fine details.</p>
 
-                <p style="margin-bottom: 0.5rem;"><strong>Fox Image - Hyperparameter Comparison:</strong></p>
-                <figure>
-                    <img src="src/img/1-fox/hyperparam_comparison.png" alt="Fox - Hyperparameter Grid" class="clickable" style="max-height: 60vh; width: auto;">
-                    <figcaption>2×2 grid comparing different L values and layer widths on the fox image</figcaption>
-                </figure>
-
-                <p style="margin-bottom: 0.5rem;"><strong>CalHacks Bear - Hyperparameter Comparison:</strong></p>
-                <figure>
-                    <img src="src/img/1-calbear/hyperparam_comparison.png" alt="CalBear - Hyperparameter Grid" class="clickable" style="max-height: 60vh; width: auto;">
-                    <figcaption>2×2 grid comparing different L values and layer widths on the CalHacks bear</figcaption>
-                </figure>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin: 0.5rem 0 1.5rem 0;">
+                    <figure>
+                        <img src="src/img/1-fox/hyperparam_comparison.png" style="height: 400px; object-fit: cover;"alt="Fox - Hyperparameter Grid" class="clickable" style="width: 100%;">
+                        <figcaption>Fox: effect of L and layer width.</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="src/img/1-calbear/hyperparam_comparison.png" style="height: 400px; object-fit: cover;"alt="CalBear - Hyperparameter Grid" class="clickable" style="width: 100%;">
+                        <figcaption>CalBear: same search space, similar trends.</figcaption>
+                    </figure>
+                </div>
 
                 <div class="observation-box">
                     <h4>Observations</h4>
@@ -779,11 +832,11 @@ c2w = [R | t] = [R₀₀  R₀₁  R₀₂  tₓ]
                 <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; margin: 1.5rem 0;">
                     <figure>
                         <img src="src/img/1-fox/psnr_curve.png" alt="Fox PSNR Curve" class="clickable">
-                        <figcaption>Fox training PSNR progression</figcaption>
+                        <figcaption>▲ Fox training PSNR progression</figcaption>
                     </figure>
                     <figure>
                         <img src="src/img/1-calbear/psnr_curve.png" alt="CalBear PSNR Curve" class="clickable">
-                        <figcaption>CalHacks bear training PSNR progression</figcaption>
+                        <figcaption>▲ CalHacks bear training PSNR progression</figcaption>
                     </figure>
                 </div>
 
@@ -795,35 +848,519 @@ c2w = [R | t] = [R₀₀  R₀₁  R₀₂  tₓ]
         <section id="part2-1" class="info-section">
             <div class="content-centered">
                 <h2>Part 2.1: Ray Generation</h2>
-                <p>[Your content here]</p>
+                <p>To render with NeRF we still need the precise rays that correspond to every pixel. The process follows the assignment diagram: (1) lift pixel coordinates into the camera frame, (2) transform them with the camera-to-world pose, and (3) interpret the camera center plus these directions as the rays we will sample along.</p>
+
+                <div class="observation-box">
+                    <h4>Coordinate Conventions</h4>
+                    <ul>
+                        <li><strong>Intrinsic matrix K:</strong> Encodes the focal lengths <code class="code-inline">f_x, f_y</code> and principal point <code class="code-inline">(o_x, o_y)</code>. I assume square pixels so <code class="code-inline">f_x = f_y = focal</code> when using the provided synthetic datasets.</li>
+                        <li><strong>Extrinsics:</strong> I store poses as camera-to-world (c2w) matrices, which is the inverse of OpenCV’s w2c output. Each pose is <code class="code-inline">[R | t]</code> where <code class="code-inline">t</code> is the camera origin expressed in world space.</li>
+                        <li><strong>Pixel centers:</strong> Following the spec, I add <code class="code-inline">0.5</code> to each integer pixel index so that rays pass through pixel centers when forming the meshgrid.</li>
+                    </ul>
+                </div>
+
+                <figure style="text-align: center; margin: 1.5rem 0;">
+                    <img src="src/img/2-1-ray-generation.png" alt="Mapping a pixel to a 3D ray" class="clickable" style="max-width: 700px;">
+                    <figcaption>▲ Camera-centric view of the mappings implemented below: pixels → camera frame → world rays.</figcaption>
+                </figure>
+
+                <h3>Implementation</h3>
+                <p>The code mirrors the three conceptual blocks above. First, <code class="code-inline">pixel_to_camera</code> undoes the projection equation <code class="code-inline">s · [u, v, 1]^⊤ = K · [x_c, y_c, z_c]^⊤</code>. Then <code class="code-inline">pixel_to_ray</code> rotates and translates those points into world space and subtracts the camera origin to obtain directions. Finally, <code class="code-inline">get_rays</code> packages everything for a full-resolution image by creating a dense grid of pixel centers.</p>
+
+                <div class="code-block">
+                    <details open>
+                        <summary class="code-toggle">
+                            <span class="toggle-icon">▼</span>
+                            <strong>Ray Generation Functions (PyTorch)</strong>
+                        </summary>
+                        <div class="code-content">
+<pre><code class="language-python">def pixel_to_camera(K, uv, s, device='cpu'):
+    if not isinstance(K, torch.Tensor):
+        K = torch.FloatTensor(K).to(device)
+    if not isinstance(uv, torch.Tensor):
+        uv = torch.FloatTensor(uv).to(device)
+
+    u, v = uv[:, 0], uv[:, 1]
+    f_x, f_y = K[0, 0], K[1, 1]
+    o_x, o_y = K[0, 2], K[1, 2]
+
+    x_c = (u - o_x) / f_x * s
+    y_c = (v - o_y) / f_y * s
+    z_c = torch.ones_like(u) * s
+    return torch.stack([x_c, y_c, z_c], dim=-1)
+
+def pixel_to_ray(K, c2w, uv):
+    if not isinstance(c2w, torch.Tensor):
+        c2w = torch.tensor(c2w, dtype=torch.float32)
+
+    device = c2w.device
+    x_c = pixel_to_camera(K, uv, s=1.0, device=device)
+    R, t = c2w[:3, :3], c2w[:3, 3]
+
+    x_w = (R @ x_c.T).T + t.unsqueeze(0)
+    r_o = t.unsqueeze(0).expand_as(x_w)
+    r_d = x_w - r_o
+    r_d = r_d / torch.norm(r_d, dim=-1, keepdim=True)
+    return r_o, r_d
+
+def get_rays(H, W, focal, c2w):
+    device = c2w.device if isinstance(c2w, torch.Tensor) else 'cpu'
+    K = torch.FloatTensor([
+        [focal, 0, W / 2],
+        [0, focal, H / 2],
+        [0, 0, 1]
+    ]).to(device)
+
+    i, j = torch.meshgrid(
+        torch.arange(H, device=device),
+        torch.arange(W, device=device),
+        indexing='ij'
+    )
+    uv = torch.stack([j + 0.5, i + 0.5], dim=-1).reshape(-1, 2).float()
+    return pixel_to_ray(K, c2w, uv)</code></pre>
+                        </div>
+                    </details>
+                </div>
+
+                <p>Quick sanity script: load Lego, grab the first pose, and make sure the shapes all line up (plus the directions are unit length).</p>
+<pre><code class="language-python">data = np.load('dataset/lego_200x200.npz')
+c2ws_train = torch.FloatTensor(data['c2ws_train'])
+focal = float(data['focal'])
+H, W = 200, 200
+
+c2w = c2ws_train[0]
+rays_o, rays_d = get_rays(H, W, focal, c2w)
+
+print(f'Ray origins shape: {rays_o.shape}')
+print(f'Ray directions shape: {rays_d.shape}')
+print(f'First ray origin: {rays_o[0]}')
+print(f'First ray direction: {rays_d[0]}')
+print(f'Ray direction norm: {torch.norm(rays_d[0])}')</code></pre>
+
+                <h3>Verification</h3>
+                <p>I also popped a random batch into <code class="code-inline">viser</code>; all origins stack at <code class="code-inline">t</code> and the directions fan out nicely across the FoV, so the pinhole math checks out.</p>
             </div>
         </section>
 
         <section id="part2-2" class="info-section">
             <div class="content-centered">
                 <h2>Part 2.2: Point Sampling</h2>
-                <p>[Your content here]</p>
+                <p>Once the rays are available, the next step is deciding <strong>which</strong> rays enter each batch and <strong>where</strong> along them we query the network.</p>
+
+                <h3>Sampling Rays Across Images</h3>
+                <p>Part&nbsp;1 already taught us how to randomly draw pixels from a single image. For Part&nbsp;2 I just scale that idea to the full dataset by pairing the pixel sampler with <code class="code-inline">get_rays</code>:</p>
+                <ul>
+                    <li><strong>Image-first strategy:</strong> Sample <code class="code-inline">M</code> images, then draw <code class="code-inline">N / M</code> pixels inside each of them. This keeps batches balanced across views so every pose gets used frequently.</li>
+                    <li><strong>Flattened strategy:</strong> Stack every pixel from every image, shuffle, and grab <code class="code-inline">N</code> rays globally. This gives perfectly random coverage but needs more memory for the flattened tensors.</li>
+                </ul>
+                <p>I tried both and stuck with the image-first option because it plays nicely with my dataloader. Regardless of strategy, I always offset pixel indices by <code class="code-inline">+0.5</code> so rays travel through pixel centers.</p>
+
+<pre><code class="language-python">n_rays = 1024
+select_inds = np.random.choice(len(rays_o), size=n_rays, replace=False)
+rays_o = rays_o[select_inds]
+rays_d = rays_d[select_inds]
+
+pts, z_vals = sample_along_rays(rays_o, rays_d, n_samples=64)
+
+print(f'Points shape: {pts.shape}')
+print(f'Z values shape: {z_vals.shape}')
+print(f'Z values range: [{z_vals.min():.2f}, {z_vals.max():.2f}]')
+print(f'First point: {pts[0, 0]}')</code></pre>
+
+                <h3>Sampling Points Along Rays</h3>
+                <p>Each ray is continuous, so I chop it into samples <code class="code-inline">z</code> between <code class="code-inline">near=2.0</code> and <code class="code-inline">far=6.0</code> for the Lego scene. Uniform sampling is trivial, but jittering inside every interval during training keeps the network from memorizing a fixed lattice.</p>
+
+                <div class="code-block">
+                    <details open>
+                        <summary class="code-toggle">
+                            <span class="toggle-icon">▼</span>
+                            <strong>Stratified Sampling Along Rays</strong>
+                        </summary>
+                        <div class="code-content">
+<pre><code class="language-python">def sample_along_rays(rays_o, rays_d, near=2.0, far=6.0,
+                      n_samples=64, perturb=True):
+    N = rays_o.shape[0]
+
+    # Linear samples in normalized depth, then map to [near, far]
+    t_vals = torch.linspace(0., 1., n_samples, device=rays_o.device)
+    z_vals = near * (1. - t_vals) + far * t_vals          # (n_samples,)
+    z_vals = z_vals.expand(N, n_samples)                  # (N, n_samples)
+
+    if perturb:
+        mids = 0.5 * (z_vals[:, :-1] + z_vals[:, 1:])
+        upper = torch.cat([mids, z_vals[:, -1:]], dim=-1)
+        lower = torch.cat([z_vals[:, :1], mids], dim=-1)
+        t_rand = torch.rand_like(z_vals)
+        z_vals = lower + (upper - lower) * t_rand
+
+    pts = rays_o.unsqueeze(1) + rays_d.unsqueeze(1) * z_vals.unsqueeze(2)
+    return pts, z_vals</code></pre>
+                        </div>
+                    </details>
+                </div>
+
+                <p>The function returns both the sampled 3D coordinates and their depths. Later, the renderer uses <code class="code-inline">z_vals</code> to compute alpha weights and volume accumulation. I typically choose <code class="code-inline">n_samples = 64</code> for training and disable perturbation at evaluation time for deterministic renders.</p>
             </div>
         </section>
 
         <section id="part2-3" class="info-section">
             <div class="content-centered">
                 <h2>Part 2.3: Data Loading</h2>
-                <p>[Your content here]</p>
+                <p>This section is basically Part&nbsp;1’s pixel sampler leveled up: now every batch needs to return ray origins, ray directions, and the associated RGB colors across all camera views.</p>
+
+                <h3>Multiview Rays Dataloader</h3>
+                <p>I precompute the rays for each image once, flatten everything, and then sample by indexing into those big tensors. This keeps the per-iteration cost tiny and makes it easy to sanity check correspondence between UV coordinates and RGB values.</p>
+
+                <div class="code-block">
+                    <details open>
+                        <summary class="code-toggle">
+                            <span class="toggle-icon">▼</span>
+                            <strong>RaysData helper + sanity checks</strong>
+                        </summary>
+                        <div class="code-content">
+<pre><code class="language-python">class RaysData:
+    def __init__(self, images, K, c2ws, device='cpu'):
+        if not isinstance(images, torch.Tensor):
+            images = torch.FloatTensor(images)
+        if not isinstance(c2ws, torch.Tensor):
+            c2ws = torch.FloatTensor(c2ws)
+
+        self.images = images.to(device)
+        self.c2ws = c2ws.to(device)
+        self.device = device
+        N, H, W, _ = self.images.shape
+        focal = K[0, 0]
+
+        all_rays_o, all_rays_d, all_pixels, all_uvs = [], [], [], []
+        for i in range(N):
+            rays_o, rays_d = get_rays(H, W, focal, self.c2ws[i])
+            all_rays_o.append(rays_o)
+            all_rays_d.append(rays_d)
+            all_pixels.append(self.images[i].reshape(-1, 3))
+
+            y, x = torch.meshgrid(torch.arange(H, device=device),
+                                  torch.arange(W, device=device),
+                                  indexing='ij')
+            all_uvs.append(torch.stack([x, y], dim=-1).reshape(-1, 2).long())
+
+        self.rays_o = torch.cat(all_rays_o, dim=0)
+        self.rays_d = torch.cat(all_rays_d, dim=0)
+        self.pixels = torch.cat(all_pixels, dim=0)
+        self.uvs = torch.cat(all_uvs, dim=0)
+
+    def sample_rays(self, n):
+        idx = torch.randint(0, len(self.rays_o), (n,), device=self.device)
+        return self.rays_o[idx], self.rays_d[idx], self.pixels[idx]
+
+K = np.array([[focal, 0, W/2],
+              [0, focal, H/2],
+              [0, 0, 1]])
+
+images_train = images_train[:2]
+c2ws_train = c2ws_train[:2]
+
+dataset = RaysData(images_train, K, c2ws_train)
+
+uvs_start, uvs_end = 0, 40_000
+sample_uvs = dataset.uvs[uvs_start:uvs_end].cpu().numpy()
+assert np.allclose(
+    images_train[0, sample_uvs[:, 1], sample_uvs[:, 0]],
+    dataset.pixels[uvs_start:uvs_end].cpu().numpy()
+)
+print('✓ UV indexing correct')
+
+rays_o, rays_d, pixels = dataset.sample_rays(100)
+print(f'rays_o: {rays_o.shape}')
+print(f'rays_d: {rays_d.shape}')
+print(f'pixels: {pixels.shape}')
+
+points, z_vals = sample_along_rays(rays_o, rays_d, perturb=True)
+print(f'points: {points.shape}')
+print(f'z_vals: {z_vals.shape}')</code></pre>
+                        </div>
+                    </details>
+                </div>
+
+                <h3>Visualizer Debugging</h3>
+                <p>I used the provided plotter to draw camera frustums and sampled rays. Sampling across all views produces a spiky hedgehog, while sampling from a single pose keeps the rays nicely inside one frustum—perfect for catching any indexing bug.</p>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0;">
+                    <figure>
+                        <img src="src/img/2-3-demo-random-rays.png" alt="Random rays from all views" class="clickable">
+                        <figcaption>▲ Random rays from multiple cameras.</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="src/img/2-3-demo-rays-from-first-image.png" alt="Rays from first camera" class="clickable">
+                        <figcaption>▲ Rays sampled only from the first camera (stay inside the frustum).</figcaption>
+                    </figure>
+                </div>
             </div>
         </section>
 
         <section id="part2-4" class="info-section">
             <div class="content-centered">
                 <h2>Part 2.4: NeRF Network</h2>
-                <p>[Your content here]</p>
+                <p>The network now needs to map 3D locations and view directions to both color and density. Compared to Part&nbsp;1’s tiny MLP, this model is deeper, runs on 3D coordinates, and conditions its RGB prediction on the viewing direction.</p>
+
+                <div class="observation-box">
+                    <h4>Design Notes</h4>
+                    <ul>
+                        <li>Separate positional encodings for spatial coordinates (<code class="code-inline">L_pos = 10</code>) and view directions (<code class="code-inline">L_dir = 4</code>), following the spec.</li>
+                        <li>An 8-layer MLP with a skip connection that concatenates the encoded position halfway through so high-frequency details don&rsquo;t fade.</li>
+                        <li>Two heads: a density head (ReLUed to keep <code class="code-inline">sigma ≥ 0</code>) and a color head conditioned on both features and direction encodings.</li>
+                    </ul>
+                </div>
+
+                <div class="code-block">
+                    <details open>
+                        <summary class="code-toggle">
+                            <span class="toggle-icon">▼</span>
+                            <strong>NeRF model (PyTorch)</strong>
+                        </summary>
+                        <div class="code-content">
+<pre><code class="language-python">import torch.nn as nn
+
+class PositionalEncoding(nn.Module):
+    def __init__(self, L=10):
+        super().__init__()
+        self.L = L
+
+    def forward(self, x):
+        out = [x]
+        for i in range(self.L):
+            freq = 2 ** i * np.pi
+            out.extend([torch.sin(freq * x), torch.cos(freq * x)])
+        return torch.cat(out, dim=-1)
+
+class NeRF(nn.Module):
+    def __init__(self, L_pos=10, L_dir=4, hidden_dim=256):
+        super().__init__()
+        self.pe_pos = PositionalEncoding(L_pos)
+        self.pe_dir = PositionalEncoding(L_dir)
+
+        pos_dim = 3 + 3 * 2 * L_pos
+        dir_dim = 3 + 3 * 2 * L_dir
+
+        self.lin1 = nn.Linear(pos_dim, hidden_dim)
+        self.lin2 = nn.Linear(hidden_dim, hidden_dim)
+        self.lin3 = nn.Linear(hidden_dim, hidden_dim)
+        self.lin4 = nn.Linear(hidden_dim, hidden_dim)
+
+        self.lin5 = nn.Linear(hidden_dim + pos_dim, hidden_dim)
+        self.lin6 = nn.Linear(hidden_dim, hidden_dim)
+        self.lin7 = nn.Linear(hidden_dim, hidden_dim)
+        self.lin8 = nn.Linear(hidden_dim, hidden_dim)
+
+        self.density_lin = nn.Linear(hidden_dim, 1)
+        self.feature_lin = nn.Linear(hidden_dim, hidden_dim)
+        self.color_lin1 = nn.Linear(hidden_dim + dir_dim, 128)
+        self.color_lin2 = nn.Linear(128, 3)
+
+        nn.init.constant_(self.density_lin.bias, 0.1)
+
+    def forward(self, pts, dirs):
+        pts_enc = self.pe_pos(pts)
+        dirs_enc = self.pe_dir(dirs)
+
+        x = torch.relu(self.lin1(pts_enc))
+        x = torch.relu(self.lin2(x))
+        x = torch.relu(self.lin3(x))
+        x = torch.relu(self.lin4(x))
+        x = torch.cat([x, pts_enc], dim=-1)
+        x = torch.relu(self.lin5(x))
+        x = torch.relu(self.lin6(x))
+        x = torch.relu(self.lin7(x))
+        x = torch.relu(self.lin8(x))
+
+        sigma = torch.relu(self.density_lin(x))
+        feat = self.feature_lin(x)
+        feat_dir = torch.cat([feat, dirs_enc], dim=-1)
+        rgb = torch.relu(self.color_lin1(feat_dir))
+        rgb = torch.sigmoid(self.color_lin2(rgb))
+        return rgb, sigma
+
+model = NeRF(L_pos=10, L_dir=4, hidden_dim=256)</code></pre>
+                        </div>
+                    </details>
+                </div>
+
+                <p>And a quick smoke test just to confirm shapes, ranges, and parameter counts before plugging the network into the renderer:</p>
+
+<pre><code class="language-python">pts = torch.randn(1024, 3)
+dirs = torch.randn(1024, 3)
+dirs = dirs / torch.norm(dirs, dim=-1, keepdim=True)
+
+rgb, sigma = model(pts, dirs)
+
+print(f'RGB shape: {rgb.shape}')
+print(f'Sigma shape: {sigma.shape}')
+print(f'RGB range: [{rgb.min():.3f}, {rgb.max():.3f}]')
+print(f'Sigma range: [{sigma.min():.3f}, {sigma.max():.3f}]')
+print(f'Total parameters: {sum(p.numel() for p in model.parameters()):,}')</code></pre>
             </div>
         </section>
 
         <section id="part2-5" class="info-section">
             <div class="content-centered">
                 <h2>Part 2.5: Volume Rendering</h2>
-                <p>[Your content here]</p>
+                <p>This is where the neural outputs turn into actual pixels. Given densities <code class="code-inline">σ</code>, colors <code class="code-inline">c</code>, and depths <code class="code-inline">z</code> sampled along every ray, we integrate them with the discrete volume-rendering equation from the handout.</p>
+
+                <div class="observation-box">
+                    <h4>Key steps</h4>
+                    <ul>
+                        <li>Compute interval lengths <code class="code-inline">δ<sub>i</sub></code> from <code class="code-inline">z</code> (add a huge tail distance for the last sample).</li>
+                        <li>Convert densities to alpha values via <code class="code-inline">α = 1 - exp(-σ δ)</code>, multiply by cumulative transmittance to get per-sample weights.</li>
+                        <li>Weighted sums of RGB and depth give the rendered image and depth map; the accumulated opacity tells how much foreground we captured. An optional white background fills the remainder when <code class="code-inline">acc &lt; 1</code>.</li>
+                    </ul>
+                </div>
+
+                <div class="code-block">
+                    <details open>
+                        <summary class="code-toggle">
+                            <span class="toggle-icon">▼</span>
+                            <strong>Volume rendering helpers</strong>
+                        </summary>
+                        <div class="code-content">
+<pre><code class="language-python">import torch
+import numpy as np
+
+def volrend(sigmas, rgbs, step_size):
+    N, n_samples = sigmas.shape[:2]
+    dists = torch.full((N, n_samples), step_size, device=sigmas.device)
+    alpha = 1.0 - torch.exp(-sigmas.squeeze(-1) * dists)
+    trans = torch.cumprod(
+        torch.cat([torch.ones_like(alpha[:, :1]), 1.0 - alpha[:, :-1]], dim=-1),
+        dim=-1
+    )
+    weights = alpha * trans
+    return torch.sum(weights.unsqueeze(-1) * rgbs, dim=1)
+
+def volume_rendering(rgb, sigma, z_vals, rays_d, white_bkgd=False):
+    dists = z_vals[:, 1:] - z_vals[:, :-1]
+    dists = torch.cat([dists, torch.full_like(dists[:, :1], 1e10)], dim=-1)
+    dists = dists * torch.norm(rays_d, dim=-1, keepdim=True)
+
+    alpha = 1.0 - torch.exp(-sigma.squeeze(-1) * dists)
+    trans = torch.cumprod(
+        torch.cat([torch.ones_like(alpha[:, :1]), 1.0 - alpha[:, :-1]], dim=-1),
+        dim=-1
+    )
+    weights = alpha * trans
+
+    rgb_map = torch.sum(weights.unsqueeze(-1) * rgb, dim=1)
+    depth_map = torch.sum(weights * z_vals, dim=-1)
+    acc_map = torch.sum(weights, dim=-1)
+
+    if white_bkgd:
+        rgb_map = rgb_map + (1.0 - acc_map.unsqueeze(-1))
+    return rgb_map, depth_map, acc_map
+
+if __name__ == '__main__':
+    N, n_samples = 1024, 64
+    rgb = torch.rand(N, n_samples, 3)
+    sigma = torch.rand(N, n_samples, 1) * 5
+    z_vals = torch.linspace(2.0, 6.0, n_samples).unsqueeze(0).expand(N, -1)
+    rays_d = torch.randn(N, 3)
+    rays_d = rays_d / torch.norm(rays_d, dim=-1, keepdim=True)
+
+    rgb_map, depth_map, acc_map = volume_rendering(rgb, sigma, z_vals, rays_d)
+    print(f'RGB map shape: {rgb_map.shape}')
+    print(f'Depth map shape: {depth_map.shape}')
+    print(f'Acc map shape: {acc_map.shape}')
+    print(f'RGB range: [{rgb_map.min():.3f}, {rgb_map.max():.3f}]')
+    print(f'Depth range: [{depth_map.min():.3f}, {depth_map.max():.3f}]')
+    print(f'Acc range: [{acc_map.min():.3f}, {acc_map.max():.3f}]')</code></pre>
+                        </div>
+                    </details>
+                </div>
+
+                <figure style="text-align: center; margin: 1.5rem 0;">
+                    <img src="src/img/2-5-lego-training-progression.png" alt="NeRF training progression on Lego" class="clickable" style="max-width: 100%;">
+                    <figcaption>▲ Validation renders across training iterations: the model gradually sharpens the Lego scene as PSNR climbs.</figcaption>
+                </figure>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                    <figure>
+                        <img src="src/img/2-lego/nerf/rays_vis.png" alt="Ray and sample visualization" class="clickable">
+                        <figcaption>▲ Deliverable 1: Ray & sample visualization.</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="src/img/2-5-lego-psnr.png" alt="PSNR curve" class="clickable">
+                        <figcaption>▲ Deliverable 2: PSNR curve logged during training.</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="src/img/2-lego/nerf/val_4999.png" alt="Final validation render" class="clickable">
+                        <figcaption>▲ Deliverable 3: Final validation render (~23 dB PSNR).</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="src/img/2-5-lego-novel-views.gif" alt="Novel view GIF" class="clickable">
+                        <figcaption>▲ Deliverable 4: Novel view trajectory (spherical sweep).</figcaption>
+                    </figure>
+                </div>
+
+                <p>After wiring the renderer into the training pipeline, I ran the provided end-to-end script (below) to generate all Part&nbsp;2 deliverables: ray/sample visualizations, validation renders over time, PSNR curve, and a rotating novel-view GIF. Everything lives under <code class="code-inline">src/img/2-lego/</code>.</p>
+
+<pre><code class="language-python">"""
+Complete script to run all Part 2 deliverables
+"""
+import torch, numpy as np, os
+from nerf_train import train_nerf, render_image
+from nerf_visualize import (visualize_rays_and_samples,
+                            generate_novel_views,
+                            plot_training_progress)
+from nerf_part2_3_dataloader import NeRFDataloader
+
+def main():
+    save_dir = 'images/tmp/nerf'
+    os.makedirs(save_dir, exist_ok=True)
+
+    device = torch.device('cuda' if torch.cuda.is_available()
+                          else 'mps' if torch.backends.mps.is_available()
+                          else 'cpu')
+    data = np.load('dataset/lego_200x200.npz')
+    images_train = data['images_train'] / 255.0
+    c2ws_train = data['c2ws_train']
+    c2ws_test = data['c2ws_test']
+    focal = float(data['focal'])
+    H, W = 200, 200
+
+    model, psnr_history = train_nerf(
+        'dataset/lego_200x200.npz',
+        n_iters=5000,
+        batch_size=10000,
+        lr=5e-4,
+        n_samples=64,
+        save_dir=save_dir
+    )
+
+    dataloader = NeRFDataloader(
+        images_train[:10], c2ws_train[:10],
+        focal, H, W, batch_size=1024, device=device
+    )
+
+    visualize_rays_and_samples(dataloader, model,
+                               n_rays=100,
+                               save_path=f'{save_dir}/rays_vis.png')
+    plot_training_progress(save_dir)
+
+    test_cam_pos = c2ws_test[0, :3, 3]
+    model.eval()
+    with torch.no_grad():
+        generate_novel_views(
+            model, H, W, focal,
+            start_pos=test_cam_pos,
+            num_frames=60,
+            save_path=f'{save_dir}/novel_views.gif',
+            device=device
+        )
+
+    final_psnr = psnr_history[-1]
+    print(f'Final PSNR: {final_psnr:.2f} dB')
+
+if __name__ == '__main__':
+    main()</code></pre>
+
+                <p>The training run hits the 23&nbsp;dB PSNR target and produces all the required artifacts: PSNR curve, training progression grid, ray/sample visualization, validation renders, and a spherical sweep GIF. Results look crisp!</p>
             </div>
         </section>
 
