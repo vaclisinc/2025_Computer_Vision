@@ -840,6 +840,8 @@ c2w = [R | t] = [R₀₀  R₀₁  R₀₂  tₓ]
                     </figure>
                 </div>
 
+                <p>The <code class="code-inline">__main__</code> block above performs a quick sanity sweep: verifying UV indexing, sampling random rays, and ensuring <code class="code-inline">sample_along_rays</code> still produces reasonable shapes before plugging the dataloader into training.</p>
+
             </div>
         </section>
 
@@ -848,7 +850,7 @@ c2w = [R | t] = [R₀₀  R₀₁  R₀₂  tₓ]
         <section id="part2-1" class="info-section">
             <div class="content-centered">
                 <h2>Part 2.1: Ray Generation</h2>
-                <p>To render with NeRF we still need the precise rays that correspond to every pixel. The process follows the assignment diagram: (1) lift pixel coordinates into the camera frame, (2) transform them with the camera-to-world pose, and (3) interpret the camera center plus these directions as the rays we will sample along.</p>
+                <p>This step turns every 2D pixel into a 3D ray—that’s the data the NeRF will actually learn from. For each pixel we recover its camera-space direction, rotate/translate it into world space using the pose, and treat the camera center plus that direction as a ray ready for sampling.</p>
 
                 <div class="observation-box">
                     <h4>Coordinate Conventions</h4>
@@ -936,24 +938,16 @@ print(f'Ray directions shape: {rays_d.shape}')
 print(f'First ray origin: {rays_o[0]}')
 print(f'First ray direction: {rays_d[0]}')
 print(f'Ray direction norm: {torch.norm(rays_d[0])}')</code></pre>
-
-                <h3>Verification</h3>
-                <p>I also popped a random batch into <code class="code-inline">viser</code>; all origins stack at <code class="code-inline">t</code> and the directions fan out nicely across the FoV, so the pinhole math checks out.</p>
             </div>
         </section>
 
         <section id="part2-2" class="info-section">
             <div class="content-centered">
                 <h2>Part 2.2: Point Sampling</h2>
-                <p>Once the rays are available, the next step is deciding <strong>which</strong> rays enter each batch and <strong>where</strong> along them we query the network.</p>
+                <p>Now that every pixel is a ray, we have to choose a subset of rays per batch and discretize each ray into 3D samples for the NeRF.</p>
 
                 <h3>Sampling Rays Across Images</h3>
-                <p>Part&nbsp;1 already taught us how to randomly draw pixels from a single image. For Part&nbsp;2 I just scale that idea to the full dataset by pairing the pixel sampler with <code class="code-inline">get_rays</code>:</p>
-                <ul>
-                    <li><strong>Image-first strategy:</strong> Sample <code class="code-inline">M</code> images, then draw <code class="code-inline">N / M</code> pixels inside each of them. This keeps batches balanced across views so every pose gets used frequently.</li>
-                    <li><strong>Flattened strategy:</strong> Stack every pixel from every image, shuffle, and grab <code class="code-inline">N</code> rays globally. This gives perfectly random coverage but needs more memory for the flattened tensors.</li>
-                </ul>
-                <p>I tried both and stuck with the image-first option because it plays nicely with my dataloader. Regardless of strategy, I always offset pixel indices by <code class="code-inline">+0.5</code> so rays travel through pixel centers.</p>
+                <p>I reuse the Part&nbsp;1 pixel sampler but extend it across all views: pick <code class="code-inline">M</code> images, draw <code class="code-inline">N/M</code> pixels from each, and convert them to rays. Adding <code class="code-inline">+0.5</code> keeps rays centered on the pixels.</p>
 
 <pre><code class="language-python">n_rays = 1024
 select_inds = np.random.choice(len(rays_o), size=n_rays, replace=False)
@@ -968,7 +962,7 @@ print(f'Z values range: [{z_vals.min():.2f}, {z_vals.max():.2f}]')
 print(f'First point: {pts[0, 0]}')</code></pre>
 
                 <h3>Sampling Points Along Rays</h3>
-                <p>Each ray is continuous, so I chop it into samples <code class="code-inline">z</code> between <code class="code-inline">near=2.0</code> and <code class="code-inline">far=6.0</code> for the Lego scene. Uniform sampling is trivial, but jittering inside every interval during training keeps the network from memorizing a fixed lattice.</p>
+                <p>Each ray is continuous, so I slice it into <code class="code-inline">n_samples</code> depths between <code class="code-inline">near=2.0</code> and <code class="code-inline">far=6.0</code>. During training I jitter inside each interval (stratified sampling) so the network doesn’t overfit to a single lattice.</p>
 
                 <div class="code-block">
                     <details open>
@@ -1015,10 +1009,14 @@ print(f'First point: {pts[0, 0]}')</code></pre>
                     <details open>
                         <summary class="code-toggle">
                             <span class="toggle-icon">▼</span>
-                            <strong>RaysData helper + sanity checks</strong>
+                            <strong>RaysData + NerfDataloader (high level)</strong>
                         </summary>
                         <div class="code-content">
-<pre><code class="language-python">class RaysData:
+<pre><code class="language-python">import torch
+import numpy as np
+from nerf_part2_1_rays import get_rays
+
+class RaysData:
     def __init__(self, images, K, c2ws, device='cpu'):
         if not isinstance(images, torch.Tensor):
             images = torch.FloatTensor(images)
@@ -1029,18 +1027,16 @@ print(f'First point: {pts[0, 0]}')</code></pre>
         self.c2ws = c2ws.to(device)
         self.device = device
         N, H, W, _ = self.images.shape
-        focal = K[0, 0]
 
         all_rays_o, all_rays_d, all_pixels, all_uvs = [], [], [], []
+
         for i in range(N):
-            rays_o, rays_d = get_rays(H, W, focal, self.c2ws[i])
+            rays_o, rays_d = get_rays(H, W, K, self.c2ws[i])
             all_rays_o.append(rays_o)
             all_rays_d.append(rays_d)
             all_pixels.append(self.images[i].reshape(-1, 3))
 
-            y, x = torch.meshgrid(torch.arange(H, device=device),
-                                  torch.arange(W, device=device),
-                                  indexing='ij')
+            y, x = torch.meshgrid(torch.arange(H, device=device), torch.arange(W, device=device), indexing='ij')
             all_uvs.append(torch.stack([x, y], dim=-1).reshape(-1, 2).long())
 
         self.rays_o = torch.cat(all_rays_o, dim=0)
@@ -1049,39 +1045,26 @@ print(f'First point: {pts[0, 0]}')</code></pre>
         self.uvs = torch.cat(all_uvs, dim=0)
 
     def sample_rays(self, n):
-        idx = torch.randint(0, len(self.rays_o), (n,), device=self.device)
-        return self.rays_o[idx], self.rays_d[idx], self.pixels[idx]
+        indices = torch.randint(0, len(self.rays_o), (n,), device=self.device)
+        return self.rays_o[indices], self.rays_d[indices], self.pixels[indices]
 
-K = np.array([[focal, 0, W/2],
-              [0, focal, H/2],
-              [0, 0, 1]])
+class NeRFDataloader:
+    def __init__(self, images, c2ws, K_or_focal, H, W, batch_size, device='cpu'):
+        if isinstance(K_or_focal, np.ndarray):
+            K = K_or_focal
+        else:
+            focal = float(K_or_focal)
+            K = np.array([[focal, 0, W/2], [0, focal, H/2], [0, 0, 1]])
+        self.rays_data = RaysData(images, K, c2ws, device)
+        self.batch_size = batch_size
 
-images_train = images_train[:2]
-c2ws_train = c2ws_train[:2]
-
-dataset = RaysData(images_train, K, c2ws_train)
-
-uvs_start, uvs_end = 0, 40_000
-sample_uvs = dataset.uvs[uvs_start:uvs_end].cpu().numpy()
-assert np.allclose(
-    images_train[0, sample_uvs[:, 1], sample_uvs[:, 0]],
-    dataset.pixels[uvs_start:uvs_end].cpu().numpy()
-)
-print('✓ UV indexing correct')
-
-rays_o, rays_d, pixels = dataset.sample_rays(100)
-print(f'rays_o: {rays_o.shape}')
-print(f'rays_d: {rays_d.shape}')
-print(f'pixels: {pixels.shape}')
-
-points, z_vals = sample_along_rays(rays_o, rays_d, perturb=True)
-print(f'points: {points.shape}')
-print(f'z_vals: {z_vals.shape}')</code></pre>
+    def sample(self):
+        return self.rays_data.sample_rays(self.batch_size)</code></pre>
                         </div>
                     </details>
                 </div>
 
-                <h3>Visualizer Debugging</h3>
+                <h3>Validation</h3>
                 <p>I used the provided plotter to draw camera frustums and sampled rays. Sampling across all views produces a spiky hedgehog, while sampling from a single pose keeps the rays nicely inside one frustum—perfect for catching any indexing bug.</p>
 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.5rem 0;">
@@ -1091,7 +1074,7 @@ print(f'z_vals: {z_vals.shape}')</code></pre>
                     </figure>
                     <figure>
                         <img src="src/img/2-3-demo-rays-from-first-image.png" alt="Rays from first camera" class="clickable">
-                        <figcaption>▲ Rays sampled only from the first camera (stay inside the frustum).</figcaption>
+                        <figcaption>▲ Rays sampled only from the first camera.</figcaption>
                     </figure>
                 </div>
             </div>
@@ -1300,65 +1283,40 @@ if __name__ == '__main__':
 
                 <p>After wiring the renderer into the training pipeline, I ran the provided end-to-end script (below) to generate all Part&nbsp;2 deliverables: ray/sample visualizations, validation renders over time, PSNR curve, and a rotating novel-view GIF. Everything lives under <code class="code-inline">src/img/2-lego/</code>.</p>
 
-<pre><code class="language-python">"""
-Complete script to run all Part 2 deliverables
-"""
-import torch, numpy as np, os
-from nerf_train import train_nerf, render_image
-from nerf_visualize import (visualize_rays_and_samples,
-                            generate_novel_views,
-                            plot_training_progress)
-from nerf_part2_3_dataloader import NeRFDataloader
+<pre><code class="language-python">if __name__ == '__main__':
+    from nerf_part2_2_sampling import sample_along_rays
 
-def main():
-    save_dir = 'images/tmp/nerf'
-    os.makedirs(save_dir, exist_ok=True)
-
-    device = torch.device('cuda' if torch.cuda.is_available()
-                          else 'mps' if torch.backends.mps.is_available()
-                          else 'cpu')
     data = np.load('dataset/lego_200x200.npz')
     images_train = data['images_train'] / 255.0
     c2ws_train = data['c2ws_train']
-    c2ws_test = data['c2ws_test']
     focal = float(data['focal'])
     H, W = 200, 200
 
-    model, psnr_history = train_nerf(
-        'dataset/lego_200x200.npz',
-        n_iters=5000,
-        batch_size=10000,
-        lr=5e-4,
-        n_samples=64,
-        save_dir=save_dir
-    )
+    K = np.array([
+        [focal, 0, W/2],
+        [0, focal, H/2],
+        [0, 0, 1]
+    ])
 
-    dataloader = NeRFDataloader(
-        images_train[:10], c2ws_train[:10],
-        focal, H, W, batch_size=1024, device=device
-    )
+    images_train = images_train[:2]
+    c2ws_train = c2ws_train[:2]
 
-    visualize_rays_and_samples(dataloader, model,
-                               n_rays=100,
-                               save_path=f'{save_dir}/rays_vis.png')
-    plot_training_progress(save_dir)
+    dataset = RaysData(images_train, K, c2ws_train)
 
-    test_cam_pos = c2ws_test[0, :3, 3]
-    model.eval()
-    with torch.no_grad():
-        generate_novel_views(
-            model, H, W, focal,
-            start_pos=test_cam_pos,
-            num_frames=60,
-            save_path=f'{save_dir}/novel_views.gif',
-            device=device
-        )
+    uvs_start = 0
+    uvs_end = 40_000
+    sample_uvs = dataset.uvs[uvs_start:uvs_end].cpu().numpy()
+    assert np.allclose(images_train[0, sample_uvs[:,1], sample_uvs[:,0]], dataset.pixels[uvs_start:uvs_end].cpu().numpy())
+    print('✓ UV indexing correct')
 
-    final_psnr = psnr_history[-1]
-    print(f'Final PSNR: {final_psnr:.2f} dB')
+    rays_o, rays_d, pixels = dataset.sample_rays(100)
+    print(f'rays_o: {rays_o.shape}')
+    print(f'rays_d: {rays_d.shape}')
+    print(f'pixels: {pixels.shape}')
 
-if __name__ == '__main__':
-    main()</code></pre>
+    points, z_vals = sample_along_rays(rays_o, rays_d, perturb=True)
+    print(f'points: {points.shape}')
+    print(f'z_vals: {z_vals.shape}')</code></pre>
 
                 <p>The training run hits the 23&nbsp;dB PSNR target and produces all the required artifacts: PSNR curve, training progression grid, ray/sample visualization, validation renders, and a spherical sweep GIF. Results look crisp!</p>
             </div>
