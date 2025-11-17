@@ -187,6 +187,70 @@
                     </div>
                 </div>
 
+                <div class="code-block">
+                    <details>
+                        <summary class="code-toggle">
+                            <span class="toggle-icon">▶</span>
+                            <strong>Camera path + novel views</strong>
+                        </summary>
+                        <div class="code-content">
+<pre><code class="language-python">def create_circular_path(base_pos, num_frames):
+    radius = np.sqrt(base_pos[0]**2 + base_pos[1]**2)
+    fixed_z = base_pos[2]
+    c2ws = []
+    for i in range(num_frames):
+        angle = (i / num_frames) * 2 * np.pi
+        cam_x = radius * np.cos(angle)
+        cam_y = radius * np.sin(angle)
+        cam_pos = np.array([cam_x, cam_y, fixed_z])
+
+        forward = -cam_pos / np.linalg.norm(cam_pos)
+        world_up = np.array([0, 0, 1])
+        right = np.cross(forward, world_up); right /= np.linalg.norm(right)
+        up = np.cross(right, forward); up /= np.linalg.norm(up)
+
+        c2w = np.eye(4)
+        c2w[:3, 0] = right
+        c2w[:3, 1] = up
+        c2w[:3, 2] = forward
+        c2w[:3, 3] = cam_pos
+        c2ws.append(c2w)
+    return c2ws
+
+def render_novel_views(model, data_path, num_frames, save_path,
+                       n_samples, near, far, device, white_bkgd=True):
+    data = np.load(data_path)
+    c2ws_train = data['c2ws_train']
+    K = data['K'] if 'K' in data else np.array([
+        [data['focal'], 0, data['images_train'].shape[2] / 2],
+        [0, data['focal'], data['images_train'].shape[1] / 2],
+        [0, 0, 1]
+    ])
+    H, W = data['images_train'].shape[1:3]
+
+    c2ws = create_circular_path(c2ws_train[0, :3, 3], num_frames)
+    eval_model = model.module if hasattr(model, 'module') else model
+    eval_model.eval()
+
+    frames = []
+    with torch.no_grad():
+        for c2w in c2ws:
+            frame = render_image(eval_model,
+                                 torch.FloatTensor(c2w),
+                                 H, W, K,
+                                 n_samples=n_samples,
+                                 near=near, far=far,
+                                 device=device)
+            frames.append((np.clip(frame, 0, 1) * 255).astype(np.uint8))
+
+    pil_frames = [Image.fromarray(f) for f in frames]
+    pil_frames[0].save(save_path, save_all=True,
+                       append_images=pil_frames[1:],
+                       duration=33, loop=0)</code></pre>
+                        </div>
+                    </details>
+                </div>
+
                 <h3>Results</h3>
 
                 <div class="result-box">
@@ -1204,75 +1268,373 @@ def volume_rendering(rgb, sigma, z_vals, rays_d, white_bkgd=False):
                     </details>
                 </div>
 
-                <figure style="text-align: center; margin: 1.5rem 0;">
-                    <img src="src/img/2-5-lego-training-progression.png" alt="NeRF training progression on Lego" class="clickable" style="max-width: 100%;">
-                    <figcaption>▲ Validation renders across training iterations: the model gradually sharpens the Lego scene as PSNR climbs.</figcaption>
+                <h3>Run Part 2 on the Lego Dataset</h3>
+                <p>I packaged all subcomponents into a single script that reproduces the NeRF paper’s Lego experiment. It handles argument parsing, ray sampling, training, validation renders, and novel-view generation.</p>
+
+                <div class="code-block">
+                    <details open>
+                        <summary class="code-toggle">
+                            <span class="toggle-icon">▼</span>
+                            <strong>CLI + imports</strong>
+                        </summary>
+                        <div class="code-content">
+<pre><code class="language-python">import os
+import sys
+
+if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--dataset', type=str, default='lego',
+                        choices=['lego', 'lafufu', 'mydata', 'rabbit', 'miffy', 'all'])
+    parser.add_argument('--multi_gpu', action='store_true')
+    parser.add_argument('--gpu', type=str, default=None,
+                        help='GPU device ID (e.g., "0" or "0,1,2")')
+    args = parser.parse_args()
+
+    if args.gpu is not None:
+        os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
+        print(f'Using GPU(s): {args.gpu}')
+else:
+    args = None
+
+import torch
+import torch.nn as nn
+import numpy as np
+import matplotlib.pyplot as plt
+from PIL import Image
+from tqdm import tqdm
+
+from nerf_part2_1_rays import get_rays
+from nerf_part2_2_sampling import sample_along_rays
+from nerf_part2_3_dataloader import NeRFDataloader
+from nerf_part2_4_network import NeRF
+from nerf_part2_5_rendering import volume_rendering</code></pre>
+                        </div>
+                    </details>
+                </div>
+
+                <div class="code-block">
+                    <details>
+                        <summary class="code-toggle">
+                            <span class="toggle-icon">▶</span>
+                            <strong>Rendering helpers</strong>
+                        </summary>
+                        <div class="code-content">
+<pre><code class="language-python">def render_rays(model, rays_o, rays_d, n_samples, near, far,
+               device, white_bkgd=True, perturb=False):
+    pts, z_vals = sample_along_rays(rays_o, rays_d, near, far,
+                                    n_samples, perturb=perturb)
+
+    N, S = pts.shape[:2]
+    pts_flat = pts.reshape(-1, 3)
+    dirs_flat = rays_d.unsqueeze(1).expand(-1, S, -1).reshape(-1, 3)
+
+    rgb, sigma = model(pts_flat, dirs_flat)
+    rgb = rgb.reshape(N, S, 3)
+    sigma = sigma.reshape(N, S, 1)
+
+    return volume_rendering(rgb, sigma, z_vals, rays_d,
+                            white_bkgd=white_bkgd)
+
+def render_image(model, c2w, H, W, K_or_focal, chunk=1024,
+                 n_samples=64, near=2.0, far=6.0, device='cpu',
+                 white_bkgd=True):
+    rays_o, rays_d = get_rays(H, W, K_or_focal, c2w)
+    rays_o, rays_d = rays_o.to(device), rays_d.to(device)
+
+    rgb_chunks = []
+    for i in range(0, len(rays_o), chunk):
+        rgb, _, _ = render_rays(model,
+                                rays_o[i:i+chunk],
+                                rays_d[i:i+chunk],
+                                n_samples, near, far,
+                                device=device, white_bkgd=white_bkgd,
+                                perturb=False)
+        rgb_chunks.append(rgb.cpu())
+
+    rgb_map = torch.cat(rgb_chunks, dim=0).reshape(H, W, 3)
+    return rgb_map.numpy()</code></pre>
+                        </div>
+                    </details>
+                </div>
+
+                <div class="code-block">
+                    <details>
+                        <summary class="code-toggle">
+                            <span class="toggle-icon">▶</span>
+                            <strong>Training + evaluation utilities</strong>
+                        </summary>
+                        <div class="code-content">
+<pre><code class="language-python">def train_nerf(data_path, n_iters, batch_size, lr,
+              n_samples, near, far, save_dir,
+              multi_gpu=False, white_bkgd=True):
+    os.makedirs(save_dir, exist_ok=True)
+    device = torch.device('cuda' if torch.cuda.is_available()
+                          else 'mps' if torch.backends.mps.is_available()
+                          else 'cpu')
+    data = np.load(data_path)
+    images_train = data['images_train'] / 255.0
+    c2ws_train = data['c2ws_train']
+    images_val = data['images_val'] / 255.0
+    c2ws_val = data['c2ws_val']
+    K = data['K'] if 'K' in data else np.array([
+        [data['focal'], 0, images_train.shape[2] / 2],
+        [0, data['focal'], images_train.shape[1] / 2],
+        [0, 0, 1]
+    ])
+    H, W = images_train.shape[1:3]
+
+    model = NeRF(L_pos=10, L_dir=4, hidden_dim=256)
+    if multi_gpu and torch.cuda.device_count() > 1:
+        model = nn.DataParallel(model)
+    model = model.to(device)
+
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+    criterion = nn.MSELoss()
+    dataloader = NeRFDataloader(images_train, c2ws_train, K, H, W,
+                                batch_size, device)
+
+    psnr_history = []
+    save_iters = [0, 100, 500, 1000, 2000, n_iters - 1]
+    for it in tqdm(range(n_iters)):
+        model.train()
+        rays_o, rays_d, target_rgb = dataloader.sample()
+        pred_rgb, _, _ = render_rays(model, rays_o, rays_d,
+                                     n_samples, near, far,
+                                     device=device, white_bkgd=white_bkgd,
+                                     perturb=True)
+        loss = criterion(pred_rgb, target_rgb)
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+        psnr = -10 * torch.log10(loss)
+        psnr_history.append(psnr.item())
+
+        if it in save_iters:
+            eval_model = model.module if hasattr(model, 'module') else model
+            eval_model.eval()
+            with torch.no_grad():
+                val_img = render_image(
+                    eval_model,
+                    torch.FloatTensor(c2ws_val[0]),
+                    H, W, K,
+                    n_samples=n_samples,
+                    near=near, far=far,
+                    device=device
+                )
+                plt.figure(figsize=(10, 5))
+                plt.subplot(1, 2, 1)
+                plt.imshow(images_val[0]); plt.title('Ground Truth'); plt.axis('off')
+                plt.subplot(1, 2, 2)
+                plt.imshow(np.clip(val_img, 0, 1))
+                plt.title(f'Predicted (iter {it})'); plt.axis('off')
+                plt.tight_layout()
+                plt.savefig(f'{save_dir}/val_{it:04d}.png', dpi=150)
+                plt.close()
+
+    plt.figure(figsize=(10, 6))
+    plt.plot(psnr_history); plt.xlabel('Iteration')
+    plt.ylabel('PSNR (dB)'); plt.grid(True)
+    plt.savefig(f'{save_dir}/psnr_curve.png', dpi=150); plt.close()
+
+    model_to_save = model.module if hasattr(model, 'module') else model
+    torch.save(model_to_save.state_dict(), f'{save_dir}/model.pth')
+    return model, psnr_history
+
+def render_validation_views(model, data_path, save_dir,
+                            n_samples, near, far, device):
+    os.makedirs(save_dir, exist_ok=True)
+    data = np.load(data_path)
+    images_val = data['images_val'] / 255.0
+    c2ws_val = data['c2ws_val']
+    K = data['K'] if 'K' in data else np.array([
+        [data['focal'], 0, images_val.shape[2] / 2],
+        [0, data['focal'], images_val.shape[1] / 2],
+        [0, 0, 1]
+    ])
+    H, W = images_val.shape[1:3]
+
+    eval_model = model.module if hasattr(model, 'module') else model
+    eval_model.eval()
+    with torch.no_grad():
+        for i in range(len(images_val)):
+            pred_img = render_image(eval_model,
+                                    torch.FloatTensor(c2ws_val[i]),
+                                    H, W, K,
+                                    n_samples=n_samples,
+                                    near=near, far=far,
+                                    device=device)
+            fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+            axes[0].imshow(images_val[i]); axes[0].set_title('GT'); axes[0].axis('off')
+            axes[1].imshow(np.clip(pred_img, 0, 1))
+            axes[1].set_title('Prediction'); axes[1].axis('off')
+            axes[2].imshow(np.abs(images_val[i] - pred_img))
+            axes[2].set_title('Error'); axes[2].axis('off')
+            plt.tight_layout()
+            plt.savefig(f'{save_dir}/val_{i:02d}.png', dpi=150, bbox_inches='tight')
+            plt.close()
+
+def run_lego(multi_gpu=False):
+    save_dir = 'images/tmp/nerf'
+    data_path = 'dataset/lego_200x200.npz'
+    model, psnr_history = train_nerf(
+        data_path=data_path,
+        n_iters=5000,
+        batch_size=10000,
+        lr=5e-4,
+        n_samples=64,
+        near=2.0,
+        far=6.0,
+        save_dir=save_dir,
+        multi_gpu=multi_gpu
+    )
+    device = torch.device('cuda' if torch.cuda.is_available()
+                          else 'mps' if torch.backends.mps.is_available()
+                          else 'cpu')
+    render_validation_views(model, data_path, save_dir,
+                            n_samples=64, near=2.0, far=6.0, device=device)
+    render_novel_views(model, data_path, num_frames=120,
+                       save_path=f'{save_dir}/novel_views.gif',
+                       n_samples=64, near=2.0, far=6.0, device=device)
+    print(f'Final PSNR: {psnr_history[-1]:.2f} dB')</code></pre>
+                        </div>
+                    </details>
+                </div>
+
+                <h3>Results</h3>
+                <p>Using the Lego dataset (200×200), I trained with the following settings:</p>
+                <div class="result-box" style="margin-bottom: 1rem;">
+                    <ul style="margin: 0 0 0 1.25rem;">
+                        <li><strong>Iterations:</strong> 5,000</li>
+                        <li><strong>Batch size:</strong> 10,000 rays</li>
+                        <li><strong>Samples per ray:</strong> 64 (<code class="code-inline">near=2.0</code>, <code class="code-inline">far=6.0</code>)</li>
+                        <li><strong>Model:</strong> Same NeRF MLP from Part 2.4 with <code class="code-inline">L_pos=10</code>, <code class="code-inline">L_dir=4</code></li>
+                        <li><strong>Optimizer:</strong> Adam @ <code class="code-inline">5e-4</code>, white background</li>
+                    </ul>
+                </div>
+                <p>The final model reaches >23&nbsp;dB PSNR. Below are the intermediate and final visualizations.</p>
+
+                <figure style="text-align: center; margin: 1.25rem 0;">
+                    <img src="src/img/2-5-lego-training-preds.png" alt="Lego training snapshots" class="clickable" style="max-width: 100%;">
+                    <figcaption>▲ Predicted validation crops at iter 0 → 4999.</figcaption>
                 </figure>
 
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
-                    <figure>
-                        <img src="src/img/2-lego/nerf/rays_vis.png" alt="Ray and sample visualization" class="clickable">
-                        <figcaption>▲ Deliverable 1: Ray & sample visualization.</figcaption>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                    <figure style="margin: 0; display: flex; flex-direction: column; align-items: center;">
+                        <img src="src/img/2-lego/nerf/rays_vis.png" alt="Ray visualization" class="clickable" style="height: 340px; width: auto; object-fit: contain;">
+                        <figcaption style="margin-top: 0.5rem;">▲ Rays + samples in viser (all cameras).</figcaption>
                     </figure>
-                    <figure>
-                        <img src="src/img/2-5-lego-psnr.png" alt="PSNR curve" class="clickable">
-                        <figcaption>▲ Deliverable 2: PSNR curve logged during training.</figcaption>
-                    </figure>
-                    <figure>
-                        <img src="src/img/2-lego/nerf/val_4999.png" alt="Final validation render" class="clickable">
-                        <figcaption>▲ Deliverable 3: Final validation render (~23 dB PSNR).</figcaption>
-                    </figure>
-                    <figure>
-                        <img src="src/img/2-5-lego-novel-views.gif" alt="Novel view GIF" class="clickable">
-                        <figcaption>▲ Deliverable 4: Novel view trajectory (spherical sweep).</figcaption>
+                    <figure style="margin: 0; display: flex; flex-direction: column; align-items: center;">
+                        <img src="src/img/2-lego/nerf/psnr_curve.png" alt="PSNR curve" class="clickable" style="height: 340px; width: auto; object-fit: contain;">
+                        <figcaption style="margin-top: 0.5rem;">▲ PSNR curve (validation view) during training.</figcaption>
                     </figure>
                 </div>
 
-                <p>After wiring the renderer into the training pipeline, I ran the provided end-to-end script (below) to generate all Part&nbsp;2 deliverables: ray/sample visualizations, validation renders over time, PSNR curve, and a rotating novel-view GIF. Everything lives under <code class="code-inline">src/img/2-lego/</code>.</p>
+                <p><strong>Validation set renders:</strong></p>
+                <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem;">
+                    <figure style="margin: 0;">
+                        <img src="src/img/2-lego/nerf_results/val_00.png" alt="Validation 00" class="clickable">
+                        <figcaption>Val 00</figcaption>
+                    </figure>
+                    <figure style="margin: 0;">
+                        <img src="src/img/2-lego/nerf_results/val_01.png" alt="Validation 01" class="clickable">
+                        <figcaption>Val 01</figcaption>
+                    </figure>
+                    <figure style="margin: 0;">
+                        <img src="src/img/2-lego/nerf_results/val_02.png" alt="Validation 02" class="clickable">
+                        <figcaption>Val 02</figcaption>
+                    </figure>
+                    <figure style="margin: 0;">
+                        <img src="src/img/2-lego/nerf_results/val_03.png" alt="Validation 03" class="clickable">
+                        <figcaption>Val 03</figcaption>
+                    </figure>
+                    <figure style="margin: 0;">
+                        <img src="src/img/2-lego/nerf_results/val_04.png" alt="Validation 04" class="clickable">
+                        <figcaption>Val 04</figcaption>
+                    </figure>
+                    <figure style="margin: 0;">
+                        <img src="src/img/2-lego/nerf_results/val_05.png" alt="Validation 05" class="clickable">
+                        <figcaption>Val 05</figcaption>
+                    </figure>
+                    <figure style="margin: 0;">
+                        <img src="src/img/2-lego/nerf_results/val_06.png" alt="Validation 06" class="clickable">
+                        <figcaption>Val 06</figcaption>
+                    </figure>
+                    <figure style="margin: 0;">
+                        <img src="src/img/2-lego/nerf_results/val_07.png" alt="Validation 07" class="clickable">
+                        <figcaption>Val 07</figcaption>
+                    </figure>
+                    <figure style="margin: 0;">
+                        <img src="src/img/2-lego/nerf_results/val_08.png" alt="Validation 08" class="clickable">
+                        <figcaption>Val 08</figcaption>
+                    </figure>
+                    <figure style="margin: 0;">
+                        <img src="src/img/2-lego/nerf_results/val_09.png" alt="Validation 09" class="clickable">
+                        <figcaption>Val 09</figcaption>
+                    </figure>
+                </div>
 
-<pre><code class="language-python">if __name__ == '__main__':
-    from nerf_part2_2_sampling import sample_along_rays
+                <figure style="text-align: center; margin: 1.25rem 0;">
+                    <img src="src/img/2-lego/nerf/novel_views_fixed.gif" alt="Lego novel view GIF" class="clickable" style="max-width: 600px;height: 340px;">
+                    <figcaption>▲ Novel-view animation (circular camera path) rendered from the trained NeRF.</figcaption>
+                </figure>
 
-    data = np.load('dataset/lego_200x200.npz')
-    images_train = data['images_train'] / 255.0
-    c2ws_train = data['c2ws_train']
-    focal = float(data['focal'])
-    H, W = 200, 200
-
-    K = np.array([
-        [focal, 0, W/2],
-        [0, focal, H/2],
-        [0, 0, 1]
-    ])
-
-    images_train = images_train[:2]
-    c2ws_train = c2ws_train[:2]
-
-    dataset = RaysData(images_train, K, c2ws_train)
-
-    uvs_start = 0
-    uvs_end = 40_000
-    sample_uvs = dataset.uvs[uvs_start:uvs_end].cpu().numpy()
-    assert np.allclose(images_train[0, sample_uvs[:,1], sample_uvs[:,0]], dataset.pixels[uvs_start:uvs_end].cpu().numpy())
-    print('✓ UV indexing correct')
-
-    rays_o, rays_d, pixels = dataset.sample_rays(100)
-    print(f'rays_o: {rays_o.shape}')
-    print(f'rays_d: {rays_d.shape}')
-    print(f'pixels: {pixels.shape}')
-
-    points, z_vals = sample_along_rays(rays_o, rays_d, perturb=True)
-    print(f'points: {points.shape}')
-    print(f'z_vals: {z_vals.shape}')</code></pre>
-
-                <p>The training run hits the 23&nbsp;dB PSNR target and produces all the required artifacts: PSNR curve, training progression grid, ray/sample visualization, validation renders, and a spherical sweep GIF. Results look crisp!</p>
+                <p>All deliverables (PSNR curve, validation renders, ray visualization, and novel-view GIF) live under <code class="code-inline">src/img/2-lego/</code>.</p>
             </div>
         </section>
 
         <section id="part2-6" class="info-section">
             <div class="content-centered">
                 <h2>Part 2.6: Training with Custom Data</h2>
-                <p>[Your content here]</p>
+                <p>To stress-test the pipeline, I trained NeRF on my custom <strong>Miffy</strong> capture. I reused the same model architecture from Part&nbsp;2.4 (identical NeRF MLP with <code class="code-inline">L_pos=10</code>, <code class="code-inline">L_dir=4</code>) and adjusted the training ranges to match the smaller capture volume.</p>
+
+                <div class="result-box" style="margin-bottom: 1rem;">
+                    <ul style="margin: 0 0 0 1.25rem;">
+                        <li><strong>Iterations:</strong> 8,000</li>
+                        <li><strong>Batch size:</strong> 8,192 rays</li>
+                        <li><strong>Samples per ray:</strong> 128 (<code class="code-inline">near=0.05</code>, <code class="code-inline">far=0.65</code>)</li>
+                        <li><strong>Optimizer:</strong> Adam @ <code class="code-inline">5e-4</code>, white background</li>
+                    </ul>
+                </div>
+
+                <figure style="text-align: center; margin: 1.25rem 0;">
+                    <img src="src/img/2-6-miffy-training-preds.png" alt="Miffy training predictions" class="clickable" style="max-width: 100%;">
+                    <figcaption>▲ Predicted validation crops (iters 0 → 7999) for the Miffy dataset.</figcaption>
+                </figure>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+                    <figure style="margin: 0; display: flex; flex-direction: column; align-items: center;">
+                        <img src="src/img/2-miffy_two_fixed/psnr_curve.png" alt="Miffy PSNR curve" class="clickable" style="height: 260px; width: auto; object-fit: contain;">
+                        <figcaption style="margin-top: 0.5rem;">▲ PSNR curve on the custom validation view.</figcaption>
+                    </figure>
+                </div>
+
+                <p><strong>Validation set renders:</strong></p>
+                <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem;">
+                    <figure style="margin: 0;">
+                        <img src="src/img/2-miffy_two_fixed/val_00.png" alt="Miffy Validation 00" class="clickable">
+                        <figcaption>Val 00</figcaption>
+                    </figure>
+                    <figure style="margin: 0;">
+                        <img src="src/img/2-miffy_two_fixed/val_01.png" alt="Miffy Validation 01" class="clickable">
+                        <figcaption>Val 01</figcaption>
+                    </figure>
+                    <figure style="margin: 0;">
+                        <img src="src/img/2-miffy_two_fixed/val_02.png" alt="Miffy Validation 02" class="clickable">
+                        <figcaption>Val 02</figcaption>
+                    </figure>
+                    <figure style="margin: 0;">
+                        <img src="src/img/2-miffy_two_fixed/val_03.png" alt="Miffy Validation 03" class="clickable">
+                        <figcaption>Val 03</figcaption>
+                    </figure>
+                </div>
+
+                <figure style="text-align: center; margin: 1.25rem 0;">
+                    <img src="src/img/2-miffy_two_fixed/novel_views.gif" alt="Miffy novel views" class="clickable" style="max-width: 600px;">
+                    <figcaption>▲ Novel-view animation rendered from the custom Miffy NeRF.</figcaption>
+                </figure>
+
+                <p>All assets for this run live under <code class="code-inline">src/img/2-miffy_two_fixed/</code>; every thumbnail here can be clicked to open the lightbox.</p>
             </div>
         </section>
 
