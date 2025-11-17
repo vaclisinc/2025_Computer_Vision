@@ -1579,14 +1579,13 @@ def run_lego(multi_gpu=False):
                     <figcaption>▲ Novel-view animation (circular camera path) rendered from the trained NeRF.</figcaption>
                 </figure>
 
-                <p>All deliverables (PSNR curve, validation renders, ray visualization, and novel-view GIF) live under <code class="code-inline">src/img/2-lego/</code>.</p>
             </div>
         </section>
 
         <section id="part2-6" class="info-section">
             <div class="content-centered">
                 <h2>Part 2.6: Training with Custom Data</h2>
-                <p>To stress-test the pipeline, I trained NeRF on my custom <strong>Miffy</strong> capture. I reused the same model architecture from Part&nbsp;2.4 (identical NeRF MLP with <code class="code-inline">L_pos=10</code>, <code class="code-inline">L_dir=4</code>) and adjusted the training ranges to match the smaller capture volume.</p>
+                <p>I trained NeRF on my custom <strong>Miffy</strong> capture. I reused the same model architecture from Part&nbsp;2.4 (identical NeRF MLP with <code class="code-inline">L_pos=10</code>, <code class="code-inline">L_dir=4</code>) and adjusted the training ranges to match the smaller capture volume.</p>
 
                 <div class="result-box" style="margin-bottom: 1rem;">
                     <ul style="margin: 0 0 0 1.25rem;">
@@ -1633,8 +1632,6 @@ def run_lego(multi_gpu=False):
                     <img src="src/img/2-miffy_two_fixed/novel_views.gif" alt="Miffy novel views" class="clickable" style="max-width: 600px;">
                     <figcaption>▲ Novel-view animation rendered from the custom Miffy NeRF.</figcaption>
                 </figure>
-
-                <p>All assets for this run live under <code class="code-inline">src/img/2-miffy_two_fixed/</code>; every thumbnail here can be clicked to open the lightbox.</p>
             </div>
         </section>
 
