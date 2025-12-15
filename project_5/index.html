@@ -111,6 +111,7 @@
                     <h3>Forward Process</h3>
                 </div>
                 <p>x_t = √(ᾱ_t)·x_0 + √(1-ᾱ_t)·ε. Applied to Campanile at t=[250, 500, 750].</p>
+                <p><strong>Implementation:</strong> Add noise using the formula where epsilon is Gaussian noise from torch.randn_like(). The alphas_cumprod array contains cumulative product values that control scaling of the original image and noise at each timestep t.</p>
                 <div class="media-row">
                     <figure>
                         <img src="src/img/1-1-campanile.jpg" alt="Original Campanile" />
@@ -137,6 +138,7 @@
                     <h3>Classical Denoising</h3>
                 </div>
                 <p>Gaussian blur on noisy images. Removes high-freq noise but can't reconstruct edges.</p>
+                <p><strong>Implementation:</strong> Uses torchvision.transforms.functional.gaussian_blur with varying kernel sizes. The Gaussian blur is applied directly to noisy images, but results show it's not effective for high noise levels.</p>
                 <div class="media-row">
                     <figure>
                         <img src="src/img/parta_1.2_Classical_Denoising_cell25_out1_img0.png" alt="t=250 noisy" />
@@ -173,6 +175,7 @@
                     <h3>One-Step Denoising</h3>
                 </div>
                 <p>UNet predicts noise, recover x_0. Works for t≤500, struggles at t=750.</p>
+                <p><strong>Implementation:</strong> Pass noisy image through stage_1.unet() to get noise estimate. Recover x_0 using x_0 = (x_t - √(1-ᾱ_t)·noise_pred) / √(ᾱ_t).</p>
                 <div class="media-row">
                     <figure>
                         <img src="src/img/parta_cell27_out3_img0.png" alt="t=250 noisy" />
@@ -209,6 +212,7 @@
                     <h3>Iterative Denoising</h3>
                 </div>
                 <p>DDPM sampling: t=990→0, stride=30. Iterative recovery from heavy noise.</p>
+                <p><strong>Implementation:</strong> Loop from high timesteps to low (t=990 down to 0 with stride 30). At each step, predict noise and compute x_{t-1} from x_t using DDPM backward formula with optional random noise z.</p>
                 <div class="media-row" style="grid-template-columns: repeat(5, 1fr);">
                     <figure>
                         <img src="src/img/parta_cell33_out0_img0.png" alt="Original" />
@@ -239,6 +243,7 @@
                     <h3>Sampling</h3>
                 </div>
                 <p>Generate from pure noise. Prompt: "a high quality photo"</p>
+                <p><strong>Implementation:</strong> Start with pure Gaussian noise torch.randn(), then run the iterative denoising loop from t=max down to t=0 to generate images from scratch.</p>
                 <div class="media-row">
                     <figure><img src="src/img/parta_1.5_Diffusion_Model_Sampling_cell35_out1_img0.png" alt="Sample 1" /><figcaption>Sample 1</figcaption></figure>
                     <figure><img src="src/img/parta_1.5_Diffusion_Model_Sampling_cell35_out3_img0.png" alt="Sample 2" /><figcaption>Sample 2</figcaption></figure>
@@ -254,6 +259,7 @@
                     <h3>CFG</h3>
                 </div>
                 <p>ε = ε_uncond + γ·(ε_cond - ε_uncond), γ=7. Much sharper results!</p>
+                <p><strong>Implementation:</strong> At each timestep, run UNet twice: once with prompt embeddings (conditional) and once with empty prompt (unconditional). Combine predictions using ε = ε_uncond + γ·(ε_cond - ε_uncond).</p>
                 <div class="media-row">
                     <figure><img src="src/img/parta_1.6_Classifier_Free_Guidance_cell38_out2_img0.png" alt="CFG sample 1" /><figcaption>CFG sample 1</figcaption></figure>
                     <figure><img src="src/img/parta_1.6_Classifier_Free_Guidance_cell38_out4_img0.png" alt="CFG sample 2" /><figcaption>CFG sample 2</figcaption></figure>
@@ -269,6 +275,7 @@
                     <h3>Image-to-Image</h3>
                 </div>
                 <p>SDEdit: partial noise + denoise</p>
+                <p><strong>Implementation:</strong> Add noise to input image up to timestep i_start, then run denoising loop from i_start back to 0. Higher i_start = more noise = more variation from original.</p>
 
                 <h4 style="margin: 1rem 0 0.5rem;">SDEdit with i_start = 1, 3, 5, 7, 10, 20</h4>
                 <div class="media-row" style="grid-template-columns: repeat(6, 1fr);">
@@ -446,6 +453,7 @@
                     <details id="part1-7-2">
                         <summary>1.7.2 Inpainting</summary>
                         <p>Fill masked regions. At each step: denoise, then re-impose unmasked pixels.</p>
+                        <p><strong>Implementation:</strong> During denoising loop, after each UNet prediction, replace unmasked regions with original noisy values at that timestep. Masked regions are filled by the model.</p>
                         <div class="media-row">
                             <figure>
                                 <img src="src/img/parta_cell54_out0_img0.png" alt="Original" />
@@ -464,6 +472,7 @@
                     <details id="part1-7-3">
                         <summary>1.7.3 Text-Conditional Image-to-Image</summary>
                         <p>Prompt: "a lonely robot waiting for a bus in the snow". i_start = [1, 3, 5, 7, 10, 20]</p>
+                        <p><strong>Implementation:</strong> Same as SDEdit but uses different prompt embeddings during denoising. The prompt guides the transformation while preserving structure from original image.</p>
                         <div class="media-row" style="grid-template-columns: repeat(6, 1fr);">
                             <figure>
                                 <img src="src/img/parta_cell56_out1_img0.png" alt="i_start=1" />
@@ -500,6 +509,7 @@
                     <h3>Visual Anagrams</h3>
                 </div>
                 <p>Dual-prompt noise averaging. The image looks different when flipped upside down!</p>
+                <p><strong>Implementation:</strong> At each timestep, predict noise with prompt1 normally, then flip image 180°, predict noise with prompt2, flip back. Average the two noise predictions: ε = (ε1 + ε2_flipped) / 2.</p>
                 <div class="media-row">
                     <figure>
                         <img src="src/img/parta_1.8_Visual_Anagrams_cell59_out0_img0.png" alt="Visual anagram upright" />
@@ -518,6 +528,7 @@
                     <h3>Hybrid Images</h3>
                 </div>
                 <p>Factorized diffusion with Gaussian blur (kernel=33, σ=2)</p>
+                <p><strong>Implementation:</strong> Predict noise with prompt_low, apply Gaussian blur to get low-freq component. Predict noise with prompt_high on (original - blurred) to get high-freq. Combine: ε = ε_low_blur + ε_high_residual.</p>
                 <div class="media-row">
                     <figure>
                         <img src="src/img/parta_1.9_Hybrid_Images_cell62_out0_img0.png" alt="Hybrid image 1" />
@@ -546,6 +557,7 @@
                         <h3>Using the UNet to Train a Denoiser</h3>
                     </div>
                     <p>Visualize noising process: z = x + σε for σ = [0.0, 0.2, 0.4, 0.5, 0.6, 0.8, 1.0]</p>
+                    <p><strong>Implementation:</strong> Train UNet to predict clean images from noisy inputs. Add Gaussian noise ε~N(0,σ²I) to clean images, use MSELoss(predicted_clean, original_clean).</p>
                     <div class="media-row">
                         <figure>
                             <img src="src/img/partb_part_1.2:_using_the_unet_to_train_a_deno_1.png" alt="Noise levels sweep" />
@@ -584,6 +596,7 @@
                         <h3>Out-of-Distribution Testing</h3>
                     </div>
                     <p>Test denoiser on different σ values (trained on σ=0.5 only). From top to bottom: σ = 0.0, 0.2, 0.4, 0.5, 0.6, 0.8, 1.0</p>
+                    <p><strong>Implementation:</strong> Generate noisy_images = test_images + torch.randn_like(test_images) * sigma_val for each σ, then run model(noisy_images) to test generalization.</p>
                     <div class="media-row">
                         <figure>
                             <img src="src/img/partb_part_1.2.2:_out-of-distribution_testing_1.png" alt="OOD sigma tests" />
@@ -599,6 +612,7 @@
                         <h3>Denoising Pure Noise</h3>
                     </div>
                     <p><strong>Result:</strong> Outputs blurry average of all digits (0-9). MSE loss learns the centroid—proves we need iterative denoising for generation!</p>
+                    <p><strong>Implementation:</strong> Feed pure noise torch.randn_like(images) as input with clean MNIST digits as targets. Model learns to output mean of all training images since input contains no information.</p>
                     <div class="media-row">
                         <figure>
                             <img src="src/img/partb_part_1.2.3_denoising_pure_noise_1.png" alt="Pure noise denoising epochs" />
@@ -622,6 +636,7 @@
                         <h3>Adding Time Conditioning to UNet</h3>
                     </div>
                     <p>Flow matching: x_t = (1-t)x_0 + tx_1, learn u(x_t,t) = x_1 - x_0. Inject t via FCBlock modulation.</p>
+                    <p><strong>Implementation:</strong> Add two FCBlock modules that modulate features at bottleneck and decoder. Time scalar t∈[0,1] reshaped to (N,1) produces modulation weights: x_unflat = unflatten(x_fc * t1) and x_dec2 = decoder(x_dec3 * t2).</p>
                 </div>
 
                 <!-- Part 2.2: Training the Time-Conditioned UNet -->
@@ -631,6 +646,7 @@
                         <h3>Training the Time-Conditioned UNet</h3>
                     </div>
                     <p><strong>Setup:</strong> D=64, batch=64, lr=1e-2, epochs=10, exponential LR decay γ=0.1^(1/10)</p>
+                    <p><strong>Implementation:</strong> Compute flow matching loss using x_t = (1-t)*x_0 + t*x_1 where x_0~N(0,I) is noise, x_1 is clean image, t~Uniform(0,1). Model predicts flow vector, loss is MSELoss(predicted_flow, x_1 - x_0).</p>
                     <div class="media-row">
                         <figure>
                             <img src="src/img/partb_part_2.2:_training_the_time-conditioned__1.png" alt="Time-conditioned training" />
@@ -646,6 +662,7 @@
                         <h3>Sampling from the Time-Conditioned UNet</h3>
                     </div>
                     <p>Euler method sampling with 50 timesteps</p>
+                    <p><strong>Implementation:</strong> Start from x_t = randn() at t=0. For each timestep i, compute t = i/num_ts, predict flow u = unet(x_t, t), update x_t = x_t + u * dt with dt = 1.0/num_ts.</p>
                     <div class="media-row">
                         <figure>
                             <img src="src/img/partb_part_2.3:_sampling_from_the_time-conditi_1.png" alt="Samples overview" />
@@ -673,6 +690,7 @@
                         <h3>Adding Class-Conditioning to UNet</h3>
                     </div>
                     <p>One-hot class vectors (0-9) with 10% dropout for CFG training. Modulation: unflatten = c1*unflatten + t1</p>
+                    <p><strong>Implementation:</strong> Create one-hot vectors via F.one_hot(c, 10).float(). Implement dropout with mask = (torch.rand(batch_size) > 0.1).float(), then c_one_hot = c_one_hot * mask. Process through fc1_c and fc2_c FCBlocks.</p>
                 </div>
 
                 <!-- Part 2.5: Training Class-Conditioned UNet -->
@@ -682,6 +700,7 @@
                         <h3>Training the Class-Conditioned UNet</h3>
                     </div>
                     <p><strong>Setup:</strong> Same as 2.2 but with class conditioning and p_uncond=0.1</p>
+                    <p><strong>Implementation:</strong> Integrate class modulation with time modulation: x_unflat = unflatten(c1*x_fc + t1) at bottleneck and x_dec2 = decoder(c2*x_dec3 + t2) at decoder. Same flow matching loss MSELoss(predicted_flow, x_1 - x_0).</p>
                     <div class="media-row">
                         <figure>
                             <img src="src/img/partb_part_2.5_training_the_class-conditioned__1.png" alt="Class-conditioned training" />
@@ -697,6 +716,7 @@
                         <h3>Sampling from the Class-Conditioned UNet</h3>
                     </div>
                     <p>CFG sampling with γ=5.0. <strong>No LR scheduler:</strong> Used constant lr=5e-3, 12 epochs, gradient clipping—maintained same quality!</p>
+                    <p><strong>Implementation:</strong> At each timestep, compute two forward passes: u_cond = unet(x_t, c, t, mask=ones) and u_uncond = unet(x_t, c, t, mask=zeros). Combine: u = u_uncond + 5.0 * (u_cond - u_uncond). Use in Euler integration: x_t = x_t + u * dt.</p>
                     <div class="media-row">
                         <figure>
                             <img src="src/img/partb_part_2.6:_sampling_from_the_class-condit_1.png" alt="Epochs comparison" />
@@ -719,8 +739,8 @@
 
         <footer>
             <div class="footer-shell">
-                <span>CS 180 · Project 5 Template</span>
-                <span>Update this footer once results are finalized.</span>
+                <span>CS 180 · Project 5</span>
+                <span>Song-Ze Yu · 3042011066</span>
             </div>
         </footer>
     </div>
