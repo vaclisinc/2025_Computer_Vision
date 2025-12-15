@@ -139,28 +139,30 @@
                 <p>Gaussian blur on noisy images. Removes high-freq noise but can't reconstruct edges.</p>
                 <div class="media-row">
                     <figure>
-                        <img src="src/img/parta_1.2_Classical_Denoising_cell25_out1_img0.png" alt="t=250 blurred" />
-                        <figcaption>t=250 Gaussian blur</figcaption>
+                        <img src="src/img/parta_1.2_Classical_Denoising_cell25_out1_img0.png" alt="t=250 noisy" />
+                        <figcaption>t=250 Noisy</figcaption>
                     </figure>
                     <figure>
-                        <img src="src/img/parta_1.2_Classical_Denoising_cell25_out3_img0.png" alt="t=500 blurred" />
-                        <figcaption>t=500 Gaussian blur</figcaption>
+                        <img src="src/img/parta_1.2_Classical_Denoising_cell25_out5_img0.png" alt="t=500 noisy" />
+                        <figcaption>t=500 Noisy</figcaption>
                     </figure>
                     <figure>
-                        <img src="src/img/parta_1.2_Classical_Denoising_cell25_out5_img0.png" alt="t=750 blurred" />
-                        <figcaption>t=750 Gaussian blur</figcaption>
+                        <img src="src/img/parta_1.2_Classical_Denoising_cell25_out9_img0.png" alt="t=750 noisy" />
+                        <figcaption>t=750 Noisy</figcaption>
+                    </figure>
+                </div>
+                <div class="media-row">
+                    <figure>
+                        <img src="src/img/parta_1.2_Classical_Denoising_cell25_out3_img0.png" alt="t=250 Gaussian denoised" />
+                        <figcaption>t=250 Gaussian denoised</figcaption>
                     </figure>
                     <figure>
-                        <img src="src/img/parta_1.2_Classical_Denoising_cell25_out7_img0.png" alt="t=250 noisy" />
-                        <figcaption>Noisy t=250</figcaption>
+                        <img src="src/img/parta_1.2_Classical_Denoising_cell25_out7_img0.png" alt="t=500 Gaussian denoised" />
+                        <figcaption>t=500 Gaussian denoised</figcaption>
                     </figure>
                     <figure>
-                        <img src="src/img/parta_1.2_Classical_Denoising_cell25_out9_img0.png" alt="t=500 noisy" />
-                        <figcaption>Noisy t=500</figcaption>
-                    </figure>
-                    <figure>
-                        <img src="src/img/parta_1.2_Classical_Denoising_cell25_out11_img0.png" alt="t=750 noisy" />
-                        <figcaption>Noisy t=750</figcaption>
+                        <img src="src/img/parta_1.2_Classical_Denoising_cell25_out11_img0.png" alt="t=750 Gaussian denoised" />
+                        <figcaption>t=750 Gaussian denoised</figcaption>
                     </figure>
                 </div>
             </section>
@@ -173,16 +175,30 @@
                 <p>UNet predicts noise, recover x_0. Works for t≤500, struggles at t=750.</p>
                 <div class="media-row">
                     <figure>
-                        <img src="src/img/parta_1.3_Implementing_One_Step_Denoising_cell27_out1_img0.png" alt="One-step t=250" />
-                        <figcaption>One-step denoise (t=250)</figcaption>
+                        <img src="src/img/parta_cell27_out3_img0.png" alt="t=250 noisy" />
+                        <figcaption>Noisy t=250</figcaption>
                     </figure>
                     <figure>
-                        <img src="src/img/parta_1.3_Implementing_One_Step_Denoising_cell27_out7_img0.png" alt="One-step t=500" />
-                        <figcaption>One-step denoise (t=500)</figcaption>
+                        <img src="src/img/parta_cell27_out9_img0.png" alt="t=500 noisy" />
+                        <figcaption>Noisy t=500</figcaption>
                     </figure>
                     <figure>
-                        <img src="src/img/parta_1.3_Implementing_One_Step_Denoising_cell27_out13_img0.png" alt="One-step t=750" />
-                        <figcaption>One-step denoise (t=750)</figcaption>
+                        <img src="src/img/parta_cell27_out15_img0.png" alt="t=750 noisy" />
+                        <figcaption>Noisy t=750</figcaption>
+                    </figure>
+                </div>
+                <div class="media-row">
+                    <figure>
+                        <img src="src/img/parta_cell27_out5_img0.png" alt="One-step denoised t=250" />
+                        <figcaption>One-step denoised (t=250)</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="src/img/parta_cell27_out11_img0.png" alt="One-step denoised t=500" />
+                        <figcaption>One-step denoised (t=500)</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="src/img/parta_cell27_out17_img0.png" alt="One-step denoised t=750" />
+                        <figcaption>One-step denoised (t=750)</figcaption>
                     </figure>
                 </div>
             </section>
@@ -193,26 +209,26 @@
                     <h3>Iterative Denoising</h3>
                 </div>
                 <p>DDPM sampling: t=990→0, stride=30. Iterative recovery from heavy noise.</p>
-                <div class="media-row">
+                <div class="media-row" style="grid-template-columns: repeat(5, 1fr);">
                     <figure>
-                        <img src="src/img/parta_1.4_Implementing_Iterative_Denoising_cell33_out0_img4.png" alt="Noisy start" />
-                        <figcaption>Start (noisy)</figcaption>
+                        <img src="src/img/parta_cell33_out0_img0.png" alt="Original" />
+                        <figcaption>Original</figcaption>
                     </figure>
                     <figure>
-                        <img src="src/img/parta_1.4_Implementing_Iterative_Denoising_cell33_out0_img3.png" alt="Iteration mid" />
-                        <figcaption>Mid-iteration</figcaption>
+                        <img src="src/img/parta_cell33_out0_img1.png" alt="Noisy (t=690)" />
+                        <figcaption>Noisy (t=690)</figcaption>
                     </figure>
                     <figure>
-                        <img src="src/img/parta_1.4_Implementing_Iterative_Denoising_cell33_out0_img2.png" alt="Iteration later" />
-                        <figcaption>Later iteration</figcaption>
+                        <img src="src/img/parta_cell33_out0_img2.png" alt="Iterative Denoise" />
+                        <figcaption>Iterative Denoise</figcaption>
                     </figure>
                     <figure>
-                        <img src="src/img/parta_1.4_Implementing_Iterative_Denoising_cell33_out0_img1.png" alt="Near clean" />
-                        <figcaption>Near clean</figcaption>
+                        <img src="src/img/parta_cell33_out0_img3.png" alt="One-step Denoise" />
+                        <figcaption>One-step Denoise</figcaption>
                     </figure>
                     <figure>
-                        <img src="src/img/parta_1.4_Implementing_Iterative_Denoising_cell33_out0_img0.png" alt="Final clean" />
-                        <figcaption>Final clean</figcaption>
+                        <img src="src/img/parta_cell33_out0_img4.png" alt="Gaussian Blur" />
+                        <figcaption>Gaussian Blur</figcaption>
                     </figure>
                 </div>
             </section>
@@ -253,54 +269,226 @@
                     <h3>Image-to-Image</h3>
                 </div>
                 <p>SDEdit: partial noise + denoise</p>
-                <div class="accordion">
+
+                <h4 style="margin: 1rem 0 0.5rem;">SDEdit with i_start = 1, 3, 5, 7, 10, 20</h4>
+                <div class="media-row" style="grid-template-columns: repeat(6, 1fr);">
+                    <figure>
+                        <img src="src/img/parta_cell40_out1_img0.png" alt="i_start=1" />
+                        <figcaption>i_start=1</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="src/img/parta_cell40_out1_img1.png" alt="i_start=3" />
+                        <figcaption>i_start=3</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="src/img/parta_cell40_out1_img2.png" alt="i_start=5" />
+                        <figcaption>i_start=5</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="src/img/parta_cell40_out1_img3.png" alt="i_start=7" />
+                        <figcaption>i_start=7</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="src/img/parta_cell40_out1_img4.png" alt="i_start=10" />
+                        <figcaption>i_start=10</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="src/img/parta_cell40_out1_img5.png" alt="i_start=20" />
+                        <figcaption>i_start=20</figcaption>
+                    </figure>
+                </div>
+
+                <div class="accordion" style="margin-top: 2rem;">
                     <details>
                     <summary>1.7.1 Hand-Drawn Edits</summary>
-                        <div class="media-row">
+                        <p><strong>Staff-provided avocado chair:</strong></p>
+                        <div class="media-row" style="grid-template-columns: repeat(6, 1fr);">
                             <figure>
-                                <img src="src/img/1-7-calbear.png" alt="Cal bear sketch" />
-                                <figcaption>Sketch input (Cal bear)</figcaption>
+                                <img src="src/img/parta_cell44_out1_img0.png" alt="i_start=1" />
+                                <figcaption>i_start=1</figcaption>
                             </figure>
                             <figure>
-                                <img src="src/img/1-7-sheep.png" alt="Hand-drawn sheep" />
-                                <figcaption>Hand-drawn sheep input</figcaption>
+                                <img src="src/img/parta_cell44_out1_img1.png" alt="i_start=3" />
+                                <figcaption>i_start=3</figcaption>
                             </figure>
                             <figure>
-                                <img src="src/img/1-7-snoopy.jpg" alt="Web image" />
-                                <figcaption>Web image input</figcaption>
+                                <img src="src/img/parta_cell44_out1_img2.png" alt="i_start=5" />
+                                <figcaption>i_start=5</figcaption>
+                            </figure>
+                            <figure>
+                                <img src="src/img/parta_cell44_out1_img3.png" alt="i_start=7" />
+                                <figcaption>i_start=7</figcaption>
+                            </figure>
+                            <figure>
+                                <img src="src/img/parta_cell44_out1_img4.png" alt="i_start=10" />
+                                <figcaption>i_start=10</figcaption>
+                            </figure>
+                            <figure>
+                                <img src="src/img/parta_cell44_out1_img5.png" alt="i_start=20" />
+                                <figcaption>i_start=20</figcaption>
                             </figure>
                         </div>
-                        <div class="media-row">
-                            <figure><img src="src/img/parta_1.7.1_Editing_Hand-Drawn_and_Web_Images_cell44_out1_img0.png" alt="Edit example 1" /><figcaption>Noise step variant</figcaption></figure>
-                            <figure><img src="src/img/parta_1.7.1_Editing_Hand-Drawn_and_Web_Images_cell44_out1_img1.png" alt="Edit example 2" /><figcaption>Noise step variant</figcaption></figure>
-                            <figure><img src="src/img/parta_1.7.1_Editing_Hand-Drawn_and_Web_Images_cell44_out1_img2.png" alt="Edit example 3" /><figcaption>Noise step variant</figcaption></figure>
-                            <figure><img src="src/img/parta_1.7.1_Editing_Hand-Drawn_and_Web_Images_cell44_out1_img3.png" alt="Edit example 4" /><figcaption>Noise step variant</figcaption></figure>
-                            <figure><img src="src/img/parta_1.7.1_Editing_Hand-Drawn_and_Web_Images_cell44_out1_img4.png" alt="Edit example 5" /><figcaption>Noise step variant</figcaption></figure>
-                            <figure><img src="src/img/parta_1.7.1_Editing_Hand-Drawn_and_Web_Images_cell44_out1_img5.png" alt="Edit example 6" /><figcaption>Noise step variant</figcaption></figure>
+
+                        <p style="margin-top: 2rem;"><strong>Custom hand-drawn images from Instagram stories: sheep, bear, stick figure, snoopy</strong></p>
+
+                        <h5 style="margin-top: 1rem;">Sheep:</h5>
+                        <div class="media-row" style="grid-template-columns: repeat(6, 1fr);">
+                            <figure>
+                                <img src="src/img/parta_cell49_out1_img0.png" alt="Sheep i_start=1" />
+                                <figcaption>i_start=1</figcaption>
+                            </figure>
+                            <figure>
+                                <img src="src/img/parta_cell49_out1_img1.png" alt="Sheep i_start=3" />
+                                <figcaption>i_start=3</figcaption>
+                            </figure>
+                            <figure>
+                                <img src="src/img/parta_cell49_out1_img2.png" alt="Sheep i_start=5" />
+                                <figcaption>i_start=5</figcaption>
+                            </figure>
+                            <figure>
+                                <img src="src/img/parta_cell49_out1_img3.png" alt="Sheep i_start=7" />
+                                <figcaption>i_start=7</figcaption>
+                            </figure>
+                            <figure>
+                                <img src="src/img/parta_cell49_out1_img4.png" alt="Sheep i_start=10" />
+                                <figcaption>i_start=10</figcaption>
+                            </figure>
+                            <figure>
+                                <img src="src/img/parta_cell49_out1_img5.png" alt="Sheep i_start=20" />
+                                <figcaption>i_start=20</figcaption>
+                            </figure>
+                        </div>
+
+                        <h5 style="margin-top: 1rem;">Bear:</h5>
+                        <div class="media-row" style="grid-template-columns: repeat(6, 1fr);">
+                            <figure>
+                                <img src="src/img/parta_cell47_out1_img0.png" alt="Bear i_start=1" />
+                                <figcaption>i_start=1</figcaption>
+                            </figure>
+                            <figure>
+                                <img src="src/img/parta_cell47_out1_img1.png" alt="Bear i_start=3" />
+                                <figcaption>i_start=3</figcaption>
+                            </figure>
+                            <figure>
+                                <img src="src/img/parta_cell47_out1_img2.png" alt="Bear i_start=5" />
+                                <figcaption>i_start=5</figcaption>
+                            </figure>
+                            <figure>
+                                <img src="src/img/parta_cell47_out1_img3.png" alt="Bear i_start=7" />
+                                <figcaption>i_start=7</figcaption>
+                            </figure>
+                            <figure>
+                                <img src="src/img/parta_cell47_out1_img4.png" alt="Bear i_start=10" />
+                                <figcaption>i_start=10</figcaption>
+                            </figure>
+                            <figure>
+                                <img src="src/img/parta_cell47_out1_img5.png" alt="Bear i_start=20" />
+                                <figcaption>i_start=20</figcaption>
+                            </figure>
+                        </div>
+
+                        <h5 style="margin-top: 1rem;">Stick Figure:</h5>
+                        <div class="media-row" style="grid-template-columns: repeat(6, 1fr);">
+                            <figure>
+                                <img src="src/img/parta_cell48_out1_img0.png" alt="Stick i_start=1" />
+                                <figcaption>i_start=1</figcaption>
+                            </figure>
+                            <figure>
+                                <img src="src/img/parta_cell48_out1_img1.png" alt="Stick i_start=3" />
+                                <figcaption>i_start=3</figcaption>
+                            </figure>
+                            <figure>
+                                <img src="src/img/parta_cell48_out1_img2.png" alt="Stick i_start=5" />
+                                <figcaption>i_start=5</figcaption>
+                            </figure>
+                            <figure>
+                                <img src="src/img/parta_cell48_out1_img3.png" alt="Stick i_start=7" />
+                                <figcaption>i_start=7</figcaption>
+                            </figure>
+                            <figure>
+                                <img src="src/img/parta_cell48_out1_img4.png" alt="Stick i_start=10" />
+                                <figcaption>i_start=10</figcaption>
+                            </figure>
+                            <figure>
+                                <img src="src/img/parta_cell48_out1_img5.png" alt="Stick i_start=20" />
+                                <figcaption>i_start=20</figcaption>
+                            </figure>
+                        </div>
+
+                        <h5 style="margin-top: 1rem;">Snoopy:</h5>
+                        <div class="media-row" style="grid-template-columns: repeat(6, 1fr);">
+                            <figure>
+                                <img src="src/img/parta_cell50_out1_img0.png" alt="Snoopy i_start=1" />
+                                <figcaption>i_start=1</figcaption>
+                            </figure>
+                            <figure>
+                                <img src="src/img/parta_cell50_out1_img1.png" alt="Snoopy i_start=3" />
+                                <figcaption>i_start=3</figcaption>
+                            </figure>
+                            <figure>
+                                <img src="src/img/parta_cell50_out1_img2.png" alt="Snoopy i_start=5" />
+                                <figcaption>i_start=5</figcaption>
+                            </figure>
+                            <figure>
+                                <img src="src/img/parta_cell50_out1_img3.png" alt="Snoopy i_start=7" />
+                                <figcaption>i_start=7</figcaption>
+                            </figure>
+                            <figure>
+                                <img src="src/img/parta_cell50_out1_img4.png" alt="Snoopy i_start=10" />
+                                <figcaption>i_start=10</figcaption>
+                            </figure>
+                            <figure>
+                                <img src="src/img/parta_cell50_out1_img5.png" alt="Snoopy i_start=20" />
+                                <figcaption>i_start=20</figcaption>
+                            </figure>
                         </div>
                     </details>
                     <details id="part1-7-2">
                         <summary>1.7.2 Inpainting</summary>
-                        <p>Fill masked regions. At each step: denoise, then re-impose unmasked pixels. Prompt: "a rocket ship"</p>
+                        <p>Fill masked regions. At each step: denoise, then re-impose unmasked pixels.</p>
                         <div class="media-row">
-                            <figure><img src="src/img/parta_1.7.2_Inpainting_cell52_out0_img0.png" alt="Inpaint result 1" /><figcaption>Inpaint result 1</figcaption></figure>
-                            <figure><img src="src/img/parta_1.7.2_Inpainting_cell52_out0_img1.png" alt="Inpaint result 2" /><figcaption>Inpaint result 2</figcaption></figure>
-                            <figure><img src="src/img/parta_1.7.2_Inpainting_cell52_out0_img2.png" alt="Inpaint result 3" /><figcaption>Inpaint result 3</figcaption></figure>
-                            <figure><img src="src/img/parta_1.7.2_Inpainting_cell54_out0_img0.png" alt="Inpaint result 4" /><figcaption>Inpaint result 4</figcaption></figure>
-                            <figure><img src="src/img/parta_1.7.2_Inpainting_cell54_out0_img1.png" alt="Inpaint result 5" /><figcaption>Inpaint result 5</figcaption></figure>
-                            <figure><img src="src/img/parta_1.7.2_Inpainting_cell54_out0_img2.png" alt="Inpaint result 6" /><figcaption>Inpaint result 6</figcaption></figure>
+                            <figure>
+                                <img src="src/img/parta_cell54_out0_img0.png" alt="Original" />
+                                <figcaption>Original</figcaption>
+                            </figure>
+                            <figure>
+                                <img src="src/img/parta_cell54_out0_img1.png" alt="Mask" />
+                                <figcaption>Mask</figcaption>
+                            </figure>
+                            <figure>
+                                <img src="src/img/parta_cell54_out0_img2.png" alt="Inpainted" />
+                                <figcaption>Inpainted</figcaption>
+                            </figure>
                         </div>
                     </details>
                     <details id="part1-7-3">
-                        <summary>1.7.3 Text-Conditional</summary>
-                        <p>Noise schedule [1,3,5,7,10,20]</p>
-                        <div class="media-row">
-                            <figure><img src="src/img/parta_1.7.3_Text-Conditioned_Image-to-image_Translation_cell56_out1_img0.png" alt="Text edit 1" /><figcaption>Text edit 1</figcaption></figure>
-                            <figure><img src="src/img/parta_1.7.3_Text-Conditioned_Image-to-image_Translation_cell56_out1_img1.png" alt="Text edit 2" /><figcaption>Text edit 2</figcaption></figure>
-                            <figure><img src="src/img/parta_1.7.3_Text-Conditioned_Image-to-image_Translation_cell56_out1_img2.png" alt="Text edit 3" /><figcaption>Text edit 3</figcaption></figure>
-                            <figure><img src="src/img/parta_1.7.3_Text-Conditioned_Image-to-image_Translation_cell56_out1_img3.png" alt="Text edit 4" /><figcaption>Text edit 4</figcaption></figure>
-                            <figure><img src="src/img/parta_1.7.3_Text-Conditioned_Image-to-image_Translation_cell56_out1_img4.png" alt="Text edit 5" /><figcaption>Text edit 5</figcaption></figure>
-                            <figure><img src="src/img/parta_1.7.3_Text-Conditioned_Image-to-image_Translation_cell56_out1_img5.png" alt="Text edit 6" /><figcaption>Text edit 6</figcaption></figure>
+                        <summary>1.7.3 Text-Conditional Image-to-Image</summary>
+                        <p>Prompt: "a lonely robot waiting for a bus in the snow". i_start = [1, 3, 5, 7, 10, 20]</p>
+                        <div class="media-row" style="grid-template-columns: repeat(6, 1fr);">
+                            <figure>
+                                <img src="src/img/parta_cell56_out1_img0.png" alt="i_start=1" />
+                                <figcaption>i_start=1</figcaption>
+                            </figure>
+                            <figure>
+                                <img src="src/img/parta_cell56_out1_img1.png" alt="i_start=3" />
+                                <figcaption>i_start=3</figcaption>
+                            </figure>
+                            <figure>
+                                <img src="src/img/parta_cell56_out1_img2.png" alt="i_start=5" />
+                                <figcaption>i_start=5</figcaption>
+                            </figure>
+                            <figure>
+                                <img src="src/img/parta_cell56_out1_img3.png" alt="i_start=7" />
+                                <figcaption>i_start=7</figcaption>
+                            </figure>
+                            <figure>
+                                <img src="src/img/parta_cell56_out1_img4.png" alt="i_start=10" />
+                                <figcaption>i_start=10</figcaption>
+                            </figure>
+                            <figure>
+                                <img src="src/img/parta_cell56_out1_img5.png" alt="i_start=20" />
+                                <figcaption>i_start=20</figcaption>
+                            </figure>
                         </div>
                     </details>
                 </div>
@@ -311,10 +499,16 @@
                     <span class="task-label">1.8</span>
                     <h3>Visual Anagrams</h3>
                 </div>
-                <p>Dual-prompt noise averaging. Prompts: "campfire" (upright) / "old man" (flipped)</p>
+                <p>Dual-prompt noise averaging. The image looks different when flipped upside down!</p>
                 <div class="media-row">
-                    <figure><img src="src/img/parta_1.8_Visual_Anagrams_cell59_out0_img0.png" alt="Visual anagram upright" /><figcaption>Illusion upright</figcaption></figure>
-                    <figure><img src="src/img/parta_1.8_Visual_Anagrams_cell59_out0_img1.png" alt="Visual anagram flipped" /><figcaption>Illusion flipped</figcaption></figure>
+                    <figure>
+                        <img src="src/img/parta_1.8_Visual_Anagrams_cell59_out0_img0.png" alt="Visual anagram upright" />
+                        <figcaption>Upright: "a lonely robot waiting for a bus in the snow"</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="src/img/parta_1.8_Visual_Anagrams_cell59_out0_img1.png" alt="Visual anagram flipped" />
+                        <figcaption>Flipped: "a cyberpunk city reflected on water, pixel art style"</figcaption>
+                    </figure>
                 </div>
             </section>
 
@@ -323,10 +517,16 @@
                     <span class="task-label">1.9</span>
                     <h3>Hybrid Images</h3>
                 </div>
-                <p>Factorized diffusion. Low-freq: "skull" / High-freq: "waterfall". kernel=33, σ=2</p>
+                <p>Factorized diffusion with Gaussian blur (kernel=33, σ=2)</p>
                 <div class="media-row">
-                    <figure><img src="src/img/parta_1.9_Hybrid_Images_cell62_out0_img0.png" alt="Hybrid image A" /><figcaption>Hybrid image A</figcaption></figure>
-                    <figure><img src="src/img/parta_1.9_Hybrid_Images_cell63_out0_img0.png" alt="Hybrid image B" /><figcaption>Hybrid image B</figcaption></figure>
+                    <figure>
+                        <img src="src/img/parta_1.9_Hybrid_Images_cell62_out0_img0.png" alt="Hybrid image 1" />
+                        <figcaption>Low-freq: "a picture of a finger" / High-freq: "a picture of canyon"</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="src/img/parta_1.9_Hybrid_Images_cell63_out0_img0.png" alt="Hybrid image 2" />
+                        <figcaption>Low-freq: "a painting of a piano" / High-freq: "a painting of a zebra"</figcaption>
+                    </figure>
                 </div>
             </section>
 
@@ -383,11 +583,11 @@
                         <span class="task-label">1.2.2</span>
                         <h3>Out-of-Distribution Testing</h3>
                     </div>
-                    <p>Test denoiser on different σ values (trained on σ=0.5 only)</p>
+                    <p>Test denoiser on different σ values (trained on σ=0.5 only). From top to bottom: σ = 0.0, 0.2, 0.4, 0.5, 0.6, 0.8, 1.0</p>
                     <div class="media-row">
                         <figure>
                             <img src="src/img/partb_part_1.2.2:_out-of-distribution_testing_1.png" alt="OOD sigma tests" />
-                            <figcaption>OOD σ test results</figcaption>
+                            <figcaption>OOD σ test results (rows: σ = 0.0 → 1.0)</figcaption>
                         </figure>
                     </div>
                 </div>
@@ -515,48 +715,6 @@
 
             </section>
 
-            <section class="part-intro" id="part2">
-                <div class="section-heading">
-                    <span class="section-label">Part 2</span>
-                    <div>
-                        <h2>Bells, Whistles, & Original Ideas</h2>
-                        <p>Reserved for CS280A: alternate anagram transforms and course logo remix.</p>
-                    </div>
-                </div>
-
-                <div class="two-col-grid">
-                    <article class="task-block">
-                        <header>
-                            <span class="task-label">2.1</span>
-                            <h3>Alternate Visual Anagrams</h3>
-                        </header>
-                        <p>Plan: rotate/sheer variants per paper; capture two additional illusions.</p>
-                    </article>
-
-                    <article class="task-block">
-                        <header>
-                            <span class="task-label">2.2</span>
-                            <h3>Course Logo Remix</h3>
-                        </header>
-                        <p>Try text-conditioned edits on UCB logo and personal sketches.</p>
-                    </article>
-
-                    <article class="task-block full-width">
-                        <header>
-                            <span class="task-label">2.3</span>
-                            <h3>Your Own Idea</h3>
-                        </header>
-                        <p>Stretch goal slot for extra hybrids or higher-res upsampling.</p>
-                    </article>
-                </div>
-            </section>
-
-            <section class="wrap-up">
-                <h2>Reflection</h2>
-                <p><strong>Part A:</strong> CFG (γ=7) dramatically boosts quality. Iterative DDPM > one-step. Same diffusion framework handles inpainting, anagrams, hybrids.</p>
-                <p><strong>Part B:</strong> Single-step denoising fails (learns mean). Flow matching works with x_t=(1-t)x_0+tx_1. Class conditioning + CFG enables controllable generation. Constant LR works as well as exponential decay.</p>
-                <p><strong>Key insight:</strong> Diffusion models learn data manifold structure through iterative denoising. CFG is the secret sauce.</p>
-            </section>
         </main>
 
         <footer>
