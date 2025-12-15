@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project 5: Diffusion Models (Parts A & B)</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+</head>
+<body>
+    <div class="page">
+        <header>
+            <div class="header-gradient"></div>
+            <div class="header-shell">
+                <a class="back-link" href="../index.html">← Back to Projects</a>
+                <div class="header-main">
+                    <div>
+                        <h1>Project 5 · Diffusion & Flow Models</h1>
+                        <p class="subtitle">CS 180 / 280A · Song-Ze Yu · Seed = 100</p>
+                    </div>
+                    <div class="status-tags">
+                        <span class="tag">Part A · DeepFloyd IF</span>
+                        <span class="tag">Part B · Flow Matching</span>
+                        <span class="tag alt">Fall 2025</span>
+                    </div>
+                </div>
+
+            </div>
+        </header>
+
+        <nav class="toc">
+            <a href="#parta">Part A</a>
+            <a href="#partb">Part B</a>
+        </nav>
+
+        <main>
+            <section class="part-intro" id="parta">
+                <div class="section-heading">
+                    <span class="section-label">Part A</span>
+                    <div>
+                        <h2>DeepFloyd IF Diffusion</h2>
+                    </div>
+                </div>
+
+                <!-- Part 0 -->
+                <div class="task-cluster">
+                    <div class="cluster-heading">
+                        <span class="task-label">Part 0</span>
+                        <h3>Setup & Prompts</h3>
+                    </div>
+                    <p>Generated text embeddings using DeepFloyd IF cluster on Hugging Face. Seed=100.</p>
+
+                    <h4>All Prompts Designed:</h4>
+                    <ul class="mini-list">
+                        <li>'a picture of canyon'</li>
+                        <li>'a picture of a finger'</li>
+                        <li>'a lonely robot waiting for a bus in the snow'</li>
+                        <li>'a painting of a piano'</li>
+                        <li>'a painting of a zebra'</li>
+                        <li>'a cat and a dog merged into one animal'</li>
+                        <li>'a guitar that transforms into a bird while being played'</li>
+                        <li>'half human half tree standing in a baseball stadium'</li>
+                        <li>'Shohei Ohtani eating his baseball'</li>
+                        <li>'a cyberpunk city reflected on water, pixel art style'</li>
+                        <li>'a rainy street at night with only one yellow light on and a store opened'</li>
+                        <li>'a moon and stars and a couple kissing and becomes two monkeys'</li>
+                        <li>'a high quality photo'</li>
+                        <li>'' (empty prompt)</li>
+                    </ul>
+
+                    <h4 style="margin-top: 1.5rem;">Selected 3 Prompts with num_inference_steps=20:</h4>
+                    <div class="media-row">
+                        <figure>
+                            <img src="src/img/parta_cell16_out3_img0.png" alt="Robot in snow" />
+                            <figcaption>"a lonely robot waiting for a bus in the snow"</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="src/img/parta_cell16_out3_img1.png" alt="Human-tree hybrid" />
+                            <figcaption>"half human half tree standing in a baseball stadium"</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="src/img/parta_cell16_out3_img2.png" alt="Cyberpunk city" />
+                            <figcaption>"a cyberpunk city reflected on water, pixel art style"</figcaption>
+                        </figure>
+                    </div>
+
+                    <h4 style="margin-top: 1.5rem;">Same Prompts with num_inference_steps=200:</h4>
+                    <div class="media-row">
+                        <figure>
+                            <img src="src/img/messageImage_1765781023123_0.jpg" alt="Robot in snow (200 steps)" />
+                            <figcaption>"a lonely robot waiting for a bus in the snow"</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="src/img/messageImage_1765781027863_0.jpg" alt="Human-tree hybrid (200 steps)" />
+                            <figcaption>"half human half tree standing in a baseball stadium"</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="src/img/messageImage_1765781034413_0.jpg" alt="Cyberpunk city (200 steps)" />
+                            <figcaption>"a cyberpunk city reflected on water, pixel art style"</figcaption>
+                        </figure>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Part 1 starts here -->
+
+            <section class="task-cluster" id="part1-1">
+                <div class="cluster-heading">
+                    <span class="task-label">1.1</span>
+                    <h3>Forward Process</h3>
+                </div>
+                <p>x_t = √(ᾱ_t)·x_0 + √(1-ᾱ_t)·ε. Applied to Campanile at t=[250, 500, 750].</p>
+                <div class="media-row">
+                    <figure>
+                        <img src="src/img/1-1-campanile.jpg" alt="Original Campanile" />
+                        <figcaption>Original Campanile</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="src/img/parta_1.1_Implementing_the_forward_process_cell23_out1_img0.png" alt="Noisy t=250" />
+                        <figcaption>Noisy t=250</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="src/img/parta_1.1_Implementing_the_forward_process_cell23_out3_img0.png" alt="Noisy t=500" />
+                        <figcaption>Noisy t=500</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="src/img/parta_1.1_Implementing_the_forward_process_cell23_out5_img0.png" alt="Noisy t=750" />
+                        <figcaption>Noisy t=750</figcaption>
+                    </figure>
+                </div>
+            </section>
+
+            <section class="task-cluster" id="part1-2">
+                <div class="cluster-heading">
+                    <span class="task-label">1.2</span>
+                    <h3>Classical Denoising</h3>
+                </div>
+                <p>Gaussian blur on noisy images. Removes high-freq noise but can't reconstruct edges.</p>
+                <div class="media-row">
+                    <figure>
+                        <img src="src/img/parta_1.2_Classical_Denoising_cell25_out1_img0.png" alt="t=250 blurred" />
+                        <figcaption>t=250 Gaussian blur</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="src/img/parta_1.2_Classical_Denoising_cell25_out3_img0.png" alt="t=500 blurred" />
+                        <figcaption>t=500 Gaussian blur</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="src/img/parta_1.2_Classical_Denoising_cell25_out5_img0.png" alt="t=750 blurred" />
+                        <figcaption>t=750 Gaussian blur</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="src/img/parta_1.2_Classical_Denoising_cell25_out7_img0.png" alt="t=250 noisy" />
+                        <figcaption>Noisy t=250</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="src/img/parta_1.2_Classical_Denoising_cell25_out9_img0.png" alt="t=500 noisy" />
+                        <figcaption>Noisy t=500</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="src/img/parta_1.2_Classical_Denoising_cell25_out11_img0.png" alt="t=750 noisy" />
+                        <figcaption>Noisy t=750</figcaption>
+                    </figure>
+                </div>
+            </section>
+
+            <section class="task-cluster" id="part1-3">
+                <div class="cluster-heading">
+                    <span class="task-label">1.3</span>
+                    <h3>One-Step Denoising</h3>
+                </div>
+                <p>UNet predicts noise, recover x_0. Works for t≤500, struggles at t=750.</p>
+                <div class="media-row">
+                    <figure>
+                        <img src="src/img/parta_1.3_Implementing_One_Step_Denoising_cell27_out1_img0.png" alt="One-step t=250" />
+                        <figcaption>One-step denoise (t=250)</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="src/img/parta_1.3_Implementing_One_Step_Denoising_cell27_out7_img0.png" alt="One-step t=500" />
+                        <figcaption>One-step denoise (t=500)</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="src/img/parta_1.3_Implementing_One_Step_Denoising_cell27_out13_img0.png" alt="One-step t=750" />
+                        <figcaption>One-step denoise (t=750)</figcaption>
+                    </figure>
+                </div>
+            </section>
+
+            <section class="task-cluster" id="part1-4">
+                <div class="cluster-heading">
+                    <span class="task-label">1.4</span>
+                    <h3>Iterative Denoising</h3>
+                </div>
+                <p>DDPM sampling: t=990→0, stride=30. Iterative recovery from heavy noise.</p>
+                <div class="media-row">
+                    <figure>
+                        <img src="src/img/parta_1.4_Implementing_Iterative_Denoising_cell33_out0_img4.png" alt="Noisy start" />
+                        <figcaption>Start (noisy)</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="src/img/parta_1.4_Implementing_Iterative_Denoising_cell33_out0_img3.png" alt="Iteration mid" />
+                        <figcaption>Mid-iteration</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="src/img/parta_1.4_Implementing_Iterative_Denoising_cell33_out0_img2.png" alt="Iteration later" />
+                        <figcaption>Later iteration</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="src/img/parta_1.4_Implementing_Iterative_Denoising_cell33_out0_img1.png" alt="Near clean" />
+                        <figcaption>Near clean</figcaption>
+                    </figure>
+                    <figure>
+                        <img src="src/img/parta_1.4_Implementing_Iterative_Denoising_cell33_out0_img0.png" alt="Final clean" />
+                        <figcaption>Final clean</figcaption>
+                    </figure>
+                </div>
+            </section>
+
+            <section class="task-cluster" id="part1-5">
+                <div class="cluster-heading">
+                    <span class="task-label">1.5</span>
+                    <h3>Sampling</h3>
+                </div>
+                <p>Generate from pure noise. Prompt: "a high quality photo"</p>
+                <div class="media-row">
+                    <figure><img src="src/img/parta_1.5_Diffusion_Model_Sampling_cell35_out1_img0.png" alt="Sample 1" /><figcaption>Sample 1</figcaption></figure>
+                    <figure><img src="src/img/parta_1.5_Diffusion_Model_Sampling_cell35_out3_img0.png" alt="Sample 2" /><figcaption>Sample 2</figcaption></figure>
+                    <figure><img src="src/img/parta_1.5_Diffusion_Model_Sampling_cell35_out5_img0.png" alt="Sample 3" /><figcaption>Sample 3</figcaption></figure>
+                    <figure><img src="src/img/parta_1.5_Diffusion_Model_Sampling_cell35_out7_img0.png" alt="Sample 4" /><figcaption>Sample 4</figcaption></figure>
+                    <figure><img src="src/img/parta_1.5_Diffusion_Model_Sampling_cell35_out9_img0.png" alt="Sample 5" /><figcaption>Sample 5</figcaption></figure>
+                </div>
+            </section>
+
+            <section class="task-cluster" id="part1-6">
+                <div class="cluster-heading">
+                    <span class="task-label">1.6</span>
+                    <h3>CFG</h3>
+                </div>
+                <p>ε = ε_uncond + γ·(ε_cond - ε_uncond), γ=7. Much sharper results!</p>
+                <div class="media-row">
+                    <figure><img src="src/img/parta_1.6_Classifier_Free_Guidance_cell38_out2_img0.png" alt="CFG sample 1" /><figcaption>CFG sample 1</figcaption></figure>
+                    <figure><img src="src/img/parta_1.6_Classifier_Free_Guidance_cell38_out4_img0.png" alt="CFG sample 2" /><figcaption>CFG sample 2</figcaption></figure>
+                    <figure><img src="src/img/parta_1.6_Classifier_Free_Guidance_cell38_out6_img0.png" alt="CFG sample 3" /><figcaption>CFG sample 3</figcaption></figure>
+                    <figure><img src="src/img/parta_1.6_Classifier_Free_Guidance_cell38_out8_img0.png" alt="CFG sample 4" /><figcaption>CFG sample 4</figcaption></figure>
+                    <figure><img src="src/img/parta_1.6_Classifier_Free_Guidance_cell38_out10_img0.png" alt="CFG sample 5" /><figcaption>CFG sample 5</figcaption></figure>
+                </div>
+            </section>
+
+            <section class="task-cluster" id="part1-7">
+                <div class="cluster-heading">
+                    <span class="task-label">1.7</span>
+                    <h3>Image-to-Image</h3>
+                </div>
+                <p>SDEdit: partial noise + denoise</p>
+                <div class="accordion">
+                    <details>
+                    <summary>1.7.1 Hand-Drawn Edits</summary>
+                        <div class="media-row">
+                            <figure>
+                                <img src="src/img/1-7-calbear.png" alt="Cal bear sketch" />
+                                <figcaption>Sketch input (Cal bear)</figcaption>
+                            </figure>
+                            <figure>
+                                <img src="src/img/1-7-sheep.png" alt="Hand-drawn sheep" />
+                                <figcaption>Hand-drawn sheep input</figcaption>
+                            </figure>
+                            <figure>
+                                <img src="src/img/1-7-snoopy.jpg" alt="Web image" />
+                                <figcaption>Web image input</figcaption>
+                            </figure>
+                        </div>
+                        <div class="media-row">
+                            <figure><img src="src/img/parta_1.7.1_Editing_Hand-Drawn_and_Web_Images_cell44_out1_img0.png" alt="Edit example 1" /><figcaption>Noise step variant</figcaption></figure>
+                            <figure><img src="src/img/parta_1.7.1_Editing_Hand-Drawn_and_Web_Images_cell44_out1_img1.png" alt="Edit example 2" /><figcaption>Noise step variant</figcaption></figure>
+                            <figure><img src="src/img/parta_1.7.1_Editing_Hand-Drawn_and_Web_Images_cell44_out1_img2.png" alt="Edit example 3" /><figcaption>Noise step variant</figcaption></figure>
+                            <figure><img src="src/img/parta_1.7.1_Editing_Hand-Drawn_and_Web_Images_cell44_out1_img3.png" alt="Edit example 4" /><figcaption>Noise step variant</figcaption></figure>
+                            <figure><img src="src/img/parta_1.7.1_Editing_Hand-Drawn_and_Web_Images_cell44_out1_img4.png" alt="Edit example 5" /><figcaption>Noise step variant</figcaption></figure>
+                            <figure><img src="src/img/parta_1.7.1_Editing_Hand-Drawn_and_Web_Images_cell44_out1_img5.png" alt="Edit example 6" /><figcaption>Noise step variant</figcaption></figure>
+                        </div>
+                    </details>
+                    <details id="part1-7-2">
+                        <summary>1.7.2 Inpainting</summary>
+                        <p>Fill masked regions. At each step: denoise, then re-impose unmasked pixels. Prompt: "a rocket ship"</p>
+                        <div class="media-row">
+                            <figure><img src="src/img/parta_1.7.2_Inpainting_cell52_out0_img0.png" alt="Inpaint result 1" /><figcaption>Inpaint result 1</figcaption></figure>
+                            <figure><img src="src/img/parta_1.7.2_Inpainting_cell52_out0_img1.png" alt="Inpaint result 2" /><figcaption>Inpaint result 2</figcaption></figure>
+                            <figure><img src="src/img/parta_1.7.2_Inpainting_cell52_out0_img2.png" alt="Inpaint result 3" /><figcaption>Inpaint result 3</figcaption></figure>
+                            <figure><img src="src/img/parta_1.7.2_Inpainting_cell54_out0_img0.png" alt="Inpaint result 4" /><figcaption>Inpaint result 4</figcaption></figure>
+                            <figure><img src="src/img/parta_1.7.2_Inpainting_cell54_out0_img1.png" alt="Inpaint result 5" /><figcaption>Inpaint result 5</figcaption></figure>
+                            <figure><img src="src/img/parta_1.7.2_Inpainting_cell54_out0_img2.png" alt="Inpaint result 6" /><figcaption>Inpaint result 6</figcaption></figure>
+                        </div>
+                    </details>
+                    <details id="part1-7-3">
+                        <summary>1.7.3 Text-Conditional</summary>
+                        <p>Noise schedule [1,3,5,7,10,20]</p>
+                        <div class="media-row">
+                            <figure><img src="src/img/parta_1.7.3_Text-Conditioned_Image-to-image_Translation_cell56_out1_img0.png" alt="Text edit 1" /><figcaption>Text edit 1</figcaption></figure>
+                            <figure><img src="src/img/parta_1.7.3_Text-Conditioned_Image-to-image_Translation_cell56_out1_img1.png" alt="Text edit 2" /><figcaption>Text edit 2</figcaption></figure>
+                            <figure><img src="src/img/parta_1.7.3_Text-Conditioned_Image-to-image_Translation_cell56_out1_img2.png" alt="Text edit 3" /><figcaption>Text edit 3</figcaption></figure>
+                            <figure><img src="src/img/parta_1.7.3_Text-Conditioned_Image-to-image_Translation_cell56_out1_img3.png" alt="Text edit 4" /><figcaption>Text edit 4</figcaption></figure>
+                            <figure><img src="src/img/parta_1.7.3_Text-Conditioned_Image-to-image_Translation_cell56_out1_img4.png" alt="Text edit 5" /><figcaption>Text edit 5</figcaption></figure>
+                            <figure><img src="src/img/parta_1.7.3_Text-Conditioned_Image-to-image_Translation_cell56_out1_img5.png" alt="Text edit 6" /><figcaption>Text edit 6</figcaption></figure>
+                        </div>
+                    </details>
+                </div>
+            </section>
+
+            <section class="task-cluster" id="part1-8">
+                <div class="cluster-heading">
+                    <span class="task-label">1.8</span>
+                    <h3>Visual Anagrams</h3>
+                </div>
+                <p>Dual-prompt noise averaging. Prompts: "campfire" (upright) / "old man" (flipped)</p>
+                <div class="media-row">
+                    <figure><img src="src/img/parta_1.8_Visual_Anagrams_cell59_out0_img0.png" alt="Visual anagram upright" /><figcaption>Illusion upright</figcaption></figure>
+                    <figure><img src="src/img/parta_1.8_Visual_Anagrams_cell59_out0_img1.png" alt="Visual anagram flipped" /><figcaption>Illusion flipped</figcaption></figure>
+                </div>
+            </section>
+
+            <section class="task-cluster" id="part1-9">
+                <div class="cluster-heading">
+                    <span class="task-label">1.9</span>
+                    <h3>Hybrid Images</h3>
+                </div>
+                <p>Factorized diffusion. Low-freq: "skull" / High-freq: "waterfall". kernel=33, σ=2</p>
+                <div class="media-row">
+                    <figure><img src="src/img/parta_1.9_Hybrid_Images_cell62_out0_img0.png" alt="Hybrid image A" /><figcaption>Hybrid image A</figcaption></figure>
+                    <figure><img src="src/img/parta_1.9_Hybrid_Images_cell63_out0_img0.png" alt="Hybrid image B" /><figcaption>Hybrid image B</figcaption></figure>
+                </div>
+            </section>
+
+            <section class="part-intro" id="partb">
+                <div class="section-heading">
+                    <span class="section-label">Part B</span>
+                    <div>
+                        <h2>Flow Matching from Scratch</h2>
+                        <p>Train UNet on MNIST: single-step denoiser → time-conditioned flow matching → class-conditioned generation with CFG.</p>
+                    </div>
+                </div>
+
+                <!-- Part 1.2: Using UNet to Train a Denoiser -->
+                <div class="task-cluster">
+                    <div class="cluster-heading">
+                        <span class="task-label">1.2</span>
+                        <h3>Using the UNet to Train a Denoiser</h3>
+                    </div>
+                    <p>Visualize noising process: z = x + σε for σ = [0.0, 0.2, 0.4, 0.5, 0.6, 0.8, 1.0]</p>
+                    <div class="media-row">
+                        <figure>
+                            <img src="src/img/partb_part_1.2:_using_the_unet_to_train_a_deno_1.png" alt="Noise levels sweep" />
+                            <figcaption>Noise levels σ sweep</figcaption>
+                        </figure>
+                    </div>
+                </div>
+
+                <!-- Part 1.2.1: Training -->
+                <div class="task-cluster">
+                    <div class="cluster-heading">
+                        <span class="task-label">1.2.1</span>
+                        <h3>Training</h3>
+                    </div>
+                    <p><strong>Setup:</strong> D=128, batch=256, lr=1e-4, epochs=5, σ=0.5</p>
+                    <div class="media-row">
+                        <figure>
+                            <img src="src/img/partb_part_1.2.1:_training_1.png" alt="Training curve" />
+                            <figcaption>Training loss curve</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="src/img/partb_part_1.2.1:_training_2.png" alt="Training curve zoom" />
+                            <figcaption>Loss (mid-epoch)</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="src/img/partb_part_1.2.1:_training_3.png" alt="Training curve later" />
+                            <figcaption>Loss (later iterations)</figcaption>
+                        </figure>
+                    </div>
+                </div>
+
+                <!-- Part 1.2.2: Out-of-Distribution Testing -->
+                <div class="task-cluster">
+                    <div class="cluster-heading">
+                        <span class="task-label">1.2.2</span>
+                        <h3>Out-of-Distribution Testing</h3>
+                    </div>
+                    <p>Test denoiser on different σ values (trained on σ=0.5 only)</p>
+                    <div class="media-row">
+                        <figure>
+                            <img src="src/img/partb_part_1.2.2:_out-of-distribution_testing_1.png" alt="OOD sigma tests" />
+                            <figcaption>OOD σ test results</figcaption>
+                        </figure>
+                    </div>
+                </div>
+
+                <!-- Part 1.2.3: Denoising Pure Noise -->
+                <div class="task-cluster">
+                    <div class="cluster-heading">
+                        <span class="task-label">1.2.3</span>
+                        <h3>Denoising Pure Noise</h3>
+                    </div>
+                    <p><strong>Result:</strong> Outputs blurry average of all digits (0-9). MSE loss learns the centroid—proves we need iterative denoising for generation!</p>
+                    <div class="media-row">
+                        <figure>
+                            <img src="src/img/partb_part_1.2.3_denoising_pure_noise_1.png" alt="Pure noise denoising epochs" />
+                            <figcaption>Epoch checkpoints</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="src/img/partb_part_1.2.3_denoising_pure_noise_2.png" alt="Pure noise comparison" />
+                            <figcaption>Epoch 1 vs 5</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="src/img/partb_part_1.2.3_denoising_pure_noise_3.png" alt="Pure noise samples" />
+                            <figcaption>Samples</figcaption>
+                        </figure>
+                    </div>
+                </div>
+
+                <!-- Part 2.1: Adding Time Conditioning -->
+                <div class="task-cluster">
+                    <div class="cluster-heading">
+                        <span class="task-label">2.1</span>
+                        <h3>Adding Time Conditioning to UNet</h3>
+                    </div>
+                    <p>Flow matching: x_t = (1-t)x_0 + tx_1, learn u(x_t,t) = x_1 - x_0. Inject t via FCBlock modulation.</p>
+                </div>
+
+                <!-- Part 2.2: Training the Time-Conditioned UNet -->
+                <div class="task-cluster">
+                    <div class="cluster-heading">
+                        <span class="task-label">2.2</span>
+                        <h3>Training the Time-Conditioned UNet</h3>
+                    </div>
+                    <p><strong>Setup:</strong> D=64, batch=64, lr=1e-2, epochs=10, exponential LR decay γ=0.1^(1/10)</p>
+                    <div class="media-row">
+                        <figure>
+                            <img src="src/img/partb_part_2.2:_training_the_time-conditioned__1.png" alt="Time-conditioned training" />
+                            <figcaption>Training loss</figcaption>
+                        </figure>
+                    </div>
+                </div>
+
+                <!-- Part 2.3: Sampling from Time-Conditioned UNet -->
+                <div class="task-cluster">
+                    <div class="cluster-heading">
+                        <span class="task-label">2.3</span>
+                        <h3>Sampling from the Time-Conditioned UNet</h3>
+                    </div>
+                    <p>Euler method sampling with 50 timesteps</p>
+                    <div class="media-row">
+                        <figure>
+                            <img src="src/img/partb_part_2.3:_sampling_from_the_time-conditi_1.png" alt="Samples overview" />
+                            <figcaption>Sample overview</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="src/img/partb_part_2.3:_sampling_from_the_time-conditi_2.png" alt="Epoch 1" />
+                            <figcaption>Epoch 1</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="src/img/partb_part_2.3:_sampling_from_the_time-conditi_3.png" alt="Epoch 5" />
+                            <figcaption>Epoch 5</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="src/img/partb_part_2.3:_sampling_from_the_time-conditi_4.png" alt="Epoch 10" />
+                            <figcaption>Epoch 10</figcaption>
+                        </figure>
+                    </div>
+                </div>
+
+                <!-- Part 2.4: Adding Class Conditioning -->
+                <div class="task-cluster">
+                    <div class="cluster-heading">
+                        <span class="task-label">2.4</span>
+                        <h3>Adding Class-Conditioning to UNet</h3>
+                    </div>
+                    <p>One-hot class vectors (0-9) with 10% dropout for CFG training. Modulation: unflatten = c1*unflatten + t1</p>
+                </div>
+
+                <!-- Part 2.5: Training Class-Conditioned UNet -->
+                <div class="task-cluster">
+                    <div class="cluster-heading">
+                        <span class="task-label">2.5</span>
+                        <h3>Training the Class-Conditioned UNet</h3>
+                    </div>
+                    <p><strong>Setup:</strong> Same as 2.2 but with class conditioning and p_uncond=0.1</p>
+                    <div class="media-row">
+                        <figure>
+                            <img src="src/img/partb_part_2.5_training_the_class-conditioned__1.png" alt="Class-conditioned training" />
+                            <figcaption>Training loss</figcaption>
+                        </figure>
+                    </div>
+                </div>
+
+                <!-- Part 2.6: Sampling from Class-Conditioned UNet -->
+                <div class="task-cluster">
+                    <div class="cluster-heading">
+                        <span class="task-label">2.6</span>
+                        <h3>Sampling from the Class-Conditioned UNet</h3>
+                    </div>
+                    <p>CFG sampling with γ=5.0. <strong>No LR scheduler:</strong> Used constant lr=5e-3, 12 epochs, gradient clipping—maintained same quality!</p>
+                    <div class="media-row">
+                        <figure>
+                            <img src="src/img/partb_part_2.6:_sampling_from_the_class-condit_1.png" alt="Epochs comparison" />
+                            <figcaption>Epochs 1/5/10</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="src/img/partb_part_2.6:_sampling_from_the_class-condit_2.png" alt="CFG samples" />
+                            <figcaption>CFG γ=5</figcaption>
+                        </figure>
+                        <figure>
+                            <img src="src/img/partb_part_2.6:_sampling_from_the_class-condit_3.png" alt="Per-digit grid" />
+                            <figcaption>Per-digit grid</figcaption>
+                        </figure>
+                    </div>
+                </div>
+
+            </section>
+
+            <section class="part-intro" id="part2">
+                <div class="section-heading">
+                    <span class="section-label">Part 2</span>
+                    <div>
+                        <h2>Bells, Whistles, & Original Ideas</h2>
+                        <p>Reserved for CS280A: alternate anagram transforms and course logo remix.</p>
+                    </div>
+                </div>
+
+                <div class="two-col-grid">
+                    <article class="task-block">
+                        <header>
+                            <span class="task-label">2.1</span>
+                            <h3>Alternate Visual Anagrams</h3>
+                        </header>
+                        <p>Plan: rotate/sheer variants per paper; capture two additional illusions.</p>
+                    </article>
+
+                    <article class="task-block">
+                        <header>
+                            <span class="task-label">2.2</span>
+                            <h3>Course Logo Remix</h3>
+                        </header>
+                        <p>Try text-conditioned edits on UCB logo and personal sketches.</p>
+                    </article>
+
+                    <article class="task-block full-width">
+                        <header>
+                            <span class="task-label">2.3</span>
+                            <h3>Your Own Idea</h3>
+                        </header>
+                        <p>Stretch goal slot for extra hybrids or higher-res upsampling.</p>
+                    </article>
+                </div>
+            </section>
+
+            <section class="wrap-up">
+                <h2>Reflection</h2>
+                <p><strong>Part A:</strong> CFG (γ=7) dramatically boosts quality. Iterative DDPM > one-step. Same diffusion framework handles inpainting, anagrams, hybrids.</p>
+                <p><strong>Part B:</strong> Single-step denoising fails (learns mean). Flow matching works with x_t=(1-t)x_0+tx_1. Class conditioning + CFG enables controllable generation. Constant LR works as well as exponential decay.</p>
+                <p><strong>Key insight:</strong> Diffusion models learn data manifold structure through iterative denoising. CFG is the secret sauce.</p>
+            </section>
+        </main>
+
+        <footer>
+            <div class="footer-shell">
+                <span>CS 180 · Project 5 Template</span>
+                <span>Update this footer once results are finalized.</span>
+            </div>
+        </footer>
+    </div>
+</body>
+</html>
